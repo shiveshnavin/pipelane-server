@@ -43,6 +43,7 @@ input CreatePipetaskInput {
   taskTypeName: String!
   isParallel: Boolean
   input: String
+  pipelaneName: String
 }
 
 type PipelaneExecution {

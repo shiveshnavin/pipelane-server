@@ -85,14 +85,14 @@ function Main() {
                   title: 'Home'
                 },
                 {
-                  id: 'search',
-                  icon: 'search',
-                  title: 'Search'
+                  id: 'executions',
+                  icon: 'plane',
+                  title: 'Executions'
                 },
                 {
-                  id: 'profile',
-                  icon: 'user',
-                  title: 'Profile'
+                  id: 'settings',
+                  icon: 'gear',
+                  title: 'Settings'
                 }]} />
             </VPage>
           </SafeAreaView>
