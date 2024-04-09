@@ -1,9 +1,5 @@
-# Basic quick start app
+# Pipelane server
 
-The basic quick start app comes with:
+### cron
 
-1. ExpressJS
-2. Typescript
-3. React Native using expo
-4. GraphQL
-5. Multi-DB-ORM
+https://github.com/kelektiv/node-cron/issues/190

@@ -1,6 +1,15 @@
 #graphql
 type Query {
   Pipelane(name: ID): Pipelane
+  TaskType(type: ID): TaskType
+
+  taskTypes: [TaskType]
+  pipelanes: [Pipelane]
+}
+
+type TaskType {
+  type: ID
+  variants: [ID]
 }
 
 type Pipelane {
@@ -12,12 +21,28 @@ type Pipelane {
   executions: [PipelaneExecution]
 }
 
+input CreatePipelaneInput {
+  name: ID!
+  inputs: String
+  schedule: String
+  active: Boolean
+  tasks: [CreatePipetaskInput]
+}
+
 type Pipetask {
-  taskVariantName: ID
-  taskTypeName: String
+  pipelaneName: ID!
+  taskVariantName: ID!
+  taskTypeName: String!
   isParallel: Boolean
   input: String
   executions: [PipetaskExecution]
+}
+
+input CreatePipetaskInput {
+  taskVariantName: ID!
+  taskTypeName: String!
+  isParallel: Boolean
+  input: String
 }
 
 type PipelaneExecution {
@@ -43,5 +68,6 @@ enum Status {
 }
 
 type Mutation {
-  createPipelane(id: String, comment: String): Pipelane!
+  createPipelane(data: CreatePipelaneInput!): Pipelane!
+  createPipelaneTask(data: CreatePipetaskInput!): Pipetask!
 }

@@ -2,8 +2,9 @@
 
 # dependencies
 gen/
+.vscode
 test.db
-test.sqlite
+*.sqlite
 creds.json
 node_modules/
 tmp/*

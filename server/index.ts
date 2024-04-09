@@ -5,13 +5,7 @@ import path from "path";
 import fs from 'fs'
 import { generateResolvers } from "./graphql/resolvers";
 import db from "./db";
-
-const resolvers = generateResolvers(db)
-const typeDefs = fs.readFileSync('model.graphql').toString()
-const appoloServer = new ApolloServer({
-  typeDefs,
-  resolvers,
-})
+import { TaskVariantConfig } from "pipelane";
 
 const app = express()
 
@@ -30,7 +24,16 @@ app.get("/", (_req, res) => {
   res.redirect('/graph')
 })
 
-export default async function getApp() {
+export default async function creatPipelaneServer(variantConfig: TaskVariantConfig) {
+
+  const resolvers = generateResolvers(db, variantConfig)
+  const typeDefs = fs.readFileSync('model.graphql').toString()
+  const appoloServer = new ApolloServer({
+    typeDefs,
+    resolvers,
+  })
+
+
   return new Promise((resolve) => {
     appoloServer.start().then(() => {
       app.use('/graph', express.json(), expressMiddleware(appoloServer));
