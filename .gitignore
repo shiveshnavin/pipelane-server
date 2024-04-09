@@ -3,6 +3,7 @@
 # dependencies
 gen/
 test.db
+test.sqlite
 creds.json
 node_modules/
 tmp/*

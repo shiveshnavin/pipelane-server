@@ -1,25 +1,47 @@
 #graphql
 type Query {
-  users: [User]
-  User(id: String!): User
+  Pipelane(name: ID): Pipelane
 }
 
-type User {
-  id: String
-  first_name: String
-  userName: String
-  comments: [String]
+type Pipelane {
+  name: ID
+  inputs: String
+  schedule: String
+  active: Boolean
+  tasks: [Pipetask]
+  executions: [PipelaneExecution]
+}
+
+type Pipetask {
+  taskVariantName: ID
+  taskTypeName: String
+  isParallel: Boolean
+  input: String
+  executions: [PipetaskExecution]
+}
+
+type PipelaneExecution {
+  id: ID
+  isRunning: Boolean
+  definition: Pipelane
+  status: Status
+  logs: [String]
+}
+
+type PipetaskExecution {
+  id: ID
+  definition: Pipetask
+  startTime: String
+  status: Status
+  endTime: String
 }
 
 enum Status {
   SUCCESS
+  IN_PROGRESS
   FAILURE
 }
 
-type UserComment {
-  id: String
-  comments: [String]
-}
 type Mutation {
-  commentOnUser(id: String, comment: String): UserComment!
+  createPipelane(id: String, comment: String): Pipelane!
 }
