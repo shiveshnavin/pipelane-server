@@ -13,7 +13,7 @@ export default function SearchPage() {
                 <TextView>Hello Search!</TextView>
                 <ButtonView
                     onPress={() => {
-                        router.push(`/search/yolo?query=paneer`)
+                        router.push(`/executions/yolo?query=paneer`)
                     }}
                     text="Go to query" />
             </Center>

@@ -3,8 +3,9 @@ import { gql } from "@apollo/client";
 import React, { useEffect, useState } from "react";
 import { useContext } from "react";
 import { ButtonView, CompositeTextInputView, SimpleDatalistView, SimpleToolbar, SwitchView, ThemeContext, VPage, isDesktop } from "react-native-boxes";
-import { Pipelane } from '../../gen/model'
+import { Pipelane } from '../../../gen/model'
 import KeyboardAvoidingScrollView, { CardView, HBox } from "react-native-boxes/src/Box";
+import { useRouter } from "expo-router";
 
 export default function HomeLayout() {
     const theme = useContext(ThemeContext)
@@ -13,7 +14,7 @@ export default function HomeLayout() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState("")
     const [pipes, setUsers] = useState([])
-
+    const router = useRouter()
     //@ts-ignores
     function getPipes(text?) {
         let query = `
@@ -72,6 +73,9 @@ export default function HomeLayout() {
                     itemAdapter={(pipe: Pipelane, idx: number) => {
 
                         return {
+                            onPress: () => {
+                                router.navigate(`/home/${pipe.name}`)
+                            },
                             action: (
                                 <SwitchView
                                     value={pipe.active == true}

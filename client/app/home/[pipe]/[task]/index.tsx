@@ -9,7 +9,7 @@ import { Center, Expand, TextView, ThemeContext, Title, VBox, VPage } from "reac
 
 export default function QueryPage() {
     const theme = useContext(ThemeContext)
-    const { user } = useLocalSearchParams();
+    const { pipe } = useLocalSearchParams();
     const [curUser, setCurUser] = useState<any>({})
     const appContext = useContext(AppContext)
     const graph = appContext.context.api.graph
@@ -27,13 +27,13 @@ export default function QueryPage() {
 
         addComment({
             variables: {
-                id: user,
+                id: pipe,
                 comment: 'I visited on ' + (new Date()).toTimeString()
             }
         })
         let query = `
         query GetUser {
-            user: User(id:"${user}") {
+            pipe: Pipelane(id:"${pipe}") {
                 id
                 first_name
                 userName
@@ -47,10 +47,10 @@ export default function QueryPage() {
             setCurUser(result.data.user)
         }).catch(() => {
             setCurUser({
-                userName: `${user} not found`
+                userName: `${pipe} not found`
             })
         })
-    }, [user])
+    }, [pipe])
 
 
 
@@ -58,10 +58,12 @@ export default function QueryPage() {
     return (
         <VPage>
             <Center>
-                <TextView>Hello {user}!</TextView>
+                <TextView>Hello {pipe}!</TextView>
                 <Title>{curUser.userName}</Title>
                 <Expand title="See comments">
+                    <VBox>
 
+                    </VBox>
                 </Expand>
             </Center>
         </VPage>
