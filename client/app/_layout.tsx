@@ -49,6 +49,8 @@ function Main() {
   useEffect(() => {
     console.log('route', route)
     let id = route.pathname.split('/')[1]
+    if (id == '')
+      id = 'home'
     setBottombarId(id)
     router.navigate(route.unstable_globalHref)
   }, [])
