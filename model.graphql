@@ -5,6 +5,7 @@ type Query {
 
   taskTypes: [TaskType]
   pipelanes(search: String): [Pipelane]
+  pipelaneTasks(pipelaneName: ID!): [Pipetask]
 }
 
 type TaskType {
