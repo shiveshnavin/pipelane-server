@@ -3,7 +3,7 @@ import { CreatePipelaneInput, CreatePipetaskInput, Pipelane } from '../../../gen
 import { Platform } from 'react-native';
 let HOST = Platform.OS == 'web' ? 'http://localhost:4001' : 'http://192.168.0.115:4001'
 if (!__DEV__) {
-    HOST = '/'
+    HOST = 'http://oci.semibit.in:4001'
 }
 const client = new ApolloClient({
     uri: HOST + '/graph',
