@@ -19,6 +19,7 @@ type Pipelane {
   input: String
   schedule: String
   active: Boolean
+  updatedTimestamp: String
   tasks: [Pipetask]
   executions: [PipelaneExecution]
 }

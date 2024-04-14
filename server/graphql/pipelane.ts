@@ -45,11 +45,12 @@ export function generatePipelaneResolvers(db: MultiDbORM, variantConfig: TaskVar
                     {
                         pipelaneName: input.pipelaneName,
                         taskVariantName: input.taskVariantName
-                    })
+                    }) as Pipelane
                 let isUpdate = existing != undefined
                 if (!isUpdate)
-                    existing = {}
+                    existing = {} as Pipelane
                 Object.assign(existing, input)
+                existing.updatedTimestamp = `${Date.now()}`
                 if (isUpdate)
                     await db.update(TableName.PS_PIPELANE_TASK, {
                         pipelaneName: input.pipelaneName,
