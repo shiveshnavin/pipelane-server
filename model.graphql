@@ -10,7 +10,7 @@ type Query {
 }
 
 type TaskType {
-  type: ID
+  type: ID!
   variants: [ID]
 }
 
