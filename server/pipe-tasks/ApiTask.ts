@@ -14,7 +14,24 @@ export class ApiTask extends PipeTask<any, any> {
         return true
     }
     async execute(pipeWorkInstance: PipeLane, input: any): Promise<any[]> {
-        let reqConfig = input
+        input = input.additionalInputs
+        if (!input.url) {
+            return [{
+                status: false,
+                message: 'invalid input'
+            }]
+        }
+        let options = input
+        try {
+            let response = await axios.get(input.url, options)
+            if (response) {
+                return [{
+                    status: response.status < 300,
+                    statusCode: response.status,
+                    ...response?.data
+                }]
+            }
+        } catch (e) { }
         return [{
             status: false
         }]

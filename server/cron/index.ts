@@ -52,6 +52,10 @@ export class CronScheduler {
     }
 
     async triggerPipelane(pl: PipelaneSchedule) {
+        if (this.stopped) {
+            console.warn(`Executor is stopped, skip triggering ${pl.name}`)
+            return
+        }
         let pipelaneBluePrint = await this.getPipelaneDefinition(pl.name)
         if (!pipelaneBluePrint) {
             console.warn(`No definition found for ${pl.name}`)
@@ -67,7 +71,7 @@ export class CronScheduler {
                 console.warn(`No tasks of types ${nonExistingTask.join(",")} found in variantconfig. Skipping triggering ${pl.name}`)
                 return
             }
-            pl.tasks.forEach(tkd => {
+            pl.tasks.filter(t => t.active).forEach(tkd => {
                 let input = {}
                 try {
                     // todo: resolve placeholders
