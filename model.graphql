@@ -20,6 +20,8 @@ type Pipelane {
   schedule: String
   active: Boolean
   updatedTimestamp: String
+  retryCount: Int
+  nextRun: String
   tasks: [Pipetask]
   executions: [PipelaneExecution]
 }
@@ -28,6 +30,7 @@ input CreatePipelaneInput {
   name: ID!
   input: String
   schedule: String
+  retryCount: Int
   active: Boolean
   tasks: [CreatePipetaskInput]
 }

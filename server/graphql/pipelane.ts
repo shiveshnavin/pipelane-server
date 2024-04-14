@@ -1,12 +1,17 @@
 import { MultiDbORM } from "multi-db-orm"
 import PipeLane, { PipeTask, TaskVariantConfig } from "pipelane"
-import { CreatePipelaneInput, CreatePipetaskInput, Pipelane } from "../../gen/model"
+import { CreatePipelaneInput, CreatePipetaskInput, Pipelane, Pipetask } from "../../gen/model"
 import { TableName } from "../db"
 import _ from 'lodash'
+import { CronScheduler } from "../cron"
 
-export function generatePipelaneResolvers(db: MultiDbORM, variantConfig: TaskVariantConfig) {
+export function generatePipelaneResolvers(
+    db: MultiDbORM,
+    variantConfig: TaskVariantConfig,
+    cronScheduler?: CronScheduler) {
     const PipelaneResolvers = {
         Pipelane: {
+            nextRun: (parent: Pipelane) => cronScheduler.getNextRun(parent.schedule).toLocaleString(),
             tasks: async (parent) => {
                 if (parent.tasks) return parent.tasks
                 let tasks = await db.get(TableName.PS_PIPELANE_TASK,
@@ -17,21 +22,21 @@ export function generatePipelaneResolvers(db: MultiDbORM, variantConfig: TaskVar
             }
         },
         Query: {
-            Pipelane: async (parent, arg) => {
+            Pipelane: async (parent, arg): Promise<Pipelane> => {
                 let existing = await db.getOne(TableName.PS_PIPELANE,
                     { name: arg.name })
                 return existing
             },
-            Pipetask: async (parent, arg) => {
+            Pipetask: async (parent, arg): Promise<Pipetask> => {
                 let existing = await db.getOne(TableName.PS_PIPELANE_TASK,
                     { taskVariantName: arg.taskVariantName, pipelaneName: arg.pipelaneName })
                 return existing
             },
-            pipelanes: async () => {
+            pipelanes: async (): Promise<Pipelane[]> => {
                 let pls = await db.get(TableName.PS_PIPELANE, {})
                 return pls
             },
-            pipelaneTasks: async (parent, arg) => {
+            pipelaneTasks: async (parent, arg): Promise<Pipetask[]> => {
                 let pls = await db.get(TableName.PS_PIPELANE_TASK,
                     { pipelaneName: arg.pipelaneName })
                 return pls
@@ -45,12 +50,11 @@ export function generatePipelaneResolvers(db: MultiDbORM, variantConfig: TaskVar
                     {
                         pipelaneName: input.pipelaneName,
                         taskVariantName: input.taskVariantName
-                    }) as Pipelane
+                    }) as Pipetask
                 let isUpdate = existing != undefined
                 if (!isUpdate)
-                    existing = {} as Pipelane
+                    existing = {} as Pipetask
                 Object.assign(existing, input)
-                existing.updatedTimestamp = `${Date.now()}`
                 if (isUpdate)
                     await db.update(TableName.PS_PIPELANE_TASK, {
                         pipelaneName: input.pipelaneName,
@@ -63,13 +67,17 @@ export function generatePipelaneResolvers(db: MultiDbORM, variantConfig: TaskVar
             async createPipelane(parent: any, request: { data: CreatePipelaneInput }) {
                 let input = request.data
                 let tasks = request.data.tasks || []
-                let existing = await db.getOne(TableName.PS_PIPELANE, { name: input.name })
+                let existing = await db.getOne(TableName.PS_PIPELANE, { name: input.name }) as Pipelane
                 let isUpdate = existing != undefined
                 if (!isUpdate)
-                    existing = {}
+                    existing = {} as Pipelane
                 let pl = Object.assign(existing, request.data)
                 delete existing.tasks
 
+                existing.schedule = existing.schedule.trim()
+                existing.retryCount = existing.retryCount || 0
+                existing.updatedTimestamp = `${Date.now()}`
+                cronScheduler?.addToSchedule(existing)
                 await Promise.all([
                     isUpdate ? db.update(TableName.PS_PIPELANE, {
                         name: input.name

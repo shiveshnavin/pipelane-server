@@ -53,6 +53,8 @@ export class Api {
                   active
                   schedule
                   input
+                  nextRun
+                  retryCount
                 }
               }`,
             variables: {
@@ -86,6 +88,8 @@ export class Api {
                             input
                             schedule
                             active
+                            nextRun
+                            retryCount
                             ${getTasks ? `
                                 tasks {
                                 pipelaneName

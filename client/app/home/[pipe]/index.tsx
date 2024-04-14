@@ -57,7 +57,9 @@ export default function PipelanePage() {
                 curPipe && <PipelaneView pipe={curPipe} save={(pipe: Pipelane) => {
                     setLoading(true)
                     seterr(undefined)
+                    delete pipe.nextRun
                     delete pipe.__typename
+                    pipe.retryCount = parseInt(`${pipe.retryCount || 0}`)
                     api.upsertPipelane({ ...pipe, tasks: undefined }).then(result => {
                         setCurPipe(result.data.createPipelane)
                     }).catch((error) => {
@@ -79,6 +81,13 @@ function PipelaneView({ pipe: inputPipe, save }: { pipe: Pipelane, save: Functio
             tasks: undefined,
             input: JSON.stringify(JSON.parse(inputPipe.input as string), null, 2)
         })
+    useEffect(() => {
+        setPipe({
+            tasks: pipe.tasks,
+            ...inputPipe,
+            input: JSON.stringify(JSON.parse(inputPipe.input as string), null, 2)
+        })
+    }, [inputPipe])
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useContext(ThemeContext)
 
@@ -111,11 +120,27 @@ function PipelaneView({ pipe: inputPipe, save }: { pipe: Pipelane, save: Functio
                         }}
                     />
                 </HBox>
+                <HBox style={{
+                    padding: theme.dimens.space.md,
+                    justifyContent: 'space-between'
+                }}>
+                    <TextView>Next run</TextView>
+                    <TextView>{pipe.nextRun}</TextView>
+                </HBox>
                 <CompositeTextInputView
                     placeholder="Pipelane name"
                     value={pipe.name as string}
                     onChangeText={(nt) => {
                         pipe.name = nt
+                        forceUpdate()
+                    }}
+                />
+                <CompositeTextInputView
+                    placeholder="Retry count"
+                    value={`${pipe.retryCount}`}
+                    onChangeText={(nt) => {
+                        //@ts-ignore
+                        pipe.retryCount = nt
                         forceUpdate()
                     }}
                 />

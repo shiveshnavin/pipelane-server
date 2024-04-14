@@ -6,9 +6,10 @@ import fs from 'fs'
 import { generateResolvers } from "./graphql/resolvers";
 import db from "./db";
 import { TaskVariantConfig } from "pipelane";
+import { CronScheduler } from "./cron";
+import { generatePipelaneResolvers } from "./graphql/pipelane";
 
 const app = express()
-
 
 //see https://docs.expo.dev/more/expo-cli/#hosting-with-sub-paths
 //cd client && npx expo export
@@ -26,7 +27,23 @@ app.get("/", (_req, res) => {
 
 export default async function creatPipelaneServer(variantConfig: TaskVariantConfig) {
 
-  const resolvers = generateResolvers(db, variantConfig)
+  const cronScheduler = new CronScheduler()
+  const resolvers = generateResolvers(db, variantConfig, cronScheduler)
+  const pipelaneResolver = generatePipelaneResolvers(db, variantConfig)
+  pipelaneResolver.Query.pipelanes().then(pls => {
+    cronScheduler.init(pls, async (pipeName) => {
+      let pipelane = await pipelaneResolver.Query.Pipelane({}, {
+        name: pipeName
+      })
+      pipelane.tasks = await pipelaneResolver.Query.pipelaneTasks({}, {
+        pipelaneName: pipeName
+      })
+      return pipelane
+    })
+    cronScheduler.startAll()
+    console.log('Scheduled', pls.length, 'pipes')
+  })
+
   const typeDefs = fs.readFileSync('model.graphql').toString()
   const appoloServer = new ApolloServer({
     typeDefs,

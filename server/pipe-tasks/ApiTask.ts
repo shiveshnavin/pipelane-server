@@ -1,3 +1,4 @@
+import axios from "axios";
 import PipeLane, { PipeTask } from "pipelane";
 
 export class ApiTask extends PipeTask<any, any> {
@@ -10,10 +11,13 @@ export class ApiTask extends PipeTask<any, any> {
     }
 
     kill(): boolean {
-        throw new Error("Method not implemented.");
+        return true
     }
-    execute(pipeWorkInstance: PipeLane, input: any): Promise<any[]> {
-        throw new Error("Method not implemented.");
+    async execute(pipeWorkInstance: PipeLane, input: any): Promise<any[]> {
+        let reqConfig = input
+        return [{
+            status: false
+        }]
     }
 
 }
