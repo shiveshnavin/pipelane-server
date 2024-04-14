@@ -98,21 +98,23 @@ export class CronScheduler {
             let onResult = (function (results) {
                 if (results == undefined || results[0].status == false) {
                     if (retryCountLeft-- > 0) {
-                        console.warn(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}`)
+                        console.warn(`Pipe:${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}`)
                         //@ts-ignore
                         pipelaneInstance.currentTaskIdx = 0
                         //@ts-ignore
                         pipelaneInstance.executedTasks = []
                         pipelaneInstance.start(input).then(onResult)
+                        return
                     } else {
                         console.log(`Pipe:${pl.name} failed`)
                     }
 
                 } else {
                     console.log(`Pipe:${pl.name} success`)
-                    //@ts-ignore
-                    this.currentExecutions = this.currentExecutions.filter(cei => cei.name != pipelaneInstance.name)
                 }
+
+                //@ts-ignore
+                this.currentExecutions = this.currentExecutions.filter(cei => cei.name != pipelaneInstance.name)
             }).bind(this)
             // todo: save Execution
             pipelaneInstance.start(input).then(onResult).catch((e) => {
