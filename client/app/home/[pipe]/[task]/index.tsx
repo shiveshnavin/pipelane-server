@@ -4,7 +4,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useRouteInfo, useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon, Subtitle, DropDownView } from "react-native-boxes";
+import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon, Subtitle, DropDownView, ButtonView } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipelane, Pipetask, PipetaskExecution, TaskType } from "../../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
@@ -17,6 +17,7 @@ export default function PipeTaskPage() {
     const [err, seterr] = useState<undefined | string>(undefined)
     const [loading, setLoading] = useState(true)
     const appContext = useContext(AppContext)
+    const router = useRouter()
     const api = appContext.context.api
 
     function getPipetask() {
@@ -32,6 +33,7 @@ export default function PipeTaskPage() {
                   taskTypeName
                   isParallel
                   input
+                  active
                 }
                 taskTypes {
                   type
@@ -73,13 +75,30 @@ export default function PipeTaskPage() {
                 }} />
             }
             {
-                curPipetask && <PipetaskView taskTypes={taskTypes} pipetask={curPipetask} />
+                curPipetask && <PipetaskView
+                    save={(task: Pipetask) => {
+                        setLoading(true)
+                        seterr(undefined)
+                        delete task.__typename
+                        api.upsertPipelaneTask({ ...task }).then(result => {
+                            setCurPipetask(result.data.createPipelaneTask)
+                            if (result.data.createPipelaneTask.taskVariantName != taskVariantName) {
+                                router.navigate(`/home/${result.data.createPipelaneTask.pipelaneName}/${result.data.createPipelaneTask.taskVariantName}`)
+                            }
+
+                        }).catch((error) => {
+                            seterr(getGraphErrorMessage(error))
+                        }).finally(() => {
+                            setLoading(false)
+                        })
+                    }}
+                    taskTypes={taskTypes} pipetask={curPipetask} />
             }
         </VPage>
     );
 }
 
-function PipetaskView({ pipetask: inputPipetask, taskTypes }: { pipetask: Pipetask, taskTypes: TaskType[] }) {
+function PipetaskView({ pipetask: inputPipetask, taskTypes, save }: { pipetask: Pipetask, taskTypes: TaskType[], save: Function }) {
     const router = useRouter()
     const [task, setTask] = useState<Pipetask>(
         {
@@ -96,10 +115,15 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes }: { pipetask: Pipeta
 
     }
 
+    console.log(task)
     return (
         <VBox>
-            <TransparentCenterToolbar title={task.taskVariantName as string} />
-            <Center><Subtitle>{task.pipelaneName}</Subtitle></Center>
+            <TransparentCenterToolbar title={`${task.pipelaneName} : ${task.taskVariantName}`} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
+                if (router.canGoBack())
+                    router.back()
+                else
+                    router.navigate(`/home/${task.pipelaneName}`)
+            }} />
             <CardView>
                 <HBox style={{
                     padding: theme.dimens.space.md,
@@ -159,6 +183,9 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes }: { pipetask: Pipeta
                     }}
                     value={task.input as string}
                     initialText={task.input as string} />
+                <ButtonView onPress={() => {
+                    save(task)
+                }}>Save</ButtonView>
             </CardView>
             <CardView>
 

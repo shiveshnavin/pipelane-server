@@ -4,7 +4,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useRouteInfo, useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon } from "react-native-boxes";
+import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon, ButtonView } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipelane, Pipetask } from "../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
@@ -54,13 +54,24 @@ export default function PipelanePage() {
                 }} />
             }
             {
-                curPipe && <PipelaneView pipe={curPipe} />
+                curPipe && <PipelaneView pipe={curPipe} save={(pipe: Pipelane) => {
+                    setLoading(true)
+                    seterr(undefined)
+                    delete pipe.__typename
+                    api.upsertPipelane({ ...pipe, tasks: undefined }).then(result => {
+                        setCurPipe(result.data.createPipelane)
+                    }).catch((error) => {
+                        seterr(getGraphErrorMessage(error))
+                    }).finally(() => {
+                        setLoading(false)
+                    })
+                }} />
             }
         </VPage>
     );
 }
 
-function PipelaneView({ pipe: inputPipe }: { pipe: Pipelane }) {
+function PipelaneView({ pipe: inputPipe, save }: { pipe: Pipelane, save: Function }) {
     const router = useRouter()
     const [pipe, setPipe] = useState<Pipelane>(
         {
@@ -83,7 +94,9 @@ function PipelaneView({ pipe: inputPipe }: { pipe: Pipelane }) {
 
     return (
         <VBox>
-            <TransparentCenterToolbar title={pipe.name as string} />
+            <TransparentCenterToolbar title={pipe.name as string} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
+                router.navigate(`/home`)
+            }} />
             <CardView>
                 <HBox style={{
                     padding: theme.dimens.space.md,
@@ -133,6 +146,10 @@ function PipelaneView({ pipe: inputPipe }: { pipe: Pipelane }) {
                     }}
                     value={pipe.input as string}
                     initialText={pipe.input as string} />
+
+                <ButtonView onPress={() => {
+                    save(pipe)
+                }}>Save</ButtonView>
             </CardView>
             <CardView>
 

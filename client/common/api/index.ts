@@ -1,4 +1,5 @@
 import { ApolloClient, InMemoryCache, ApolloProvider, gql, ApolloQueryResult } from '@apollo/client';
+import { CreatePipelaneInput, CreatePipetaskInput, Pipelane } from '../../../gen/model';
 const client = new ApolloClient({
     uri: 'http://localhost:4000/graph',
     cache: new InMemoryCache(),
@@ -25,6 +26,38 @@ export function getGraphErrorMessage(error: any) {
 export class Api {
     graph = client
 
+    upsertPipelaneTask(task: CreatePipetaskInput) {
+        return this.graph.mutate({
+            mutation: gql`mutation Mutation($data: CreatePipetaskInput!) {
+                createPipelaneTask(data: $data) {
+                  pipelaneName
+                  taskTypeName
+                  taskVariantName
+                  active
+                  isParallel
+                  input
+                }
+              }`,
+            variables: {
+                data: task
+            }
+        })
+    }
+    upsertPipelane(pipe: CreatePipelaneInput) {
+        return this.graph.mutate({
+            mutation: gql`mutation Mutation($data: CreatePipelaneInput!) {
+                createPipelane(data: $data) {
+                  name
+                  active
+                  schedule
+                  input
+                }
+              }`,
+            variables: {
+                data: pipe
+            }
+        })
+    }
     getPipelaneTasks(pipeName: string) {
         return this.graph.query({
             query: gql`
@@ -35,6 +68,7 @@ export class Api {
                             taskTypeName
                             isParallel
                             input
+                            active
                         }
                     }
 `,
@@ -75,6 +109,7 @@ export class Api {
     taskTypeName
     isParallel
     input
+    active
   }
 }
                
