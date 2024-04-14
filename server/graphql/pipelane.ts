@@ -11,7 +11,7 @@ export function generatePipelaneResolvers(
     cronScheduler?: CronScheduler) {
     const PipelaneResolvers = {
         Pipelane: {
-            nextRun: (parent: Pipelane) => cronScheduler.getNextRun(parent.schedule).toLocaleString('Asia/Kolkata'),
+            nextRun: (parent: Pipelane) => cronScheduler.getNextRun(parent.schedule).toLocaleString('en-IN'),
             tasks: async (parent) => {
                 if (parent.tasks) return parent.tasks
                 let tasks = await db.get(TableName.PS_PIPELANE_TASK,
