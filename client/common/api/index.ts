@@ -1,7 +1,9 @@
 import { ApolloClient, InMemoryCache, ApolloProvider, gql, ApolloQueryResult } from '@apollo/client';
 import { CreatePipelaneInput, CreatePipetaskInput, Pipelane } from '../../../gen/model';
+import { Platform } from 'react-native';
+const HOST = Platform.OS == 'web' ? 'http://localhost:4000' : 'http://192.168.0.115:4000'
 const client = new ApolloClient({
-    uri: 'http://localhost:4000/graph',
+    uri: HOST + '/graph',
     cache: new InMemoryCache(),
 });
 

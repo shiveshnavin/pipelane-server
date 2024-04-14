@@ -6,6 +6,7 @@ import { ButtonView, CompositeTextInputView, SimpleDatalistView, SimpleToolbar, 
 import { Pipelane } from '../../../gen/model'
 import KeyboardAvoidingScrollView, { CardView, HBox } from "react-native-boxes/src/Box";
 import { useRouter } from "expo-router";
+import { StatusBar } from "react-native";
 
 export default function HomeLayout() {
     const theme = useContext(ThemeContext)
@@ -44,6 +45,7 @@ export default function HomeLayout() {
                     color: theme.colors.text
                 }}
                 backgroundColor={theme.colors.transparent} homeIcon="" title="Pipelanes" />
+
             <KeyboardAvoidingScrollView style={{
                 width: '100%'
             }}>

@@ -110,7 +110,11 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save }: { pipetask: 
 
     const appContext = useContext(AppContext)
     const api = appContext.context.api
-
+    const taskVariants = (taskTypes?.find(t => t.type == task.taskTypeName)?.variants || [])?.map(tt => ({
+        id: tt,
+        value: tt,
+        title: tt,
+    }))
     function getExecutions() {
 
     }
@@ -146,11 +150,11 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save }: { pipetask: 
                         forceUpdate()
                     }}
                     selectedId={task.taskTypeName}
-                    options={taskTypes.map(tt => ({
+                    options={taskTypes?.map(tt => ({
                         id: tt.type,
                         value: tt.type,
                         title: tt.type,
-                    }))} />
+                    }) || [])} />
                 <DropDownView
                     title="Task Variant"
                     forceDialogSelectOnWeb={true}
@@ -160,11 +164,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save }: { pipetask: 
                     }}
                     selectedId={task.taskVariantName}
                     //@ts-ignore
-                    options={taskTypes?.find(t => t.type == task.taskTypeName)?.variants?.map(tt => ({
-                        id: tt,
-                        value: tt,
-                        title: tt,
-                    }) || [])} />
+                    options={taskVariants} />
                 <CompositeTextInputView
                     icon="close"
                     placeholder="Inputs"
