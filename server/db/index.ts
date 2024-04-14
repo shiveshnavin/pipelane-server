@@ -13,7 +13,7 @@ export const TableName = {
 
 let pl: Pipelane = {
     active: true,
-    inputs: 'TEXT',
+    input: 'TEXT',
     name: 'smallstring',
     schedule: 'smallstring'
 }
@@ -21,6 +21,7 @@ let pl: Pipelane = {
 let plt: Pipetask = {
     pipelaneName: 'smallstring',
     isParallel: true,
+    active: true,
     input: 'TEXT',
     taskVariantName: 'smallstring',
     taskTypeName: 'smallstring'

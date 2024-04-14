@@ -7,8 +7,9 @@ import { useContext } from "react";
 import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipelane, Pipetask } from "../../../../gen/model";
+import { getGraphErrorMessage } from "@/common/api";
 
-export default function QueryPage() {
+export default function PipelanePage() {
     const theme = useContext(ThemeContext)
     const { pipe } = useLocalSearchParams();
     const [curPipe, setCurPipe] = useState<Pipelane | undefined>(undefined)
@@ -26,8 +27,8 @@ export default function QueryPage() {
             if (!result.data.Pipelane) {
                 seterr(`No pipelane exists with name ${pipe}`)
             }
-        }).catch(error => {
-            seterr(error.message)
+        }).catch((error) => {
+            seterr(getGraphErrorMessage(error))
         }).finally(() => {
             setLoading(false)
         })
@@ -65,7 +66,7 @@ function PipelaneView({ pipe: inputPipe }: { pipe: Pipelane }) {
         {
             ...inputPipe,
             tasks: undefined,
-            inputs: JSON.stringify(JSON.parse(inputPipe.inputs as string), null, 2)
+            input: JSON.stringify(JSON.parse(inputPipe.input as string), null, 2)
         })
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useContext(ThemeContext)
@@ -127,11 +128,11 @@ function PipelaneView({ pipe: inputPipe }: { pipe: Pipelane }) {
                         }
                     }}
                     onChangeText={(t: Maybe<string> | undefined) => {
-                        pipe.inputs = t
+                        pipe.input = t
                         forceUpdate()
                     }}
-                    value={pipe.inputs as string}
-                    initialText={pipe.inputs as string} />
+                    value={pipe.input as string}
+                    initialText={pipe.input as string} />
             </CardView>
             <CardView>
 

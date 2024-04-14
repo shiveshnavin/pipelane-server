@@ -1,7 +1,8 @@
 #graphql
 type Query {
-  Pipelane(name: ID): Pipelane
-  TaskType(type: ID): TaskType
+  Pipelane(name: ID!): Pipelane
+  Pipetask(taskVariantName: ID!, pipelaneName: ID!): Pipetask
+  TaskType(type: ID!): TaskType
 
   taskTypes: [TaskType]
   pipelanes(search: String): [Pipelane]
@@ -14,8 +15,8 @@ type TaskType {
 }
 
 type Pipelane {
-  name: ID
-  inputs: String
+  name: ID!
+  input: String
   schedule: String
   active: Boolean
   tasks: [Pipetask]
@@ -24,7 +25,7 @@ type Pipelane {
 
 input CreatePipelaneInput {
   name: ID!
-  inputs: String
+  input: String
   schedule: String
   active: Boolean
   tasks: [CreatePipetaskInput]
@@ -33,7 +34,8 @@ input CreatePipelaneInput {
 type Pipetask {
   pipelaneName: ID!
   taskVariantName: ID!
-  taskTypeName: String!
+  taskTypeName: ID!
+  active: Boolean
   isParallel: Boolean
   input: String
   executions: [PipetaskExecution]
@@ -41,14 +43,15 @@ type Pipetask {
 
 input CreatePipetaskInput {
   taskVariantName: ID!
-  taskTypeName: String!
+  taskTypeName: ID!
   isParallel: Boolean
   input: String
   pipelaneName: String
 }
 
 type PipelaneExecution {
-  id: ID
+  id: ID!
+  pipelaneName: ID!
   isRunning: Boolean
   definition: Pipelane
   status: Status
@@ -56,7 +59,9 @@ type PipelaneExecution {
 }
 
 type PipetaskExecution {
-  id: ID
+  id: ID!
+  taskVariantName: ID!
+  pipelaneName: ID!
   definition: Pipetask
   startTime: String
   status: Status

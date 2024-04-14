@@ -12,7 +12,7 @@ export class ApiTask extends PipeTask<any, any> {
     kill(): boolean {
         throw new Error("Method not implemented.");
     }
-    execute(pipeWorkInstance: PipeLane, inputs: any): Promise<any[]> {
+    execute(pipeWorkInstance: PipeLane, input: any): Promise<any[]> {
         throw new Error("Method not implemented.");
     }
 

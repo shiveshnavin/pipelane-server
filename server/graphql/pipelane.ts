@@ -22,6 +22,11 @@ export function generatePipelaneResolvers(db: MultiDbORM, variantConfig: TaskVar
                     { name: arg.name })
                 return existing
             },
+            Pipetask: async (parent, arg) => {
+                let existing = await db.getOne(TableName.PS_PIPELANE_TASK,
+                    { taskVariantName: arg.taskVariantName, pipelaneName: arg.pipelaneName })
+                return existing
+            },
             pipelanes: async () => {
                 let pls = await db.get(TableName.PS_PIPELANE, {})
                 return pls

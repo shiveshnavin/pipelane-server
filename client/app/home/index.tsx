@@ -21,7 +21,7 @@ export default function HomeLayout() {
         query GetPipes {
             pipelanes {
               name
-              inputs
+              input
               schedule
               active
             }
@@ -87,7 +87,7 @@ export default function HomeLayout() {
                             title: pipe.name,
                             subtitle: pipe.schedule,
                             flexRatio: [0.1, 7, 1],
-                            body: pipe.inputs
+                            body: pipe.input
                         }
                     }} />
 
