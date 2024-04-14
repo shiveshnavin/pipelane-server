@@ -1,7 +1,7 @@
 import creatPipelaneServer from "./server";
 import { VariantConfig } from "./server/pipe-tasks";
 
-const port = process.env.PORT || 4000
+const port = process.env.PORT || 4001
 
 creatPipelaneServer(VariantConfig).then((app: any) => {
     app.listen(port)
