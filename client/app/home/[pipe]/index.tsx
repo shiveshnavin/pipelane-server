@@ -68,6 +68,7 @@ export default function PipelanePage() {
                     setLoading(true)
                     seterr(undefined)
                     delete pipe.nextRun
+                    delete pipe.updatedTimestamp
                     delete pipe.__typename
                     pipe.retryCount = parseInt(`${pipe.retryCount || 0}`)
                     api.upsertPipelane({ ...pipe, tasks: undefined }).then(result => {

@@ -80,6 +80,7 @@ export class Api {
                   input
                   nextRun
                   retryCount
+                  updatedTimestamp
                 }
               }`,
             variables: {
