@@ -70,6 +70,9 @@ export default function PipeTaskPage() {
                         }`,
                 variables: {}
             }).then(result => {
+                let taskTypes: TaskType[] = result.data.taskTypes
+                newTask.taskTypeName = taskTypes[0].type
+                newTask.taskVariantName = taskTypes[0].variants![0] as string
                 setCurPipetask(newTask)
                 setTaskTypes(result.data.taskTypes)
             }).catch(error => {
@@ -118,7 +121,7 @@ export default function PipeTaskPage() {
                         api.upsertPipelaneTask({ ...task }).then(result => {
                             setCurPipetask(result.data.createPipelaneTask)
                             if (result.data.createPipelaneTask.name != name) {
-                                router.navigate(`/home/${result.data.createPipelaneTask.pipelaneName}/${result.data.createPipelaneTask.taskVariantName}`)
+                                router.navigate(`/home/${result.data.createPipelaneTask.pipelaneName}/${result.data.createPipelaneTask.name}`)
                             }
 
                         }).catch((error) => {
@@ -163,12 +166,12 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     icon: 'trash',
                     title: 'Delete',
                     onClick: () => {
-                        api.deletePipelaneTask(task.pipelaneName, task.taskVariantName).then(() => {
+                        api.deletePipelaneTask(task.pipelaneName, task.name).then(() => {
                             router.navigate('/home/' + task.pipelaneName)
                         }).catch(e => seterr(getGraphErrorMessage(e)))
                     }
                 }]}
-                title={`${task.pipelaneName} : ${task.taskVariantName}`} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
+                title={`${task.pipelaneName}   ➤   ${task.name}`} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
                     if (router.canGoBack())
                         router.back()
                     else

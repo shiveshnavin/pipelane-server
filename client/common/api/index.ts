@@ -51,6 +51,7 @@ export class Api {
         isParallel: false
     }
     upsertPipelaneTask(task: CreatePipetaskPayload) {
+        this.graph.resetStore()
         return this.graph.mutate({
             mutation: gql`mutation Mutation($data: CreatePipetaskPayload!) {
                 createPipelaneTask(data: $data) {
@@ -69,6 +70,7 @@ export class Api {
         })
     }
     upsertPipelane(pipe: CreatePipelanePayload) {
+        this.graph.resetStore()
         return this.graph.mutate({
             mutation: gql`mutation Mutation($data: CreatePipelanePayload!) {
                 createPipelane(data: $data) {
@@ -114,6 +116,7 @@ export class Api {
                             active
                             nextRun
                             retryCount
+                            updatedTimestamp
                             ${getTasks ? `
                                 tasks {
                                 pipelaneName
@@ -153,6 +156,7 @@ export class Api {
     }
 
     deletePipelane(name: string) {
+        this.graph.resetStore()
         return this.graph.mutate({
             mutation: gql`mutation DeletePipelane($name: ID!) {
                 deletePipelane(name: $name)
@@ -164,16 +168,17 @@ export class Api {
         })
     }
 
-    deletePipelaneTask(pipelaneName: string, taskVariantName: string) {
+    deletePipelaneTask(pipelaneName: string, name: string) {
+        this.graph.resetStore()
         return this.graph.mutate({
             mutation: gql`
-            mutation DeletePipelaneTask($pipelaneName: ID!, $taskVariantName: ID!) {
-                deletePipelaneTask(pipelaneName: $pipelaneName, taskVariantName: $taskVariantName)
+            mutation DeletePipelaneTask($pipelaneName: ID!, $name: ID!) {
+                deletePipelaneTask(pipelaneName: $pipelaneName, name: $name)
               }
               `,
             variables: {
                 pipelaneName,
-                taskVariantName
+                name
             }
         })
     }

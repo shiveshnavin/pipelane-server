@@ -208,35 +208,39 @@ function PipelaneView({ pipe: inputPipe, save, seterr }: { pipe: Pipelane, save:
 
                 </Expand>
             </CardView>
-            <CardView>
+            {
+                pipe.updatedTimestamp != undefined && (
+                    <CardView>
 
-                <Expand title="Tasks" onExpand={() => {
-                    getTasks()
-                }}>
-                    <SimpleDatalistView
-                        loading={pipe.tasks == undefined}
-                        items={(pipe.tasks || []) as any}
-                        itemAdapter={(item: Pipetask) => {
-                            return {
-                                flexRatio: [0, 9, 1],
-                                action: (
-                                    <Icon
-                                        color={theme.colors.text}
-                                        name="arrow-right" />
-                                ),
-                                title: item.taskVariantName,
-                                body: item.taskTypeName,
-                                onPress: () => {
-                                    router.navigate(`/home/${item.pipelaneName}/${item.name}`)
-                                }
-                            }
-                        }}
-                    />
-                    <TertiaryButtonView text="Create" onPress={() => {
-                        router.navigate(`/home/${pipe.name}/new`)
-                    }} />
-                </Expand>
-            </CardView>
+                        <Expand title="Tasks" onExpand={() => {
+                            getTasks()
+                        }}>
+                            <SimpleDatalistView
+                                loading={pipe.tasks == undefined}
+                                items={(pipe.tasks || []) as any}
+                                itemAdapter={(item: Pipetask) => {
+                                    return {
+                                        flexRatio: [0, 9, 1],
+                                        action: (
+                                            <Icon
+                                                color={theme.colors.text}
+                                                name="arrow-right" />
+                                        ),
+                                        title: item.name + (item.active ? '' : ' (Disabled)'),
+                                        body: `Type: ${item.taskVariantName} (${item.taskTypeName})`,
+                                        onPress: () => {
+                                            router.navigate(`/home/${item.pipelaneName}/${item.name}`)
+                                        }
+                                    }
+                                }}
+                            />
+                            <TertiaryButtonView text="Create" onPress={() => {
+                                router.navigate(`/home/${pipe.name}/new`)
+                            }} />
+                        </Expand>
+                    </CardView>
+                )
+            }
         </VBox>
 
     )

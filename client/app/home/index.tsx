@@ -11,6 +11,7 @@ import { StatusBar } from "react-native";
 export default function HomeLayout() {
     const theme = useContext(ThemeContext)
     const appContext = useContext(AppContext)
+    const api = appContext.context.api
     const graph = appContext.context.api.graph
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState("")
@@ -22,9 +23,9 @@ export default function HomeLayout() {
         query GetPipes {
             pipelanes {
               name
-              input
               schedule
               active
+              nextRun
             }
           }
      `
@@ -86,13 +87,13 @@ export default function HomeLayout() {
                                     value={pipe.active == true}
                                     onValueChange={(p) => {
                                         pipe.active = p
-                                        console.log('presss', p)
+                                        graph
                                     }} />
                             ),
                             title: pipe.name,
-                            subtitle: pipe.schedule,
+                            subtitle: `Schedule: ${pipe.schedule}`,
                             flexRatio: [0.1, 7, 1],
-                            body: pipe.input
+                            body: `Next run on ${pipe.nextRun}`
                         }
                     }} />
 
