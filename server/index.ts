@@ -42,6 +42,8 @@ export default async function creatPipelaneServer(variantConfig: TaskVariantConf
     })
     cronScheduler.startAll()
     console.log('Scheduled', pls.length, 'pipes')
+  }).catch(err => {
+    console.error('Error initializing pipelanes. ', err.message)
   })
 
   const typeDefs = fs.readFileSync('model.graphql').toString()

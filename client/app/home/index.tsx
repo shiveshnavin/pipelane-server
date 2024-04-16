@@ -62,6 +62,9 @@ export default function HomeLayout() {
                         <ButtonView onPress={() => {
                             getPipes(search)
                         }} style={{ flex: isDesktop() ? 1 : 2 }} icon="search" />
+                        <ButtonView onPress={() => {
+                            router.navigate(`/home/new`)
+                        }} style={{ flex: isDesktop() ? 1 : 2 }} icon="plus" />
 
                     </HBox>
                 </CardView>

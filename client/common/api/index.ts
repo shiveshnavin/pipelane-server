@@ -1,5 +1,7 @@
 import { ApolloClient, InMemoryCache, ApolloProvider, gql, ApolloQueryResult } from '@apollo/client';
-import { CreatePipelaneInput, CreatePipetaskInput, Pipelane } from '../../../gen/model';
+import {
+    CreatePipelanePayload, CreatePipetaskPayload, Pipelane, Pipetask
+} from '../../../gen/model';
 import { Platform } from 'react-native';
 let HOST = Platform.OS == 'web' ? 'http://localhost:4001' : 'http://192.168.0.115:4001'
 if (!__DEV__) {
@@ -31,10 +33,28 @@ export function getGraphErrorMessage(error: any) {
 export class Api {
     graph = client
 
-    upsertPipelaneTask(task: CreatePipetaskInput) {
+    SAMPLE_PIPELANE: Pipelane = {
+        name: 'new',
+        active: true,
+        input: `{}`,
+        retryCount: 0,
+        schedule: '0 8 * * *',
+        tasks: [],
+    }
+    SAMPLE_PIPETASK: Pipetask = {
+        name: 'new',
+        taskTypeName: 'new',
+        taskVariantName: 'new',
+        active: true,
+        input: `{}`,
+        pipelaneName: 'new',
+        isParallel: false
+    }
+    upsertPipelaneTask(task: CreatePipetaskPayload) {
         return this.graph.mutate({
-            mutation: gql`mutation Mutation($data: CreatePipetaskInput!) {
+            mutation: gql`mutation Mutation($data: CreatePipetaskPayload!) {
                 createPipelaneTask(data: $data) {
+                  name
                   pipelaneName
                   taskTypeName
                   taskVariantName
@@ -48,9 +68,9 @@ export class Api {
             }
         })
     }
-    upsertPipelane(pipe: CreatePipelaneInput) {
+    upsertPipelane(pipe: CreatePipelanePayload) {
         return this.graph.mutate({
-            mutation: gql`mutation Mutation($data: CreatePipelaneInput!) {
+            mutation: gql`mutation Mutation($data: CreatePipelanePayload!) {
                 createPipelane(data: $data) {
                   name
                   active
@@ -70,6 +90,7 @@ export class Api {
             query: gql`
                 query PipelaneTasks($pipelaneName: ID!) {
                         pipelaneTasks(pipelaneName: $pipelaneName) {
+                            name
                             pipelaneName
                             taskVariantName
                             taskTypeName
@@ -108,25 +129,52 @@ export class Api {
         })
     }
 
-    getPipetask(pipelaneName: string, taskVariantName: string) {
+    getPipetask(name: string, pipelaneName: string) {
         return this.graph.query({
             query: gql`
- query PipeTasks($taskVariantName: ID!, $pipelaneName: ID!) {
-  Pipetask(taskVariantName: $taskVariantName, pipelaneName: $pipelaneName) {
-    pipelaneName
-    taskVariantName
-    taskTypeName
-    isParallel
-    input
-    active
-  }
-}
-               
-`,
+                        query PipeTasks($name: ID!, $taskVariantName: ID!, $pipelaneName: ID!) {
+                        Pipetask(name: $name, pipelaneName: $pipelaneName) {
+                            name
+                            pipelaneName
+                            taskVariantName
+                            taskTypeName
+                            isParallel
+                            input
+                            active
+                        }
+                        }
+                                    
+                        `,
             variables: {
-                "pipelaneName": pipelaneName,
-                "taskVariantName": taskVariantName
+                "name": name,
+                "pipelaneName": pipelaneName
             },
+        })
+    }
+
+    deletePipelane(name: string) {
+        return this.graph.mutate({
+            mutation: gql`mutation DeletePipelane($name: ID!) {
+                deletePipelane(name: $name)
+              }
+              `,
+            variables: {
+                name
+            }
+        })
+    }
+
+    deletePipelaneTask(pipelaneName: string, taskVariantName: string) {
+        return this.graph.mutate({
+            mutation: gql`
+            mutation DeletePipelaneTask($pipelaneName: ID!, $taskVariantName: ID!) {
+                deletePipelaneTask(pipelaneName: $pipelaneName, taskVariantName: $taskVariantName)
+              }
+              `,
+            variables: {
+                pipelaneName,
+                taskVariantName
+            }
         })
     }
 }

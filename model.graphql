@@ -1,7 +1,7 @@
 #graphql
 type Query {
   Pipelane(name: ID!): Pipelane
-  Pipetask(taskVariantName: ID!, pipelaneName: ID!): Pipetask
+  Pipetask(name: ID!, pipelaneName: ID!): Pipetask
   TaskType(type: ID!): TaskType
 
   taskTypes: [TaskType]
@@ -26,16 +26,17 @@ type Pipelane {
   executions: [PipelaneExecution]
 }
 
-input CreatePipelaneInput {
+input CreatePipelanePayload {
   name: ID!
   input: String
   schedule: String
   retryCount: Int
   active: Boolean
-  tasks: [CreatePipetaskInput]
+  tasks: [CreatePipetaskPayload]
 }
 
 type Pipetask {
+  name: ID!
   pipelaneName: ID!
   taskVariantName: ID!
   taskTypeName: ID!
@@ -45,7 +46,8 @@ type Pipetask {
   executions: [PipetaskExecution]
 }
 
-input CreatePipetaskInput {
+input CreatePipetaskPayload {
+  name: ID!
   pipelaneName: ID!
   taskVariantName: ID!
   taskTypeName: ID!
@@ -65,6 +67,7 @@ type PipelaneExecution {
 
 type PipetaskExecution {
   id: ID!
+  name: ID!
   taskVariantName: ID!
   pipelaneName: ID!
   definition: Pipetask
@@ -80,6 +83,8 @@ enum Status {
 }
 
 type Mutation {
-  createPipelane(data: CreatePipelaneInput!): Pipelane!
-  createPipelaneTask(data: CreatePipetaskInput!): Pipetask!
+  createPipelane(data: CreatePipelanePayload!): Pipelane!
+  createPipelaneTask(data: CreatePipetaskPayload!): Pipetask!
+  deletePipelane(name: ID!): Status!
+  deletePipelaneTask(pipelaneName: ID!, taskVariantName: ID!): Status!
 }

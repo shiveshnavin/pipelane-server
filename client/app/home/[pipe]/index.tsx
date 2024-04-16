@@ -1,41 +1,47 @@
 import { AppContext } from "@/components/Context";
 import { gql, useMutation } from "@apollo/client";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useRouteInfo, useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon, ButtonView } from "react-native-boxes";
+import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon, ButtonView, TertiaryButtonView } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipelane, Pipetask } from "../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
 
 export default function PipelanePage() {
     const theme = useContext(ThemeContext)
-    const { pipe } = useLocalSearchParams();
-    const [curPipe, setCurPipe] = useState<Pipelane | undefined>(undefined)
+    const { pipe: pipeName } = useLocalSearchParams();
+    const [pipe, setPipe] = useState<Pipelane | undefined>(undefined)
     const [err, seterr] = useState<undefined | string>(undefined)
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
     const appContext = useContext(AppContext)
     const api = appContext.context.api
 
     function getPipe(getTasks?: boolean) {
 
-        setLoading(true)
-        seterr(undefined)
-        api.getPipelane(pipe as string, getTasks).then(result => {
-            setCurPipe(result.data.Pipelane)
-            if (!result.data.Pipelane) {
-                seterr(`No pipelane exists with name ${pipe}`)
-            }
-        }).catch((error) => {
-            seterr(getGraphErrorMessage(error))
-        }).finally(() => {
-            setLoading(false)
-        })
+        if (pipeName != 'new') {
+
+            setLoading(true)
+            seterr(undefined)
+            api.getPipelane(pipeName as string, getTasks).then(result => {
+                setPipe(result.data.Pipelane)
+                if (!result.data.Pipelane) {
+                    seterr(`No pipelane exists with name ${pipeName}`)
+                }
+            }).catch((error) => {
+                seterr(getGraphErrorMessage(error))
+            }).finally(() => {
+                setLoading(false)
+            })
+        }
+        else {
+            setPipe(api.SAMPLE_PIPELANE)
+        }
     }
     useEffect(() => {
         getPipe()
-    }, [pipe])
+    }, [pipeName])
 
 
 
@@ -54,14 +60,22 @@ export default function PipelanePage() {
                 }} />
             }
             {
-                curPipe && <PipelaneView pipe={curPipe} save={(pipe: Pipelane) => {
+                pipe && <PipelaneView seterr={seterr} pipe={pipe} save={(pipe: Pipelane) => {
+                    if (pipe.name == 'new') {
+                        seterr('Please change the pipe name')
+                        return
+                    }
                     setLoading(true)
                     seterr(undefined)
                     delete pipe.nextRun
                     delete pipe.__typename
                     pipe.retryCount = parseInt(`${pipe.retryCount || 0}`)
                     api.upsertPipelane({ ...pipe, tasks: undefined }).then(result => {
-                        setCurPipe(result.data.createPipelane)
+                        setPipe(result.data.createPipelane)
+                        if (result.data.createPipelane.name != pipeName) {
+                            router.navigate(`/home/${result.data.createPipelane.name}`)
+                        }
+
                     }).catch((error) => {
                         seterr(getGraphErrorMessage(error))
                     }).finally(() => {
@@ -73,7 +87,7 @@ export default function PipelanePage() {
     );
 }
 
-function PipelaneView({ pipe: inputPipe, save }: { pipe: Pipelane, save: Function }) {
+function PipelaneView({ pipe: inputPipe, save, seterr }: { pipe: Pipelane, save: Function, seterr: Function }) {
     const router = useRouter()
     const [pipe, setPipe] = useState<Pipelane>(
         {
@@ -103,9 +117,20 @@ function PipelaneView({ pipe: inputPipe, save }: { pipe: Pipelane, save: Functio
 
     return (
         <VBox>
-            <TransparentCenterToolbar title={pipe.name as string} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
-                router.navigate(`/home`)
-            }} />
+            <TransparentCenterToolbar
+                options={[{
+                    id: 'delete',
+                    icon: 'trash',
+                    title: 'Delete',
+                    onClick: () => {
+                        api.deletePipelane(pipe.name).then(() => {
+                            router.navigate('/home')
+                        }).catch(e => seterr(getGraphErrorMessage(e)))
+                    }
+                }]}
+                title={pipe.name as string} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
+                    router.navigate(`/home`)
+                }} />
             <CardView>
                 <HBox style={{
                     padding: theme.dimens.space.md,
@@ -135,15 +160,7 @@ function PipelaneView({ pipe: inputPipe, save }: { pipe: Pipelane, save: Functio
                         forceUpdate()
                     }}
                 />
-                <CompositeTextInputView
-                    placeholder="Retry count"
-                    value={`${pipe.retryCount}`}
-                    onChangeText={(nt) => {
-                        //@ts-ignore
-                        pipe.retryCount = nt
-                        forceUpdate()
-                    }}
-                />
+
                 <CompositeTextInputView
                     icon="close"
                     placeholder="Schedule cron"
@@ -153,28 +170,43 @@ function PipelaneView({ pipe: inputPipe, save }: { pipe: Pipelane, save: Functio
                         forceUpdate()
                     }}
                 />
-                <CompositeTextInputView
-                    icon="close"
-                    placeholder="Inputs"
-                    _textInputProps={{
-                        numberOfLines: 10,
-                        multiline: true,
-                        style: {
-                            textAlignVertical: 'top',
-                            verticalAlign: 'top',
-                            alignContent: 'flex-start',
-                        }
-                    }}
-                    onChangeText={(t: Maybe<string> | undefined) => {
-                        pipe.input = t
-                        forceUpdate()
-                    }}
-                    value={pipe.input as string}
-                    initialText={pipe.input as string} />
 
                 <ButtonView onPress={() => {
                     save(pipe)
                 }}>Save</ButtonView>
+            </CardView>
+            <CardView>
+                <Expand title="Advanced">
+
+                    <CompositeTextInputView
+                        placeholder="Retry count"
+                        value={`${pipe.retryCount}`}
+                        onChangeText={(nt) => {
+                            //@ts-ignore
+                            pipe.retryCount = nt
+                            forceUpdate()
+                        }}
+                    />
+                    <CompositeTextInputView
+                        icon="close"
+                        placeholder="Inputs"
+                        _textInputProps={{
+                            numberOfLines: 10,
+                            multiline: true,
+                            style: {
+                                textAlignVertical: 'top',
+                                verticalAlign: 'top',
+                                alignContent: 'flex-start',
+                            }
+                        }}
+                        onChangeText={(t: Maybe<string> | undefined) => {
+                            pipe.input = t
+                            forceUpdate()
+                        }}
+                        value={pipe.input as string}
+                        initialText={pipe.input as string} />
+
+                </Expand>
             </CardView>
             <CardView>
 
@@ -195,12 +227,14 @@ function PipelaneView({ pipe: inputPipe, save }: { pipe: Pipelane, save: Functio
                                 title: item.taskVariantName,
                                 body: item.taskTypeName,
                                 onPress: () => {
-                                    router.navigate(`/home/${item.pipelaneName}/${item.taskVariantName}`)
+                                    router.navigate(`/home/${item.pipelaneName}/${item.name}`)
                                 }
                             }
                         }}
                     />
-
+                    <TertiaryButtonView text="Create" onPress={() => {
+                        router.navigate(`/home/${pipe.name}/new`)
+                    }} />
                 </Expand>
             </CardView>
         </VBox>

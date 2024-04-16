@@ -1,21 +1,21 @@
 import { AppContext } from "@/components/Context";
-import { gql, useMutation } from "@apollo/client";
+import { gql } from "@apollo/client";
 import { useLocalSearchParams } from "expo-router";
-import { useRouteInfo, useRouter } from "expo-router/build/hooks";
+import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon, Subtitle, DropDownView, ButtonView } from "react-native-boxes";
+import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
-import { Maybe, Pipelane, Pipetask, PipetaskExecution, TaskType } from "../../../../../gen/model";
+import { Maybe, Pipetask, PipetaskExecution, TaskType } from "../../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
 
 export default function PipeTaskPage() {
     const theme = useContext(ThemeContext)
-    const { pipe: pipelaneName, task: taskVariantName } = useLocalSearchParams();
+    const { task: name, pipe: pipelaneName } = useLocalSearchParams();
     const [curPipetask, setCurPipetask] = useState<Pipetask | undefined>(undefined)
     const [taskTypes, setTaskTypes] = useState([])
     const [err, seterr] = useState<undefined | string>(undefined)
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
     const appContext = useContext(AppContext)
     const router = useRouter()
     const api = appContext.context.api
@@ -24,42 +24,64 @@ export default function PipeTaskPage() {
 
         setLoading(true)
         seterr(undefined)
-
-        api.graph.query({
-            query: gql`query PipeTasks($taskVariantName: ID!, $pipelaneName: ID!) {
-                Pipetask(taskVariantName: $taskVariantName, pipelaneName: $pipelaneName) {
-                  pipelaneName
-                  taskVariantName
-                  taskTypeName
-                  isParallel
-                  input
-                  active
+        if (name != 'new') {
+            api.graph.query({
+                query: gql`query PipeTasks($name: ID!, $pipelaneName: ID!) {
+                    Pipetask(name: $name, pipelaneName: $pipelaneName) {
+                      name
+                      pipelaneName
+                      taskVariantName
+                      taskTypeName
+                      isParallel
+                      input
+                      active
+                    }
+                    taskTypes {
+                      type
+                      variants
+                    }
+                  }
+                  `,
+                variables: {
+                    pipelaneName,
+                    name
                 }
-                taskTypes {
-                  type
-                  variants
+            }).then(result => {
+                setCurPipetask(result.data.Pipetask)
+                setTaskTypes(result.data.taskTypes)
+                if (!result.data.Pipetask) {
+                    seterr(`No task exists with name ${name} in ${pipelaneName}`)
                 }
-              }
-              `,
-            variables: {
-                pipelaneName,
-                taskVariantName
-            }
-        }).then(result => {
-            setCurPipetask(result.data.Pipetask)
-            setTaskTypes(result.data.taskTypes)
-            if (!result.data.Pipetask) {
-                seterr(`No task exists with name ${taskVariantName} in ${pipelaneName}`)
-            }
-        }).catch(error => {
-            seterr(getGraphErrorMessage(error))
-        }).finally(() => {
-            setLoading(false)
-        })
+            }).catch(error => {
+                seterr(getGraphErrorMessage(error))
+            }).finally(() => {
+                setLoading(false)
+            })
+        } else {
+            let newTask = Object.assign({}, api.SAMPLE_PIPETASK)
+            newTask.pipelaneName = pipelaneName as string
+            api.graph.query({
+                query: gql`
+                        query TaskTypes {
+                        taskTypes {
+                            type
+                            variants
+                        }
+                        }`,
+                variables: {}
+            }).then(result => {
+                setCurPipetask(newTask)
+                setTaskTypes(result.data.taskTypes)
+            }).catch(error => {
+                seterr(getGraphErrorMessage(error))
+            }).finally(() => {
+                setLoading(false)
+            })
+        }
     }
     useEffect(() => {
         getPipetask()
-    }, [pipelaneName, taskVariantName])
+    }, [pipelaneName, name])
 
     return (
         <VPage>
@@ -76,13 +98,26 @@ export default function PipeTaskPage() {
             }
             {
                 curPipetask && <PipetaskView
+                    seterr={seterr}
                     save={(task: Pipetask) => {
+                        if (task.taskTypeName == 'new') {
+                            seterr('Please select the task type')
+                            return
+                        }
+                        if (task.taskVariantName == 'new') {
+                            seterr('Please select the task variant name')
+                            return
+                        }
+                        if (task.name == 'new') {
+                            seterr('Please enter task name')
+                            return
+                        }
                         setLoading(true)
                         seterr(undefined)
                         delete task.__typename
                         api.upsertPipelaneTask({ ...task }).then(result => {
                             setCurPipetask(result.data.createPipelaneTask)
-                            if (result.data.createPipelaneTask.taskVariantName != taskVariantName) {
+                            if (result.data.createPipelaneTask.name != name) {
                                 router.navigate(`/home/${result.data.createPipelaneTask.pipelaneName}/${result.data.createPipelaneTask.taskVariantName}`)
                             }
 
@@ -98,7 +133,7 @@ export default function PipeTaskPage() {
     );
 }
 
-function PipetaskView({ pipetask: inputPipetask, taskTypes, save }: { pipetask: Pipetask, taskTypes: TaskType[], save: Function }) {
+function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pipetask: Pipetask, taskTypes: TaskType[], save: Function, seterr: Function }) {
     const router = useRouter()
     const [task, setTask] = useState<Pipetask>(
         {
@@ -122,12 +157,23 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save }: { pipetask: 
     console.log(task)
     return (
         <VBox>
-            <TransparentCenterToolbar title={`${task.pipelaneName} : ${task.taskVariantName}`} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
-                if (router.canGoBack())
-                    router.back()
-                else
-                    router.navigate(`/home/${task.pipelaneName}`)
-            }} />
+            <TransparentCenterToolbar
+                options={[{
+                    id: 'delete',
+                    icon: 'trash',
+                    title: 'Delete',
+                    onClick: () => {
+                        api.deletePipelaneTask(task.pipelaneName, task.taskVariantName).then(() => {
+                            router.navigate('/home/' + task.pipelaneName)
+                        }).catch(e => seterr(getGraphErrorMessage(e)))
+                    }
+                }]}
+                title={`${task.pipelaneName} : ${task.taskVariantName}`} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
+                    if (router.canGoBack())
+                        router.back()
+                    else
+                        router.navigate(`/home/${task.pipelaneName}`)
+                }} />
             <CardView>
                 <HBox style={{
                     padding: theme.dimens.space.md,
@@ -142,6 +188,15 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save }: { pipetask: 
                         }}
                     />
                 </HBox>
+                <CompositeTextInputView
+                    icon="close"
+                    placeholder="Name"
+                    onChangeText={(t: string) => {
+                        task.name = t
+                        forceUpdate()
+                    }}
+                    value={task.name as string}
+                    initialText={task.name as string} />
                 <DropDownView
                     title="Task Type"
                     forceDialogSelectOnWeb={true}

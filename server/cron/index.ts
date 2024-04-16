@@ -1,4 +1,4 @@
-import PipeLane from "pipelane";
+import PipeLane, { PipeTask, VariablePipeTask } from "pipelane";
 import { Pipelane as PipelaneSchedule } from "../../gen/model";
 import Cron from "croner";
 import * as NodeCron from 'node-cron'
@@ -66,9 +66,9 @@ export class CronScheduler {
             let pipelaneInstance = new PipeLane(VariantConfig)
             let pipelaneInstName = `${pl.name}-${Date.now()}`
             pipelaneInstance.enableCheckpoints(pipelaneInstName, `pipelane/${pipelaneInstName}`)
-            let nonExistingTask = pl.tasks?.filter(pt => VariantConfig[pt.taskTypeName] == undefined).map(t => t.taskTypeName)
-            if (nonExistingTask && nonExistingTask.length > 0) {
-                console.warn(`No tasks of types ${nonExistingTask.join(",")} found in variantconfig. Skipping triggering ${pl.name}`)
+            let invalidTasksFromSchedule = pl.tasks?.filter(pt => VariantConfig[pt.taskTypeName] == undefined).map(t => t.taskTypeName)
+            if (invalidTasksFromSchedule && invalidTasksFromSchedule.length > 0) {
+                console.warn(`No tasks of types ${invalidTasksFromSchedule.join(",")} found in variantconfig. Skipping triggering ${pl.name}`)
                 return
             }
             pl.tasks.filter(t => t.active).forEach(tkd => {
@@ -80,7 +80,8 @@ export class CronScheduler {
                     console.warn(`Invalid JSON input ${tkd.input} for ${pl.name} -> ${tkd.taskVariantName}. Using {} as input`)
                 }
 
-                let pltConfig = {
+                let pltConfig: VariablePipeTask = {
+                    uniqueStepName: tkd.name,
                     type: tkd.taskTypeName,
                     variantType: tkd.taskVariantName,
                     additionalInputs: input

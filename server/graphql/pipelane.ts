@@ -1,6 +1,6 @@
 import { MultiDbORM } from "multi-db-orm"
-import PipeLane, { PipeTask, TaskVariantConfig } from "pipelane"
-import { CreatePipelaneInput, CreatePipetaskInput, Pipelane, Pipetask } from "../../gen/model"
+import { TaskVariantConfig } from "pipelane"
+import { CreatePipelanePayload, CreatePipetaskPayload, Pipelane, Pipetask } from "../../gen/model"
 import { TableName } from "../db"
 import _ from 'lodash'
 import { CronScheduler } from "../cron"
@@ -31,7 +31,10 @@ export function generatePipelaneResolvers(
             },
             Pipetask: async (parent, arg): Promise<Pipetask> => {
                 let existing = await db.getOne(TableName.PS_PIPELANE_TASK,
-                    { taskVariantName: arg.taskVariantName, pipelaneName: arg.pipelaneName })
+                    {
+                        name: arg.name,
+                        pipelaneName: arg.pipelaneName
+                    })
                 return existing
             },
             pipelanes: async (): Promise<Pipelane[]> => {
@@ -46,12 +49,12 @@ export function generatePipelaneResolvers(
         },
         Mutation: {
 
-            async createPipelaneTask(parent: any, request: { data: CreatePipetaskInput }) {
+            async createPipelaneTask(parent: any, request: { data: CreatePipetaskPayload }) {
                 let input = request.data
                 let existing = await db.getOne(TableName.PS_PIPELANE_TASK,
                     {
-                        pipelaneName: input.pipelaneName,
-                        taskVariantName: input.taskVariantName
+                        name: input.name,
+                        pipelaneName: input.pipelaneName
                     }) as Pipetask
                 let isUpdate = existing != undefined
                 if (!isUpdate)
@@ -59,14 +62,14 @@ export function generatePipelaneResolvers(
                 Object.assign(existing, input)
                 if (isUpdate)
                     await db.update(TableName.PS_PIPELANE_TASK, {
-                        pipelaneName: input.pipelaneName,
-                        taskVariantName: input.taskVariantName
+                        name: input.name,
+                        pipelaneName: input.pipelaneName
                     }, existing)
                 else
                     await db.insert(TableName.PS_PIPELANE_TASK, existing)
                 return existing
             },
-            async createPipelane(parent: any, request: { data: CreatePipelaneInput }) {
+            async createPipelane(parent: any, request: { data: CreatePipelanePayload }) {
                 let input = request.data
                 let tasks = request.data.tasks || []
                 let existing = await db.getOne(TableName.PS_PIPELANE, { name: input.name }) as Pipelane
@@ -90,6 +93,18 @@ export function generatePipelaneResolvers(
                         PipelaneResolvers.Mutation.createPipelaneTask(tk, { data: tk })
                     })])
                 return pl
+            },
+            async deletePipelane(parent, request: { name: string }) {
+                await db.delete(TableName.PS_PIPELANE, { name: request.name })
+                await db.delete(TableName.PS_PIPELANE_TASK, { pipelaneName: request.name })
+                return 'SUCCESS'
+            },
+            async deletePipelaneTask(parent, request: { name: string, pipelaneName: string }) {
+                await db.delete(TableName.PS_PIPELANE_TASK, {
+                    name: request.name,
+                    pipelaneName: request.pipelaneName
+                })
+                return 'SUCCESS'
             }
         }
     }
