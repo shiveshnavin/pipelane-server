@@ -1,6 +1,6 @@
 import { AppContext } from "@/components/Context";
 import { gql } from "@apollo/client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
 import { ButtonView, CompositeTextInputView, PressableView, SimpleDatalistView, SimpleToolbar, SwitchView, ThemeContext, VPage, isDesktop } from "react-native-boxes";
 import { Pipelane } from '../../../gen/model'
@@ -17,6 +17,8 @@ export default function HomeLayout() {
     const [search, setSearch] = useState("")
     const [pipes, setUsers] = useState([])
     const router = useRouter()
+    const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
+
     //@ts-ignores
     function getPipes(text?) {
         let query = `
@@ -94,6 +96,9 @@ export default function HomeLayout() {
                                             api.upsertPipelane({
                                                 active: p,
                                                 name: pipe.name
+                                            }).then(resp => {
+                                                Object.assign(pipe, resp.data.createPipelane)
+                                                forceUpdate()
                                             })
                                         }} />
                                 </PressableView>
