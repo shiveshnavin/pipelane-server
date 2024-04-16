@@ -2,7 +2,7 @@ import { AppContext } from "@/components/Context";
 import { gql } from "@apollo/client";
 import React, { useEffect, useState } from "react";
 import { useContext } from "react";
-import { ButtonView, CompositeTextInputView, SimpleDatalistView, SimpleToolbar, SwitchView, ThemeContext, VPage, isDesktop } from "react-native-boxes";
+import { ButtonView, CompositeTextInputView, PressableView, SimpleDatalistView, SimpleToolbar, SwitchView, ThemeContext, VPage, isDesktop } from "react-native-boxes";
 import { Pipelane } from '../../../gen/model'
 import KeyboardAvoidingScrollView, { CardView, HBox } from "react-native-boxes/src/Box";
 import { useRouter } from "expo-router";
@@ -83,12 +83,20 @@ export default function HomeLayout() {
                                 router.navigate(`/home/${pipe.name}`)
                             },
                             action: (
-                                <SwitchView
-                                    value={pipe.active == true}
-                                    onValueChange={(p) => {
-                                        pipe.active = p
-                                        graph
-                                    }} />
+                                <PressableView
+                                    onPress={(e) => {
+                                        e.stopPropagation()
+                                    }}>
+                                    <SwitchView
+                                        value={pipe.active == true}
+                                        onValueChange={(p) => {
+                                            pipe.active = p
+                                            api.upsertPipelane({
+                                                active: p,
+                                                name: pipe.name
+                                            })
+                                        }} />
+                                </PressableView>
                             ),
                             title: pipe.name,
                             subtitle: `Schedule: ${pipe.schedule}`,
