@@ -5,5 +5,5 @@ const port = process.env.PORT || 4001
 
 creatPipelaneServer(VariantConfig).then((app: any) => {
     app.listen(port)
-    console.log(`Running a GraphQL API server at http://localhost:${port}/graph`)
+    console.log(`Running a GraphQL API server at http://localhost:${port}/graph. Current time: ${new Date().toLocaleString()}`)
 })
