@@ -21,6 +21,7 @@ let pl: Pipelane = {
     name: 'smallstring',
     schedule: 'smallstring',
     retryCount: 0,
+    executionsRetentionCount: 5,
     updatedTimestamp: 'smallstring'
 }
 

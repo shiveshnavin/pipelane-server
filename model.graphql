@@ -21,6 +21,7 @@ type Pipelane {
   active: Boolean
   updatedTimestamp: String
   retryCount: Int
+  executionsRetentionCount: Int
   nextRun: String
   tasks: [Pipetask]
   executions: [PipelaneExecution]
@@ -31,6 +32,7 @@ input CreatePipelanePayload {
   input: String
   schedule: String
   retryCount: Int
+  executionsRetentionCount: Int
   active: Boolean
   tasks: [CreatePipetaskPayload]
 }
@@ -58,27 +60,31 @@ input CreatePipetaskPayload {
 
 type PipelaneExecution {
   id: ID!
-  pipelaneName: ID!
+  name: ID!
   isRunning: Boolean
   definition: Pipelane
+  startTime: String
   status: Status
-  logs: [String]
+  endTime: String
+  output: String
 }
 
 type PipetaskExecution {
   id: ID!
+  pipelaneId: ID!
   name: ID!
-  taskVariantName: ID!
   pipelaneName: ID!
   definition: Pipetask
   startTime: String
   status: Status
   endTime: String
+  output: String
 }
 
 enum Status {
   SUCCESS
   IN_PROGRESS
+  PAUSED
   FAILURE
 }
 

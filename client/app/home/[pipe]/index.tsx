@@ -71,6 +71,7 @@ export default function PipelanePage() {
                     delete pipe.updatedTimestamp
                     delete pipe.__typename
                     pipe.retryCount = parseInt(`${pipe.retryCount || 0}`)
+                    pipe.executionsRetentionCount = parseInt(`${pipe.executionsRetentionCount || 5}`)
                     api.upsertPipelane({ ...pipe, tasks: undefined }).then(result => {
                         setPipe(result.data.createPipelane)
                         if (result.data.createPipelane.name != pipeName) {
@@ -188,6 +189,17 @@ function PipelaneView({ pipe: inputPipe, save, seterr }: { pipe: Pipelane, save:
                             forceUpdate()
                         }}
                     />
+
+                    <CompositeTextInputView
+                        placeholder="Number of executions to keep"
+                        value={`${pipe.executionsRetentionCount}`}
+                        onChangeText={(nt) => {
+                            //@ts-ignore
+                            pipe.executionsRetentionCount = nt
+                            forceUpdate()
+                        }}
+                    />
+
                     <CompositeTextInputView
                         icon="close"
                         placeholder="Inputs"

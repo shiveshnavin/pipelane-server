@@ -81,6 +81,7 @@ export function generatePipelaneResolvers(
 
                 existing.schedule = existing.schedule.trim()
                 existing.retryCount = existing.retryCount || 0
+                existing.executionsRetentionCount = existing.executionsRetentionCount || 0
                 existing.updatedTimestamp = `${Date.now()}`
                 cronScheduler?.addToSchedule(existing)
                 await Promise.all([

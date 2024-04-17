@@ -38,6 +38,7 @@ export class Api {
         active: true,
         input: `{}`,
         retryCount: 0,
+        executionsRetentionCount: 5,
         schedule: '0 8 * * *',
         tasks: [],
     }
@@ -80,6 +81,7 @@ export class Api {
                   input
                   nextRun
                   retryCount
+                  executionsRetentionCount
                   updatedTimestamp
                 }
               }`,
@@ -117,6 +119,7 @@ export class Api {
                             active
                             nextRun
                             retryCount
+                            executionsRetentionCount
                             updatedTimestamp
                             ${getTasks ? `
                                 tasks {
