@@ -262,10 +262,10 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                                         color={theme.colors.text}
                                         name="arrow-right" />
                                 ),
-                                title: item.taskVariantName,
+                                title: item.name,
                                 body: item.pipelaneName,
                                 onPress: () => {
-                                    router.navigate(`/home/${item.pipelaneName}/${item.taskVariantName}`)
+                                    router.navigate(`/home/${item.pipelaneName}/${item.name}`)
                                 }
                             }
                         }}
