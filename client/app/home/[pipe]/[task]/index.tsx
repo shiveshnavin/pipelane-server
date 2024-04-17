@@ -33,6 +33,7 @@ export default function PipeTaskPage() {
                       taskVariantName
                       taskTypeName
                       isParallel
+                      step
                       input
                       active
                     }

@@ -29,6 +29,7 @@ let plt: Pipetask = {
     name: 'smallstring',
     pipelaneName: 'smallstring',
     isParallel: true,
+    step: 1,
     active: true,
     input: 'TEXT',
     taskVariantName: 'smallstring',

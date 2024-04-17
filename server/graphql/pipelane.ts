@@ -65,8 +65,11 @@ export function generatePipelaneResolvers(
                         name: input.name,
                         pipelaneName: input.pipelaneName
                     }, existing)
-                else
+                else {
+                    let existingTasks = await PipelaneResolvers.Pipelane.tasks({ name: input.pipelaneName }) || []
+                    existing.step = existingTasks.length
                     await db.insert(TableName.PS_PIPELANE_TASK, existing)
+                }
                 return existing
             },
             async createPipelane(parent: any, request: { data: CreatePipelanePayload }) {

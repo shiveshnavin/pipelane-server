@@ -62,6 +62,7 @@ export class Api {
                   taskVariantName
                   active
                   isParallel
+                  step
                   input
                 }
               }`,
@@ -100,6 +101,7 @@ export class Api {
                             taskVariantName
                             taskTypeName
                             isParallel
+                            step
                             input
                             active
                         }
@@ -127,6 +129,7 @@ export class Api {
                                 taskVariantName
                                 taskTypeName
                                 isParallel
+                                step
                                 input
                                 }`: ''}
                         }
@@ -146,6 +149,7 @@ export class Api {
                             taskVariantName
                             taskTypeName
                             isParallel
+                            step
                             input
                             active
                         }

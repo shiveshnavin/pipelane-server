@@ -39,6 +39,7 @@ input CreatePipelanePayload {
 
 type Pipetask {
   name: ID!
+  step: Int
   pipelaneName: ID!
   taskVariantName: ID!
   taskTypeName: ID!
