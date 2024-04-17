@@ -72,7 +72,7 @@ type PipelaneExecution {
 
 type PipetaskExecution {
   id: ID!
-  pipelaneId: ID!
+  pipelaneExId: ID!
   name: ID!
   pipelaneName: ID!
   definition: Pipetask
@@ -94,4 +94,5 @@ type Mutation {
   createPipelaneTask(data: CreatePipetaskPayload!): Pipetask!
   deletePipelane(name: ID!): Status!
   deletePipelaneTask(pipelaneName: ID!, taskVariantName: ID!): Status!
+  createPipelaneExecution(data: PipelaneExecution!): PipelaneExecution!
 }

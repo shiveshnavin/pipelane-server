@@ -31,17 +31,7 @@ export default async function creatPipelaneServer(variantConfig: TaskVariantConf
   const resolvers = generateResolvers(db, variantConfig, cronScheduler)
   const pipelaneResolver = generatePipelaneResolvers(db, variantConfig)
   pipelaneResolver.Query.pipelanes().then(pls => {
-    cronScheduler.init(pls, async (pipeName) => {
-      let pipelane = await pipelaneResolver.Query.Pipelane({}, {
-        name: pipeName
-      })
-      if (!pipelane)
-        return undefined
-      pipelane.tasks = await pipelaneResolver.Query.pipelaneTasks({}, {
-        pipelaneName: pipeName
-      }) || []
-      return pipelane
-    })
+    cronScheduler.init(pls, pipelaneResolver)
     cronScheduler.startAll()
     console.log('Scheduled', pls.length, 'pipes')
   }).catch(err => {
@@ -53,7 +43,6 @@ export default async function creatPipelaneServer(variantConfig: TaskVariantConf
     typeDefs,
     resolvers,
   })
-
 
   return new Promise((resolve) => {
     appoloServer.start().then(() => {

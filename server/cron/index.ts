@@ -1,19 +1,33 @@
 import PipeLane, { PipeTask, VariablePipeTask } from "pipelane";
-import { Pipelane as PipelaneSchedule } from "../../gen/model";
+import { PipelaneExecution, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
 import Cron from "croner";
 import * as NodeCron from 'node-cron'
 import { VariantConfig } from "../pipe-tasks";
+import { generatePipelaneResolvers } from "../graphql/pipelane";
+const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
+
 export class CronScheduler {
     stopped: boolean = false
     cronJobs: { name: string, job: Cron }[] = []
     schedules: PipelaneSchedule[] = []
     currentExecutions: PipeLane[] = []
-    getPipelaneDefinition: (name) => Promise<PipelaneSchedule>
+    pipelaneResolver = pipelaneResolver
 
-    init(initialSchedules: PipelaneSchedule[],
-        getPipelaneDefinition: (name) => Promise<PipelaneSchedule>) {
+    async getPipelaneDefinition(pipeName): Promise<PipelaneSchedule | undefined> {
+        let pipelane = await this.pipelaneResolver.Query.Pipelane({}, {
+            name: pipeName
+        })
+        if (!pipelane)
+            return undefined
+        pipelane.tasks = await this.pipelaneResolver.Query.pipelaneTasks({}, {
+            pipelaneName: pipeName
+        }) || []
+        return pipelane as PipelaneSchedule
+    }
+
+    init(initialSchedules: PipelaneSchedule[], pipelaneResolver: any) {
         this.schedules = initialSchedules
-        this.getPipelaneDefinition = getPipelaneDefinition
+        this.pipelaneResolver = pipelaneResolver
     }
 
     stopAll() {
@@ -31,6 +45,7 @@ export class CronScheduler {
         this.schedules.push(pl)
         this.schedulePipelaneCronjob(pl)
     }
+
     findScheduledJob(pl: PipelaneSchedule) {
         return this.cronJobs.find(p => p.name == pl.name)
     }
@@ -53,7 +68,7 @@ export class CronScheduler {
         }
     }
 
-    async triggerPipelane(pl: PipelaneSchedule) {
+    async triggerPipelane(pl: PipelaneSchedule): Promise<PipelaneExecution | undefined> {
         if (this.stopped) {
             console.warn(`Executor is stopped, skip triggering ${pl.name}`)
             return
@@ -129,7 +144,21 @@ export class CronScheduler {
                 onResult([{ status: false }])
             })
             this.currentExecutions.push(pipelaneInstance)
+            let plx = await this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                data: {
+                    name: pl.name,
+                    definition: pl,
+                    startTime: `${Date.now()}`,
+                    isRunning: true,
+                    status: Status.InProgress,
+                    id: undefined,
+                }
+            })
+            return plx
+
         }
+
+        return undefined
     }
 
     validateCronString(cronString: string) {

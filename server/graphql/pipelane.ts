@@ -1,6 +1,6 @@
 import { MultiDbORM } from "multi-db-orm"
 import { TaskVariantConfig } from "pipelane"
-import { CreatePipelanePayload, CreatePipetaskPayload, Pipelane, Pipetask } from "../../gen/model"
+import { CreatePipelanePayload, CreatePipetaskPayload, Pipelane, PipelaneExecution, Pipetask, PipetaskExecution } from "../../gen/model"
 import { TableName } from "../db"
 import _ from 'lodash'
 import { CronScheduler } from "../cron"
@@ -10,6 +10,14 @@ export function generatePipelaneResolvers(
     variantConfig: TaskVariantConfig,
     cronScheduler?: CronScheduler) {
     const PipelaneResolvers = {
+        PipelaneExecution: {
+            definition: (parent) => {
+                return PipelaneResolvers.Query.Pipetask({}, {
+                    name: parent.name,
+                    pipelaneName: parent.pipelaneName
+                })
+            }
+        },
         Pipelane: {
             nextRun: (parent: Pipelane) => cronScheduler.getNextRun(parent.schedule).toLocaleString('en-IN', {
                 timeZone: 'Asia/Kolkata'
@@ -109,6 +117,44 @@ export function generatePipelaneResolvers(
                     pipelaneName: request.pipelaneName
                 })
                 return 'SUCCESS'
+            },
+
+            async createPipelaneExecution(parent, request: { data: PipelaneExecution }) {
+                let existing = request.data.id && await db.getOne(TableName.PS_PIPELANE_EXEC, {
+                    id: request.data.id
+                })
+                let tx = request.data
+                if (!existing) {
+                    request.data.id = `${tx.name}-${Date.now()}`
+                    await db.insert(TableName.PS_PIPELANE_EXEC, tx)
+                } else {
+                    Object.assign(existing, tx)
+                    await db.update(TableName.PS_PIPELANE_EXEC,
+                        {
+                            id: existing.id
+                        },
+                        existing)
+                }
+                return existing
+            },
+
+            async createPipelaneTaskExecution(parent, request: { data: PipetaskExecution }) {
+                let existing = request.data.id && await db.getOne(TableName.PS_PIPELANE_TASK_EXEC, {
+                    id: request.data.id
+                })
+                let tx = request.data
+                if (!existing) {
+                    request.data.id = `${tx.pipelaneExId}-${tx.name}`
+                    await db.insert(TableName.PS_PIPELANE_EXEC, tx)
+                } else {
+                    Object.assign(existing, tx)
+                    await db.update(TableName.PS_PIPELANE_EXEC,
+                        {
+                            id: existing.id
+                        },
+                        existing)
+                }
+                return existing
             }
         }
     }

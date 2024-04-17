@@ -1,5 +1,5 @@
 import { MySQLDB, SQLiteDB } from "multi-db-orm";
-import { Pipelane, Pipetask } from '../../gen/model'
+import { Pipelane, PipelaneExecution, Pipetask, Status } from '../../gen/model'
 import SQLCreds from './creds.json'
 const db = new MySQLDB({
     ...SQLCreds,
@@ -13,6 +13,9 @@ const db = new MySQLDB({
 export const TableName = {
     PS_PIPELANE: "ps_pipelane",
     PS_PIPELANE_TASK: "ps_pipelane_task",
+    PS_PIPELANE_EXEC: "ps_pipelane_exec",
+    PS_PIPELANE_TASK_EXEC: "ps_pipelane_task_exec",
+
 }
 
 let pl: Pipelane = {
@@ -34,6 +37,16 @@ let plt: Pipetask = {
     input: 'TEXT',
     taskVariantName: 'smallstring',
     taskTypeName: 'smallstring'
+}
+
+let plx: PipelaneExecution = {
+    name: 'smallstring',
+    id: 'smallstring',
+    endTime: 'smallstring',
+    isRunning: true,
+    output: 'TEXT',
+    status: Status.Success,
+    startTime: 'smallstring',
 }
 
 let tablePromises = [
