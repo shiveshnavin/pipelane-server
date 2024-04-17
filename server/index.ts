@@ -35,9 +35,11 @@ export default async function creatPipelaneServer(variantConfig: TaskVariantConf
       let pipelane = await pipelaneResolver.Query.Pipelane({}, {
         name: pipeName
       })
+      if (!pipelane)
+        return undefined
       pipelane.tasks = await pipelaneResolver.Query.pipelaneTasks({}, {
         pipelaneName: pipeName
-      })
+      }) || []
       return pipelane
     })
     cronScheduler.startAll()
