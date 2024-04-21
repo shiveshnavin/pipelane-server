@@ -11,18 +11,6 @@ import { generatePipelaneResolvers } from "./graphql/pipelane";
 import { MultiDbORM, MySQLDBConfig } from "multi-db-orm";
 
 const app = express()
-
-app.use('/pipelane/config', (req, res) => {
-  res.status(200).send({
-    host: req.hostname
-  })
-})
-// Remove in production
-app.get("/", (_req, res) => {
-  res.redirect('/pipelane')
-})
-
-
 //see https://docs.expo.dev/more/expo-cli/#hosting-with-sub-paths
 //cd client && npx expo export
 const ui = express.Router()
@@ -55,9 +43,9 @@ export async function creatPipelaneServer(
   pipelaneResolver.Query.pipelanes().then(pls => {
     cronScheduler.init(pls, pipelaneResolver)
     cronScheduler.startAll()
-    console.log('Scheduled', pls.length, 'pipes')
+    console.log('pipelane:Scheduled', pls.length, 'pipes')
   }).catch(err => {
-    console.error('Error initializing pipelanes. ', err.message)
+    console.error('pipelane:Error initializing pipelanes. ', err.message)
   })
 
   const typeDefs = fs.readFileSync(path.join(__dirname, '../', 'model.graphql')).toString()
@@ -66,7 +54,7 @@ export async function creatPipelaneServer(
     resolvers,
   })
   await appoloServer.start()
-  app.use('/pipelane/graph', express.json(), expressMiddleware(appoloServer));
-  app.use('/pipelane', ui)
+  app.use('/graph', express.json(), expressMiddleware(appoloServer));
+  app.use(ui)
   return app
 }

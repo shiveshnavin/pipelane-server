@@ -80,7 +80,7 @@ export function initialzeDb(db?: MultiDbORM, mysqlConfig?: MySQLDBConfig) {
         db.create(TableName.PS_PIPELANE_TASK_EXEC, pltx),
         db.create(TableName.PS_PIPELANE_META, plm),
     ]
-    Promise.all(tablePromises).then(() => console.log('DB Initialized: ', tablePromises.length, 'tables'))
+    Promise.all(tablePromises).then(() => console.log('pipelane:DB Initialized: ', tablePromises.length, 'tables'))
 
     function clean() {
         db.delete(TableName.PS_PIPELANE_EXEC, {})
