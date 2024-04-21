@@ -8,8 +8,8 @@ type Query {
   taskTypes: [TaskType]
   pipelanes(search: String): [Pipelane]
   pipelaneTasks(pipelaneName: ID!): [Pipetask]
-  executions: [PipelaneExecution]
-  pipelaneExecutions(pipelaneName: ID!): [PipelaneExecution]
+  executions(limit: Int): [PipelaneExecution]
+  pipelaneExecutions(pipelaneName: ID!, limit: Int): [PipelaneExecution]
 }
 
 type TaskType {
@@ -60,6 +60,7 @@ input CreatePipetaskPayload {
   isParallel: Boolean
   active: Boolean
   input: String
+  step: Int
 }
 
 type PipelaneExecution {
@@ -112,11 +113,16 @@ enum Status {
   PARTIAL_SUCCESS
 }
 
+type PipelaneMeta {
+  pkey: ID!
+  pval: String
+}
+
 type Mutation {
   createPipelane(data: CreatePipelanePayload!): Pipelane!
   createPipelaneTask(data: CreatePipetaskPayload!): Pipetask!
   deletePipelane(name: ID!): Status!
-  deletePipelaneTask(pipelaneName: ID!, taskVariantName: ID!): Status!
+  deletePipelaneTask(pipelaneName: ID!, name: ID!): Status!
   createPipelaneExecution(data: PipelaneExecutionPayload!): PipelaneExecution!
   createPipelaneTaskExecution(
     data: PipetaskExecutionPayload!

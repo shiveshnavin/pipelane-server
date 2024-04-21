@@ -28,13 +28,16 @@ export class ApiTask extends PipeTask<any, any> {
                 return [{
                     status: response.status < 300,
                     statusCode: response.status,
-                    ...response?.data
+                    data: response?.data
                 }]
             }
-        } catch (e) { }
-        return [{
-            status: false
-        }]
+        } catch (e) {
+            pipeWorkInstance.onLog(e.message)
+            return [{
+                status: false
+            }]
+        }
+
     }
 
 }

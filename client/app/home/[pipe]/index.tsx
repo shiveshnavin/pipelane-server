@@ -6,8 +6,9 @@ import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
 import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon, ButtonView, TertiaryButtonView } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
-import { Maybe, Pipelane, Pipetask } from "../../../../gen/model";
+import { Maybe, Pipelane, PipelaneExecution, Pipetask } from "../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
+import { PipeExecutionsView } from "@/app/executions";
 
 export default function PipelanePage() {
     const theme = useContext(ThemeContext)
@@ -42,8 +43,6 @@ export default function PipelanePage() {
     useEffect(() => {
         getPipe()
     }, [pipeName])
-
-
 
 
     return (
@@ -119,6 +118,15 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
         })
     }
 
+
+    function getExecutions() {
+        api.pipelaneExecutions(pipe.name).then((plx) => {
+            pipe.executions = plx.data.pipelaneExecutions
+            forceUpdate()
+        }).catch(e => {
+            seterr(getGraphErrorMessage(e))
+        })
+    }
     return (
         <VBox>
             <TransparentCenterToolbar
@@ -147,7 +155,10 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                     }
                 }]}
                 title={pipe.name as string} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
-                    router.navigate(`/home`)
+                    if (router.canGoBack())
+                        router.back()
+                    else
+                        router.navigate(`/home`)
                 }} />
             <CardView>
                 <HBox style={{
@@ -270,6 +281,15 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                     </CardView>
                 )
             }
+
+            <CardView>
+
+                <Expand title="Executions" onExpand={() => {
+                    getExecutions()
+                }}>
+                    <PipeExecutionsView executions={pipe.executions as PipelaneExecution[]} router={router} />
+                </Expand>
+            </CardView>
         </VBox>
 
     )

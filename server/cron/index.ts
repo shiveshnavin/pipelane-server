@@ -152,15 +152,16 @@ export class CronScheduler {
                 }
             })
 
-            pipelaneInstance.setListener((pl, event, task, output) => {
+            const pipelaneListener = ((pl, event, task, output) => {
                 if (event == 'COMPLETE') {
                     this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
                         //@ts-ignore
                         data: {
                             endTime: `${Date.now()}`,
-                            status: Status.Success,
+                            status: this.mapStatus(output),
                             id: plx.id,
-                            output: output
+                            name: plx.name,
+                            output: JSON.stringify(output)
                         }
                     })
                 } else if (event == 'KILLED') {
@@ -170,7 +171,7 @@ export class CronScheduler {
                             endTime: `${Date.now()}`,
                             status: Status.Failed,
                             id: plx.id,
-                            output: output
+                            output: JSON.stringify(output)
                         }
                     })
                 } else if (event == 'NEW_TASK') {
@@ -178,6 +179,7 @@ export class CronScheduler {
                     this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                         //@ts-ignore
                         data: {
+                            pipelaneExId: plx.id,
                             name: taskName,
                             startTime: `${Date.now()}`,
                             status: Status.InProgress,
@@ -186,27 +188,19 @@ export class CronScheduler {
                     })
                 } else if (event == 'TASK_FINISHED') {
                     let taskName = task.uniqueStepName || task.variantType
-                    let taskId = `${plx.id}-${taskName}`
-                    let isAtleaseOneFail = (output as any[] || []).find(o => !o.status)
-                    let isAtleaseOneSuccess = (output as any[] || []).find(o => o.status)
-                    let status = Status.Success
-                    if (isAtleaseOneFail) {
-                        status = Status.PartialSuccess
-                    }
-                    if (!isAtleaseOneSuccess) {
-                        status = Status.Failed
-                    }
+                    let taskId = `${plx.id}::${taskName}`
                     this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                         //@ts-ignore
                         data: {
                             id: taskId,
                             endTime: `${Date.now()}`,
-                            status: status,
-                            output: output
+                            status: this.mapStatus(output),
+                            output: JSON.stringify(output)
                         }
                     })
                 }
-            })
+            }).bind(this)
+            pipelaneInstance.setListener(pipelaneListener)
             pipelaneInstance.start(input).then(onResult).catch((e) => {
                 console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
                 onResult([{ status: false }])
@@ -217,6 +211,20 @@ export class CronScheduler {
         }
 
         return undefined
+    }
+
+    private mapStatus(output: ({ status: Status } & any)[]) {
+
+        let isAtleaseOneFail = (output as any[] || []).find(o => !o.status)
+        let isAtleaseOneSuccess = (output as any[] || []).find(o => o.status)
+        let status = Status.Success
+        if (isAtleaseOneFail) {
+            status = Status.PartialSuccess
+        }
+        if (!isAtleaseOneSuccess) {
+            status = Status.Failed
+        }
+        return status
     }
 
     validateCronString(cronString: string) {

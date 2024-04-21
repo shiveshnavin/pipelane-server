@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, ApolloProvider, gql, ApolloQueryResult } from '@apollo/client';
+import { ApolloClient, InMemoryCache, ApolloProvider, gql, ApolloQueryResult, DefaultOptions } from '@apollo/client';
 import {
     CreatePipelanePayload, CreatePipetaskPayload, Pipelane, Pipetask
 } from '../../../gen/model';
@@ -7,13 +7,26 @@ let HOST = Platform.OS == 'web' ? 'http://localhost:4001' : 'http://192.168.0.11
 if (!__DEV__) {
     HOST = 'http://oci.semibit.in:4001'
 }
+
+const defaultOptions: DefaultOptions = {
+    watchQuery: {
+        fetchPolicy: 'no-cache',
+        errorPolicy: 'ignore',
+    },
+    query: {
+        fetchPolicy: 'no-cache',
+        errorPolicy: 'all',
+    },
+}
 const client = new ApolloClient({
     uri: HOST + '/graph',
     cache: new InMemoryCache(),
+    defaultOptions: defaultOptions,
 });
 
 export function getGraphErrorMessage(error: any) {
     try {
+        console.log(error)
         if (error?.networkError?.result)
             error = error.networkError.result
         else if (error.message) {
@@ -51,8 +64,11 @@ export class Api {
         pipelaneName: 'new',
         isParallel: false
     }
+    clearCache() {
+        this.graph.clearStore()
+    }
     upsertPipelaneTask(task: CreatePipetaskPayload) {
-        this.graph.resetStore()
+        this.clearCache()
         return this.graph.mutate({
             mutation: gql`mutation Mutation($data: CreatePipetaskPayload!) {
                 createPipelaneTask(data: $data) {
@@ -72,7 +88,7 @@ export class Api {
         })
     }
     upsertPipelane(pipe: CreatePipelanePayload) {
-        this.graph.resetStore()
+        this.clearCache()
         return this.graph.mutate({
             mutation: gql`mutation Mutation($data: CreatePipelanePayload!) {
                 createPipelane(data: $data) {
@@ -164,7 +180,7 @@ export class Api {
     }
 
     deletePipelane(name: string) {
-        this.graph.resetStore()
+        this.clearCache()
         return this.graph.mutate({
             mutation: gql`mutation DeletePipelane($name: ID!) {
                 deletePipelane(name: $name)
@@ -177,7 +193,7 @@ export class Api {
     }
 
     executePipelane(name: string, input: string) {
-        this.graph.resetStore()
+        this.clearCache()
         return this.graph.mutate({
             mutation: gql`mutation executePipelane($name: ID!, $input: String!) {
                 executePipelane(name: $name, input: $input){
@@ -193,7 +209,7 @@ export class Api {
     }
 
     deletePipelaneTask(pipelaneName: string, name: string) {
-        this.graph.resetStore()
+        this.clearCache()
         return this.graph.mutate({
             mutation: gql`
             mutation DeletePipelaneTask($pipelaneName: ID!, $name: ID!) {
@@ -203,6 +219,69 @@ export class Api {
             variables: {
                 pipelaneName,
                 name
+            }
+        })
+    }
+
+    executions() {
+        return this.graph.query({
+            query: gql`
+                query Executions {
+                    executions {
+                        id
+                        name
+                        startTime
+                        status
+                        endTime
+                    }
+                }
+            `
+        })
+    }
+
+    pipelaneExecution(id: string) {
+        return this.graph.query({
+            query: gql`
+                query Execution($id: ID!) {
+                    PipelaneExecution(id: $id) {
+                        id
+                        name
+                        output
+                        startTime
+                        status
+                        endTime
+                        tasks {
+                            id
+                            name
+                            output
+                            startTime
+                            status
+                            endTime
+                        }
+                    }
+                }
+            `,
+            variables: {
+                id
+            }
+        })
+    }
+
+    pipelaneExecutions(pipelaneName: string) {
+        return this.graph.query({
+            query: gql`
+                query Executions($pipelaneName: ID!) {
+                    pipelaneExecutions(pipelaneName: $pipelaneName) {
+                        id
+                        name
+                        startTime
+                        status
+                        endTime
+                    }
+                }
+            `,
+            variables: {
+                pipelaneName
             }
         })
     }

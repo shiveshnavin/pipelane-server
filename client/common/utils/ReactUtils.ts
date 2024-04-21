@@ -1,3 +1,58 @@
+export function prettyJson(input: any): string {
+
+    try {
+        let output = '';
+        let indentLevel = 0;
+        let inString = false;
+
+        for (let i = 0; i < input.length; i++) {
+            const char = input[i];
+
+            if (inString) {
+                output += char;
+                if (char === '"') {
+                    if (input[i - 1] !== '\\') {
+                        inString = false;
+                    }
+                }
+                continue;
+            }
+
+            switch (char) {
+                case '{':
+                case '[':
+                    output += char;
+                    output += '\n';
+                    indentLevel++;
+                    output += ' '.repeat(indentLevel * 4);
+                    break;
+                case '}':
+                case ']':
+                    output += '\n';
+                    indentLevel--;
+                    output += ' '.repeat(indentLevel * 4);
+                    output += char;
+                    break;
+                case ',':
+                    output += char;
+                    output += '\n';
+                    output += ' '.repeat(indentLevel * 4);
+                    break;
+                case '"':
+                    output += char;
+                    inString = true;
+                    break;
+                default:
+                    output += char;
+            }
+        }
+
+        return output;
+    } catch (e) {
+        return input
+    }
+}
+
 
 export function getNavParamsFromDeeplink(url: string) {
     let parts = url.split("/");

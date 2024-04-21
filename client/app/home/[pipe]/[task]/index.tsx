@@ -154,9 +154,6 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
         value: tt,
         title: tt,
     }))
-    function getExecutions() {
-
-    }
 
     console.log(task)
     return (
@@ -245,33 +242,6 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                 <ButtonView onPress={() => {
                     save(task)
                 }}>Save</ButtonView>
-            </CardView>
-            <CardView>
-
-                <Expand title="Executions" onExpand={() => {
-                    getExecutions()
-                }}>
-                    <SimpleDatalistView
-                        loading={task.executions == undefined}
-                        items={(task.executions || []) as any}
-                        itemAdapter={(item: PipetaskExecution) => {
-                            return {
-                                flexRatio: [0, 9, 1],
-                                action: (
-                                    <Icon
-                                        color={theme.colors.text}
-                                        name="arrow-right" />
-                                ),
-                                title: item.name,
-                                body: item.pipelaneName,
-                                onPress: () => {
-                                    router.navigate(`/home/${item.pipelaneName}/${item.name}`)
-                                }
-                            }
-                        }}
-                    />
-
-                </Expand>
             </CardView>
         </VBox>
 

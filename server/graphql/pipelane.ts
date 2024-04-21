@@ -1,6 +1,6 @@
 import { MultiDbORM } from "multi-db-orm"
 import { TaskVariantConfig } from "pipelane"
-import { CreatePipelanePayload, CreatePipetaskPayload, Pipelane, PipelaneExecution, Pipetask, PipetaskExecution } from "../../gen/model"
+import { CreatePipelanePayload, CreatePipetaskPayload, Pipelane, PipelaneExecution, PipelaneMeta, Pipetask, PipetaskExecution, QueryPipelaneArgs, QueryPipelaneExecutionArgs, QueryPipelaneExecutionsArgs, Status } from "../../gen/model"
 import { TableName } from "../db"
 import _ from 'lodash'
 import { CronScheduler } from "../cron"
@@ -8,7 +8,65 @@ import { CronScheduler } from "../cron"
 export function generatePipelaneResolvers(
     db: MultiDbORM,
     variantConfig: TaskVariantConfig,
-    cronScheduler?: CronScheduler) {
+    cronScheduler?: CronScheduler,
+    defaultExecutionRetentionCountPerPipe: number = 5) {
+
+    async function trimExecution(pipeEx: PipelaneExecution) {
+        let pipe = await PipelaneResolvers.Query.Pipelane(undefined, {
+            name: pipeEx.name
+        })
+        if (!pipe)
+            return
+        let pipelaneName = pipe.name
+        let pkey = `excount_${pipelaneName}`
+        let existingCounter: PipelaneMeta = await db.getOne(TableName.PS_PIPELANE_META, {
+            pkey: pkey
+        })
+        if (!existingCounter) {
+            await db.insert(TableName.PS_PIPELANE_META, {
+                pkey: pkey,
+                pval: '0'
+            })
+        } else {
+            let count = parseInt(existingCounter.pval) + 1
+            if (pipe.executionsRetentionCount == 0 || count > (pipe.executionsRetentionCount || defaultExecutionRetentionCountPerPipe)) {
+                db.get(TableName.PS_PIPELANE_EXEC, {
+                    name: pipe.name
+                }, {
+                    sort: [{
+                        field: 'startTime',
+                        order: 'asc'
+                    }],
+                    limit: Math.round(count / 2)
+                }).then(executions => {
+                    if (executions && executions.length > 0) {
+                        executions = executions.slice(0, Math.round(count / 2))
+                        console.log('Trimming the oldest execution for ' + pipe.name, 'from', executions.map(e => e.id))
+                        executions.forEach(e => {
+                            db.delete(TableName.PS_PIPELANE_EXEC, e)
+                            db.delete(TableName.PS_PIPELANE_TASK_EXEC, {
+                                pipelaneExId: e.id
+                            })
+                        })
+                        db.update(TableName.PS_PIPELANE_META, {
+                            pkey: pkey
+                        }, {
+                            pval: `${Math.max(0, count - executions.length)}`
+                        })
+                    }
+                })
+
+            }
+            else {
+
+                await db.update(TableName.PS_PIPELANE_META, {
+                    pkey: pkey
+                }, {
+                    pval: `${Math.max(0, count)}`
+                })
+            }
+        }
+    }
     const PipelaneResolvers = {
         PipelaneExecution: {
             definition: (parent) => {
@@ -30,17 +88,20 @@ export function generatePipelaneResolvers(
             nextRun: (parent: Pipelane) => cronScheduler.getNextRun(parent.schedule).toLocaleString('en-IN', {
                 timeZone: 'Asia/Kolkata'
             }),
-            tasks: async (parent) => {
+            tasks: async (parent: Pipelane) => {
                 if (parent.tasks) return parent.tasks
                 let tasks = await db.get(TableName.PS_PIPELANE_TASK,
                     {
                         pipelaneName: parent.name
                     })
                 return tasks || []
-            }
+            },
+            executions(parent: Pipelane) {
+                return db.get(TableName.PS_PIPELANE_EXEC, { name: parent.name })
+            },
         },
         Query: {
-            Pipelane: async (parent, arg): Promise<Pipelane> => {
+            Pipelane: async (parent, arg: QueryPipelaneArgs): Promise<Pipelane> => {
                 let existing = await db.getOne(TableName.PS_PIPELANE,
                     { name: arg.name })
                 return existing
@@ -53,6 +114,12 @@ export function generatePipelaneResolvers(
                     })
                 return existing
             },
+            async PipelaneExecution(pr, arg: QueryPipelaneExecutionArgs) {
+                let data = await db.getOne(TableName.PS_PIPELANE_EXEC, {
+                    id: arg.id
+                })
+                return data
+            },
             pipelanes: async (): Promise<Pipelane[]> => {
                 let pls = await db.get(TableName.PS_PIPELANE, {})
                 return pls
@@ -62,6 +129,28 @@ export function generatePipelaneResolvers(
                     { pipelaneName: arg.pipelaneName })
                 return pls
             },
+            async executions(parent, request: { limit: number }) {
+                let data = await db.get(TableName.PS_PIPELANE_EXEC, {}, {
+                    limit: request.limit || 50,
+                    sort: [{
+                        field: 'startTime',
+                        order: 'desc'
+                    }]
+                })
+                return data
+            },
+            pipelaneExecutions(pr, arg: QueryPipelaneExecutionsArgs) {
+                return db.get(TableName.PS_PIPELANE_EXEC, {
+                    name: arg.pipelaneName
+                }, {
+                    limit: arg.limit || 50,
+                    sort: [{
+                        field: 'startTime',
+                        order: 'desc'
+                    }]
+                })
+            }
+
         },
         Mutation: {
 
@@ -100,7 +189,7 @@ export function generatePipelaneResolvers(
 
                 existing.schedule = existing.schedule.trim()
                 existing.retryCount = existing.retryCount || 0
-                existing.executionsRetentionCount = existing.executionsRetentionCount || 0
+                existing.executionsRetentionCount = existing.executionsRetentionCount || defaultExecutionRetentionCountPerPipe
                 existing.updatedTimestamp = `${Date.now()}`
                 cronScheduler?.addToSchedule(existing)
                 await Promise.all([
@@ -132,6 +221,9 @@ export function generatePipelaneResolvers(
                     id: request.data.id
                 })
                 let tx = request.data
+                if (tx.status != Status.InProgress) {
+                    trimExecution(tx)
+                }
                 if (!existing) {
                     delete tx.definition
                     delete tx.tasks
@@ -157,11 +249,11 @@ export function generatePipelaneResolvers(
                 })
                 let tx = request.data
                 if (!existing) {
-                    request.data.id = `${tx.pipelaneExId}-${tx.name}`
-                    await db.insert(TableName.PS_PIPELANE_EXEC, tx)
+                    request.data.id = `${tx.pipelaneExId}::${tx.name}`
+                    await db.insert(TableName.PS_PIPELANE_TASK_EXEC, tx)
                 } else {
                     Object.assign(existing, tx)
-                    await db.update(TableName.PS_PIPELANE_EXEC,
+                    await db.update(TableName.PS_PIPELANE_TASK_EXEC,
                         {
                             id: existing.id
                         },
@@ -173,8 +265,7 @@ export function generatePipelaneResolvers(
                 let existing = await PipelaneResolvers.Query.Pipelane(parent, request)
                 let execution = await cronScheduler.triggerPipelane(existing, request.input || existing.input)
                 return execution
-            }
-
+            },
         }
     }
     return PipelaneResolvers

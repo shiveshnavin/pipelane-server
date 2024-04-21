@@ -1,5 +1,5 @@
 import { MySQLDB, SQLiteDB } from "multi-db-orm";
-import { Pipelane, PipelaneExecution, Pipetask, PipetaskExecution, Status } from '../../gen/model'
+import { Pipelane, PipelaneExecution, PipelaneMeta, Pipetask, PipetaskExecution, Status } from '../../gen/model'
 import SQLCreds from './creds.json'
 const db = new MySQLDB({
     ...SQLCreds,
@@ -15,6 +15,7 @@ export const TableName = {
     PS_PIPELANE_TASK: "ps_pipelane_task",
     PS_PIPELANE_EXEC: "ps_pipelane_exec",
     PS_PIPELANE_TASK_EXEC: "ps_pipelane_task_exec",
+    PS_PIPELANE_META: "ps_pipelane_meta",
 
 }
 
@@ -59,12 +60,25 @@ let pltx: PipetaskExecution = {
     startTime: 'smallstring',
 }
 
+let plm: PipelaneMeta = {
+    pkey: 'smallstring',
+    pval: 'smallstring'
+}
+
 let tablePromises = [
     db.create(TableName.PS_PIPELANE, pl),
     db.create(TableName.PS_PIPELANE_TASK, plt),
     db.create(TableName.PS_PIPELANE_EXEC, plx),
     db.create(TableName.PS_PIPELANE_TASK_EXEC, pltx),
+    db.create(TableName.PS_PIPELANE_META, plm),
 ]
 Promise.all(tablePromises).then(() => console.log('DB Initialized: ', tablePromises.length, 'tables'))
+
+function clean() {
+    db.delete(TableName.PS_PIPELANE_EXEC, {})
+    db.delete(TableName.PS_PIPELANE_TASK_EXEC, {})
+}
+
+// clean()
 
 export default db
