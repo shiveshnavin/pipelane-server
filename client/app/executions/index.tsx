@@ -12,7 +12,7 @@ export default function ExecutionsPage() {
     const theme = useContext(ThemeContext)
     const router = useRouter()
     const context = useContext(AppContext)
-    const [executions, setExecutions] = useState([])
+    const [executions, setExecutions] = useState<any>(undefined)
     const [err, setErr] = useState(undefined)
     const api = context.context.api
     useEffect(() => {
