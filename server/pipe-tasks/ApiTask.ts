@@ -34,7 +34,9 @@ export class ApiTask extends PipeTask<any, any> {
         } catch (e) {
             pipeWorkInstance.onLog(e.message)
             return [{
-                status: false
+                status: false,
+                statusCode: e.response.status,
+                data: e.response.data
             }]
         }
 
