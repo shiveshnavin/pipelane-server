@@ -2,8 +2,9 @@ import PipeLane, { VariablePipeTask } from "pipelane";
 import { PipelaneExecution, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
 import Cron from "croner";
 import * as NodeCron from 'node-cron'
-import { VariantConfig } from "../pipe-tasks";
 import { generatePipelaneResolvers } from "../graphql/pipelane";
+import { TaskVariantConfig } from "pipelane";
+
 const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
 
 export class CronScheduler {
@@ -12,6 +13,11 @@ export class CronScheduler {
     schedules: PipelaneSchedule[] = []
     currentExecutions: PipeLane[] = []
     pipelaneResolver = pipelaneResolver
+    variantConfig: TaskVariantConfig
+
+    constructor(variantConfig: TaskVariantConfig) {
+        this.variantConfig = variantConfig
+    }
 
     async getPipelaneDefinition(pipeName): Promise<PipelaneSchedule | undefined> {
         let pipelane = await this.pipelaneResolver.Query.Pipelane({}, {
@@ -25,7 +31,8 @@ export class CronScheduler {
         return pipelane as PipelaneSchedule
     }
 
-    init(initialSchedules: PipelaneSchedule[], pipelaneResolver: any) {
+    init(initialSchedules: PipelaneSchedule[],
+        pipelaneResolver: any) {
         this.schedules = initialSchedules
         this.pipelaneResolver = pipelaneResolver
     }
@@ -83,10 +90,10 @@ export class CronScheduler {
             pl.input = input
         }
         if (pl.active) {
-            let pipelaneInstance = new PipeLane(VariantConfig)
+            let pipelaneInstance = new PipeLane(this.variantConfig)
             let pipelaneInstName = `${pl.name}-${Date.now()}`
             pipelaneInstance.enableCheckpoints(pipelaneInstName, `pipelane/${pipelaneInstName}`)
-            let invalidTasksFromSchedule = pl.tasks?.filter(pt => VariantConfig[pt.taskTypeName] == undefined).map(t => t.taskTypeName)
+            let invalidTasksFromSchedule = pl.tasks?.filter(pt => this.variantConfig[pt.taskTypeName] == undefined).map(t => t.taskTypeName)
             if (invalidTasksFromSchedule && invalidTasksFromSchedule.length > 0) {
                 console.warn(`No tasks of types ${invalidTasksFromSchedule.join(",")} found in variantconfig. Skipping triggering ${pl.name}`)
                 return

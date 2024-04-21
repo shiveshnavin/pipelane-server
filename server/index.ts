@@ -37,7 +37,7 @@ export async function creatPipelaneServer(
     throw new Error('Unable to intialize pipelane server. persistance must be either and instance of MultiDbORM or MySQLDBConfig')
   }
 
-  const cronScheduler = new CronScheduler()
+  const cronScheduler = new CronScheduler(variantConfig)
   const resolvers = generateResolvers(db, variantConfig, cronScheduler)
   const pipelaneResolver = generatePipelaneResolvers(db, variantConfig)
   pipelaneResolver.Query.pipelanes().then(pls => {
