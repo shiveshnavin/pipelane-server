@@ -1,5 +1,5 @@
 import { MySQLDBConfig } from "multi-db-orm";
-import creatPipelaneServer from "./server";
+import { creatPipelaneServer } from "./server";
 import { VariantConfig } from "./server/pipe-tasks";
 import { readFileSync } from "fs";
 import path from "path";

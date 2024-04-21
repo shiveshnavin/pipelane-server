@@ -31,7 +31,7 @@ ui.all('*',
     res.sendFile(path.join(__dirname, '../client/dist/index.html'))
   })
 
-export default async function creatPipelaneServer(
+export async function creatPipelaneServer(
   variantConfig: TaskVariantConfig,
   persistance?: MultiDbORM | MySQLDBConfig
 ) {
