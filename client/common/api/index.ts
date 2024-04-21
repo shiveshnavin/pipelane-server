@@ -4,10 +4,6 @@ import {
 } from '../../../gen/model';
 import { Platform } from 'react-native';
 let HOST = Platform.OS == 'web' ? 'http://localhost:4001' : 'http://192.168.0.115:4001'
-if (!__DEV__) {
-    HOST = 'http://oci.semibit.in:4001'
-}
-
 const defaultOptions: DefaultOptions = {
     watchQuery: {
         fetchPolicy: 'no-cache',
@@ -18,11 +14,6 @@ const defaultOptions: DefaultOptions = {
         errorPolicy: 'all',
     },
 }
-const client = new ApolloClient({
-    uri: HOST + '/graph',
-    cache: new InMemoryCache(),
-    defaultOptions: defaultOptions,
-});
 
 export function getGraphErrorMessage(error: any) {
     try {
@@ -44,8 +35,10 @@ export function getGraphErrorMessage(error: any) {
 }
 
 export class Api {
-    graph = client
-
+    graph: ApolloClient<any>
+    constructor(apolloClient: ApolloClient<any>) {
+        this.graph = apolloClient
+    }
     SAMPLE_PIPELANE: Pipelane = {
         name: 'new',
         active: true,
@@ -285,4 +278,13 @@ export class Api {
             }
         })
     }
+}
+
+export function createApiClient(host: string) {
+    const client = new ApolloClient({
+        uri: '/pipelane/graph',
+        cache: new InMemoryCache(),
+        defaultOptions: defaultOptions,
+    });
+    return new Api(client)
 }

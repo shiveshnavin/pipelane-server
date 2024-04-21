@@ -4,9 +4,13 @@ import { Api } from "@/common/api"
 export class ContextData {
     appname: string = ''
     initialized: boolean = false
-    api: Api = new Api()
+    api!: Api
+
+    constructor(api?: Api) {
+        this.api = api!
+    }
 }
 export const AppContext = React.createContext({
-    context: new ContextData(),
+    context: new ContextData(undefined),
     setContext: (updatedCtx: ContextData) => { }
 })

@@ -15,10 +15,9 @@ export default function HomeLayout() {
     const graph = appContext.context.api.graph
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState("")
-    const [pipes, setUsers] = useState([])
+    const [pipes, setUsers] = useState<Pipelane[]>([])
     const router = useRouter()
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
-
     //@ts-ignores
     function getPipes(text?) {
         let query = `
@@ -63,9 +62,6 @@ export default function HomeLayout() {
                                 flex: 8
                             }} />
                         <ButtonView onPress={() => {
-                            getPipes(search)
-                        }} style={{ flex: isDesktop() ? 1 : 2 }} icon="search" />
-                        <ButtonView onPress={() => {
                             router.navigate(`/home/new`)
                         }} style={{ flex: isDesktop() ? 1 : 2 }} icon="plus" />
 
@@ -76,7 +72,7 @@ export default function HomeLayout() {
                     style={{
                         padding: theme.dimens.space.sm
                     }}
-                    items={pipes}
+                    items={pipes?.filter(p => p.name?.indexOf(search) > -1)}
                     //@ts-ignore
                     itemAdapter={(pipe: Pipelane, idx: number) => {
 

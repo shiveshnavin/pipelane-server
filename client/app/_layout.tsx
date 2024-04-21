@@ -10,11 +10,12 @@ import { BottomNavBar, SimpleToolbar, VBox, VPage } from 'react-native-boxes';
 import { useRouteInfo } from "expo-router/build/hooks";
 import KeyboardAvoidingScrollView, { Center } from "react-native-boxes/src/Box";
 import { ApolloProvider } from "@apollo/client";
-
+import { createApiClient } from "@/common/api";
+import axios from 'axios'
 
 function Main() {
   const [context, setContext] = useState(new ContextData())
-  let basePath = '/ui/'
+  let basePath = '/pipelane/'
   if (__DEV__) {
     basePath = ''
   }
@@ -25,15 +26,24 @@ function Main() {
   }))
   theme.insets = useSafeAreaInsets()
   const [init, setInit] = useState(false)
-  loadAsync({
-    'Regular': require('../assets/fonts/Regular.ttf'),
-    'Bold': require('../assets/fonts/Bold.ttf'),
-    'Styled': require('../assets/fonts/Bold.ttf'),
-  }).finally(() => {
-    setTimeout(() => {
-      setInit(true)
-    }, 500)
-  })
+
+  useEffect(() => {
+    Promise.all([
+      loadAsync({
+        'Regular': require('../assets/fonts/Regular.ttf'),
+        'Bold': require('../assets/fonts/Bold.ttf'),
+        'Styled': require('../assets/fonts/Bold.ttf'),
+      }),
+      axios.get('/pipelane/config').then((respo) => {
+        const api = createApiClient(respo.data.host)
+        setContext(new ContextData(api))
+      })
+    ]).finally(() => {
+      setTimeout(() => {
+        setInit(true)
+      }, 500)
+    })
+  }, [])
 
   Linking.addEventListener('url', (url) => {
     if (url?.url) {
@@ -56,9 +66,19 @@ function Main() {
       router.navigate(route.unstable_globalHref)
     }
   }, [init])
+
+  if (!init) {
+    return (
+      <Center style={{
+        flex: 1
+      }}>
+        <Spinner />
+      </Center>
+    )
+  }
   return (
     <ThemeContext.Provider value={theme} >
-      <ApolloProvider client={context.api.graph}>
+      <ApolloProvider client={context.api?.graph}>
         <AppContext.Provider value={{ context, setContext }}>
           <SafeAreaView style={{
             width: '100%',
@@ -95,23 +115,8 @@ function Main() {
                       id: 'executions',
                       icon: 'plane',
                       title: 'Executions'
-                    },
-                    {
-                      id: 'settings',
-                      icon: 'gear',
-                      title: 'Settings'
                     }]} />
                 </VPage>
-              )
-            }
-
-            {
-              !init && (
-                <Center style={{
-                  flex: 1
-                }}>
-                  <Spinner />
-                </Center>
               )
             }
           </SafeAreaView>

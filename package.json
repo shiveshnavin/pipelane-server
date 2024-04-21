@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "start": "ts-node-dev --ignore-watch client --watch *.graphql index.ts",
+    "start": "ts-node-dev --ignore-watch client --watch *.graphql app.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "gen": "node gql-ts.js",
+    "postinstall": "npm run gen && npm run build",
     "build": "cd client && npm run build"
   },
   "author": "",
