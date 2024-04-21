@@ -29,7 +29,7 @@ export function initialzeDb(db?: MultiDbORM, mysqlConfig?: MySQLDBConfig) {
 
     let pl: Pipelane = {
         active: true,
-        input: 'TEXT',
+        input: 'stringlarge',
         name: 'smallstring',
         schedule: 'smallstring',
         retryCount: 0,
@@ -43,7 +43,7 @@ export function initialzeDb(db?: MultiDbORM, mysqlConfig?: MySQLDBConfig) {
         isParallel: true,
         step: 1,
         active: true,
-        input: 'TEXT',
+        input: 'stringlarge',
         taskVariantName: 'smallstring',
         taskTypeName: 'smallstring'
     }
@@ -52,7 +52,7 @@ export function initialzeDb(db?: MultiDbORM, mysqlConfig?: MySQLDBConfig) {
         name: 'smallstring',
         id: 'smallstring',
         endTime: 'smallstring',
-        output: 'TEXT',
+        output: 'stringlarge',
         status: Status.Success,
         startTime: 'smallstring',
     }
@@ -63,7 +63,7 @@ export function initialzeDb(db?: MultiDbORM, mysqlConfig?: MySQLDBConfig) {
         name: 'smallstring',
         id: 'smallstring',
         endTime: 'smallstring',
-        output: 'TEXT',
+        output: 'stringlarge',
         status: Status.Success,
         startTime: 'smallstring',
     }
