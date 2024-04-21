@@ -10,7 +10,7 @@ async function doSomething(filePath) {
     }
     const name = path.basename(filePath).replace(".graphql", "")
     const baseDir = path.dirname(filePath)
-    const opRel = path.join('gen', `${name}.d.ts`)
+    const opRel = path.join('gen', `${name}.ts`)
     const outputPath = path.join(baseDir, opRel)
     await generate(
         {

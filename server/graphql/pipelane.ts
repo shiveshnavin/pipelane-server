@@ -16,6 +16,14 @@ export function generatePipelaneResolvers(
                     name: parent.name,
                     pipelaneName: parent.pipelaneName
                 })
+            },
+            tasks: async (parent) => {
+                if (parent.tasks) return parent.tasks
+                let tasks = await db.get(TableName.PS_PIPELANE_TASK_EXEC,
+                    {
+                        pipelaneExId: parent.id
+                    })
+                return tasks || []
             }
         },
         Pipelane: {
@@ -125,10 +133,15 @@ export function generatePipelaneResolvers(
                 })
                 let tx = request.data
                 if (!existing) {
+                    delete tx.definition
+                    delete tx.tasks
                     request.data.id = `${tx.name}-${Date.now()}`
                     await db.insert(TableName.PS_PIPELANE_EXEC, tx)
+                    existing = tx
                 } else {
                     Object.assign(existing, tx)
+                    delete existing.definition
+                    delete existing.tasks
                     await db.update(TableName.PS_PIPELANE_EXEC,
                         {
                             id: existing.id
@@ -155,7 +168,13 @@ export function generatePipelaneResolvers(
                         existing)
                 }
                 return existing
+            },
+            async executePipelane(parent, request: { name: string, input: string }) {
+                let existing = await PipelaneResolvers.Query.Pipelane(parent, request)
+                let execution = await cronScheduler.triggerPipelane(existing, request.input || existing.input)
+                return execution
             }
+
         }
     }
     return PipelaneResolvers

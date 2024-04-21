@@ -3,10 +3,13 @@ type Query {
   Pipelane(name: ID!): Pipelane
   Pipetask(name: ID!, pipelaneName: ID!): Pipetask
   TaskType(type: ID!): TaskType
+  PipelaneExecution(id: ID!): PipelaneExecution
 
   taskTypes: [TaskType]
   pipelanes(search: String): [Pipelane]
   pipelaneTasks(pipelaneName: ID!): [Pipetask]
+  executions: [PipelaneExecution]
+  pipelaneExecutions(pipelaneName: ID!): [PipelaneExecution]
 }
 
 type TaskType {
@@ -62,8 +65,8 @@ input CreatePipetaskPayload {
 type PipelaneExecution {
   id: ID!
   name: ID!
-  isRunning: Boolean
   definition: Pipelane
+  tasks: [PipetaskExecution]
   startTime: String
   status: Status
   endTime: String
@@ -82,11 +85,31 @@ type PipetaskExecution {
   output: String
 }
 
+input PipelaneExecutionPayload {
+  id: ID!
+  name: ID!
+  startTime: String
+  status: Status
+  endTime: String
+  output: String
+}
+
+input PipetaskExecutionPayload {
+  id: ID!
+  pipelaneExId: ID!
+  name: ID!
+  pipelaneName: ID!
+  startTime: String
+  status: Status
+  endTime: String
+  output: String
+}
 enum Status {
   SUCCESS
   IN_PROGRESS
   PAUSED
-  FAILURE
+  FAILED
+  PARTIAL_SUCCESS
 }
 
 type Mutation {
@@ -94,5 +117,10 @@ type Mutation {
   createPipelaneTask(data: CreatePipetaskPayload!): Pipetask!
   deletePipelane(name: ID!): Status!
   deletePipelaneTask(pipelaneName: ID!, taskVariantName: ID!): Status!
-  createPipelaneExecution(data: PipelaneExecution!): PipelaneExecution!
+  createPipelaneExecution(data: PipelaneExecutionPayload!): PipelaneExecution!
+  createPipelaneTaskExecution(
+    data: PipetaskExecutionPayload!
+  ): PipetaskExecution!
+
+  executePipelane(name: ID!, input: String): PipetaskExecution!
 }

@@ -1,4 +1,4 @@
-import PipeLane, { PipeTask, VariablePipeTask } from "pipelane";
+import PipeLane, { VariablePipeTask } from "pipelane";
 import { PipelaneExecution, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
 import Cron from "croner";
 import * as NodeCron from 'node-cron'
@@ -68,7 +68,7 @@ export class CronScheduler {
         }
     }
 
-    async triggerPipelane(pl: PipelaneSchedule): Promise<PipelaneExecution | undefined> {
+    async triggerPipelane(pl: PipelaneSchedule, input?: string): Promise<PipelaneExecution | undefined> {
         if (this.stopped) {
             console.warn(`Executor is stopped, skip triggering ${pl.name}`)
             return
@@ -79,6 +79,9 @@ export class CronScheduler {
             return
         }
         pl = pipelaneBluePrint
+        if (input) {
+            pl.input = input
+        }
         if (pl.active) {
             let pipelaneInstance = new PipeLane(VariantConfig)
             let pipelaneInstName = `${pl.name}-${Date.now()}`
@@ -138,24 +141,79 @@ export class CronScheduler {
                 //@ts-ignore
                 this.currentExecutions = this.currentExecutions.filter(cei => cei.name != pipelaneInstance.name)
             }).bind(this)
-            // todo: save Execution
+
+            let plx: PipelaneExecution = await this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                data: {
+                    name: pl.name,
+                    definition: pl,
+                    startTime: `${Date.now()}`,
+                    status: Status.InProgress,
+                    id: undefined,
+                }
+            })
+
+            pipelaneInstance.setListener((pl, event, task, output) => {
+                if (event == 'COMPLETE') {
+                    this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                        //@ts-ignore
+                        data: {
+                            endTime: `${Date.now()}`,
+                            status: Status.Success,
+                            id: plx.id,
+                            output: output
+                        }
+                    })
+                } else if (event == 'KILLED') {
+                    this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                        //@ts-ignore
+                        data: {
+                            endTime: `${Date.now()}`,
+                            status: Status.Failed,
+                            id: plx.id,
+                            output: output
+                        }
+                    })
+                } else if (event == 'NEW_TASK') {
+                    let taskName = task.uniqueStepName || task.variantType
+                    this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+                        //@ts-ignore
+                        data: {
+                            name: taskName,
+                            startTime: `${Date.now()}`,
+                            status: Status.InProgress,
+                            output: output
+                        }
+                    })
+                } else if (event == 'TASK_FINISHED') {
+                    let taskName = task.uniqueStepName || task.variantType
+                    let taskId = `${plx.id}-${taskName}`
+                    let isAtleaseOneFail = (output as any[] || []).find(o => !o.status)
+                    let isAtleaseOneSuccess = (output as any[] || []).find(o => o.status)
+                    let status = Status.Success
+                    if (isAtleaseOneFail) {
+                        status = Status.PartialSuccess
+                    }
+                    if (!isAtleaseOneSuccess) {
+                        status = Status.Failed
+                    }
+                    this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+                        //@ts-ignore
+                        data: {
+                            id: taskId,
+                            endTime: `${Date.now()}`,
+                            status: status,
+                            output: output
+                        }
+                    })
+                }
+            })
             pipelaneInstance.start(input).then(onResult).catch((e) => {
                 console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
                 onResult([{ status: false }])
             })
             this.currentExecutions.push(pipelaneInstance)
-            let plx = await this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
-                data: {
-                    name: pl.name,
-                    definition: pl,
-                    startTime: `${Date.now()}`,
-                    isRunning: true,
-                    status: Status.InProgress,
-                    id: undefined,
-                }
-            })
-            return plx
 
+            return plx
         }
 
         return undefined
@@ -180,9 +238,7 @@ export class CronScheduler {
             console.warn(`No schedule found for`, schedule.name, 'skipping')
             return
         }
-        //@ts-ignore
-        let runningPipe = this.currentExecutions.find(ex => `${ex.name}`.startsWith(schedule.name))
-        //@ts-ignore
+        let runningPipe: PipeLane = this.currentExecutions.find(ex => `${ex.name}`.startsWith(schedule.name))
         return runningPipe == undefined && !runningPipe.isRunning
     }
 }

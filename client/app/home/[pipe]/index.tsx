@@ -60,36 +60,38 @@ export default function PipelanePage() {
                 }} />
             }
             {
-                pipe && <PipelaneView seterr={seterr} pipe={pipe} save={(pipe: Pipelane) => {
-                    if (pipe.name == 'new') {
-                        seterr('Please change the pipe name')
-                        return
-                    }
-                    setLoading(true)
-                    seterr(undefined)
-                    delete pipe.nextRun
-                    delete pipe.updatedTimestamp
-                    delete pipe.__typename
-                    pipe.retryCount = parseInt(`${pipe.retryCount || 0}`)
-                    pipe.executionsRetentionCount = parseInt(`${pipe.executionsRetentionCount || 5}`)
-                    api.upsertPipelane({ ...pipe, tasks: undefined }).then(result => {
-                        setPipe(result.data.createPipelane)
-                        if (result.data.createPipelane.name != pipeName) {
-                            router.navigate(`/home/${result.data.createPipelane.name}`)
+                pipe && <PipelaneView
+                    setLoading={setLoading}
+                    seterr={seterr} pipe={pipe} save={(pipe: Pipelane) => {
+                        if (pipe.name == 'new') {
+                            seterr('Please change the pipe name')
+                            return
                         }
+                        setLoading(true)
+                        seterr(undefined)
+                        delete pipe.nextRun
+                        delete pipe.updatedTimestamp
+                        delete pipe.__typename
+                        pipe.retryCount = parseInt(`${pipe.retryCount || 0}`)
+                        pipe.executionsRetentionCount = parseInt(`${pipe.executionsRetentionCount || 5}`)
+                        api.upsertPipelane({ ...pipe, tasks: undefined }).then(result => {
+                            setPipe(result.data.createPipelane)
+                            if (result.data.createPipelane.name != pipeName) {
+                                router.navigate(`/home/${result.data.createPipelane.name}`)
+                            }
 
-                    }).catch((error) => {
-                        seterr(getGraphErrorMessage(error))
-                    }).finally(() => {
-                        setLoading(false)
-                    })
-                }} />
+                        }).catch((error) => {
+                            seterr(getGraphErrorMessage(error))
+                        }).finally(() => {
+                            setLoading(false)
+                        })
+                    }} />
             }
         </VPage>
     );
 }
 
-function PipelaneView({ pipe: inputPipe, save, seterr }: { pipe: Pipelane, save: Function, seterr: Function }) {
+function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pipelane, save: Function, seterr: Function, setLoading: Function }) {
     const router = useRouter()
     const [pipe, setPipe] = useState<Pipelane>(
         {
@@ -121,6 +123,20 @@ function PipelaneView({ pipe: inputPipe, save, seterr }: { pipe: Pipelane, save:
         <VBox>
             <TransparentCenterToolbar
                 options={[{
+                    id: 'execute',
+                    icon: 'play',
+                    title: 'Execute',
+                    onClick: () => {
+                        setLoading(true)
+                        api.executePipelane(pipe.name, pipe.input as string).then((result) => {
+                            let executionId = result.data.executePipelane.id
+                            router.navigate('/executions/' + executionId)
+                        }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
+                            setLoading(false)
+                        })
+                    }
+                },
+                {
                     id: 'delete',
                     icon: 'trash',
                     title: 'Delete',

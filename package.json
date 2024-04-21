@@ -24,7 +24,7 @@
     "mysql": "^2.18.1",
     "node-cron": "^3.0.3",
     "path": "^0.12.7",
-    "pipelane": "^2.1.2",
+    "pipelane": "^2.1.4",
     "sqlite3": "^5.1.7",
     "typescript": "^5.4.4"
   },

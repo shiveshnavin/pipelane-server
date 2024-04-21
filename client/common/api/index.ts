@@ -176,6 +176,22 @@ export class Api {
         })
     }
 
+    executePipelane(name: string, input: string) {
+        this.graph.resetStore()
+        return this.graph.mutate({
+            mutation: gql`mutation executePipelane($name: ID!, $input: String!) {
+                executePipelane(name: $name, input: $input){
+                    id
+                }
+              }
+              `,
+            variables: {
+                name,
+                input
+            }
+        })
+    }
+
     deletePipelaneTask(pipelaneName: string, name: string) {
         this.graph.resetStore()
         return this.graph.mutate({
