@@ -69,6 +69,7 @@ export default function PipelanePage() {
                         setLoading(true)
                         seterr(undefined)
                         delete pipe.nextRun
+                        delete pipe.executions
                         delete pipe.updatedTimestamp
                         delete pipe.__typename
                         pipe.retryCount = parseInt(`${pipe.retryCount || 0}`)
