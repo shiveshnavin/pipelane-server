@@ -36,10 +36,11 @@ function Main() {
       }),
       axios.get('/pipelane/config').then((respo) => {
         let api;
-        if (respo.data instanceof Object) {
-          api = createApiClient()
-        } else if (__DEV__) {
+        if (__DEV__) {
           api = createApiClient('http://localhost:4001')
+        }
+        else {
+          api = createApiClient(respo.data.host)
         }
         setContext(new ContextData(api))
       })
