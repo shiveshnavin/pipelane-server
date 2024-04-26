@@ -211,7 +211,18 @@ export class CronScheduler {
                             output: JSON.stringify(output)
                         }
                     }).catch(e => {
-                        console.error('Error saving pipelane', event, e.message)
+                        console.error('Error saving pipelane. Trying to save without output.')
+                        this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+                            //@ts-ignore
+                            data: {
+                                id: taskId,
+                                endTime: `${Date.now()}`,
+                                status: this.mapStatus(output),
+                                output: 'Unsupported Output'
+                            }
+                        }).catch(e => {
+                            console.error('Error saving pipelane. Trying to save without output.', event, e.message)
+                        })
                     })
                 }
             }).bind(this)
