@@ -119,7 +119,7 @@ export default function PipeTaskPage() {
                         setLoading(true)
                         seterr(undefined)
                         delete task.__typename
-                        api.upsertPipelaneTask({ ...task }).then(result => {
+                        api.upsertPipelaneTask({ ...task }, (name && name != 'new' ? name : task.name) as string).then(result => {
                             setCurPipetask(result.data.createPipelaneTask)
                             if (result.data.createPipelaneTask.name != name) {
                                 router.navigate(`/home/${result.data.createPipelaneTask.pipelaneName}/${result.data.createPipelaneTask.name}`)
@@ -170,10 +170,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     }
                 }]}
                 title={`${task.pipelaneName}   ➤   ${task.name}`} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
-                    if (router.canGoBack())
-                        router.back()
-                    else
-                        router.navigate(`/home/${task.pipelaneName}`)
+                    router.navigate(`/home/${task.pipelaneName}`)
                 }} />
             <CardView>
                 <HBox style={{

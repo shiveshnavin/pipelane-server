@@ -60,11 +60,11 @@ export class Api {
     clearCache() {
         this.graph.clearStore()
     }
-    upsertPipelaneTask(task: CreatePipetaskPayload) {
+    upsertPipelaneTask(task: CreatePipetaskPayload, oldTaskName: string) {
         this.clearCache()
         return this.graph.mutate({
-            mutation: gql`mutation Mutation($data: CreatePipetaskPayload!) {
-                createPipelaneTask(data: $data) {
+            mutation: gql`mutation Mutation($data: CreatePipetaskPayload!, $oldTaskName: ID) {
+                createPipelaneTask(data: $data, oldTaskName: $oldTaskName) {
                   name
                   pipelaneName
                   taskTypeName
@@ -76,15 +76,16 @@ export class Api {
                 }
               }`,
             variables: {
+                oldTaskName: oldTaskName,
                 data: task
             }
         })
     }
-    upsertPipelane(pipe: CreatePipelanePayload) {
+    upsertPipelane(pipe: CreatePipelanePayload, oldPipeName: String) {
         this.clearCache()
         return this.graph.mutate({
-            mutation: gql`mutation Mutation($data: CreatePipelanePayload!) {
-                createPipelane(data: $data) {
+            mutation: gql`mutation Mutation($data: CreatePipelanePayload!, $oldPipeName: ID) {
+                createPipelane(data: $data, oldPipeName: $oldPipeName) {
                   name
                   active
                   schedule
@@ -96,6 +97,7 @@ export class Api {
                 }
               }`,
             variables: {
+                oldPipeName,
                 data: pipe
             }
         })
@@ -169,6 +171,20 @@ export class Api {
                 "name": name,
                 "pipelaneName": pipelaneName
             },
+        })
+    }
+    clonePipelane(name: string) {
+        this.clearCache()
+        return this.graph.mutate({
+            mutation: gql`mutation clonePipelane($name: ID!) {
+                clonePipelane(name: $name) {
+                    name
+                }
+              }
+              `,
+            variables: {
+                name
+            }
         })
     }
 

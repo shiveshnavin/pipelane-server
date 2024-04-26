@@ -74,7 +74,7 @@ export default function PipelanePage() {
                         delete pipe.__typename
                         pipe.retryCount = parseInt(`${pipe.retryCount || 0}`)
                         pipe.executionsRetentionCount = parseInt(`${pipe.executionsRetentionCount || 5}`)
-                        api.upsertPipelane({ ...pipe, tasks: undefined }).then(result => {
+                        api.upsertPipelane({ ...pipe, tasks: undefined }, pipeName as string).then(result => {
                             setPipe(result.data.createPipelane)
                             if (result.data.createPipelane.name != pipeName) {
                                 router.navigate(`/home/${result.data.createPipelane.name}`)
@@ -131,35 +131,49 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
     return (
         <VBox>
             <TransparentCenterToolbar
-                options={[{
-                    id: 'execute',
-                    icon: 'play',
-                    title: 'Execute',
-                    onClick: () => {
-                        setLoading(true)
-                        api.executePipelane(pipe.name, pipe.input as string).then((result) => {
-                            let executionId = result.data.executePipelane.id
-                            router.navigate('/executions/' + executionId)
-                        }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
-                            setLoading(false)
-                        })
-                    }
-                },
-                {
-                    id: 'delete',
-                    icon: 'trash',
-                    title: 'Delete',
-                    onClick: () => {
-                        api.deletePipelane(pipe.name).then(() => {
-                            router.navigate('/home')
-                        }).catch(e => seterr(getGraphErrorMessage(e)))
-                    }
-                }]}
+                options={[
+                    {
+                        id: 'clone',
+                        icon: 'copy',
+                        title: 'Clone',
+                        onClick: () => {
+                            setLoading(true)
+                            api.clonePipelane(pipe.name).then((result) => {
+                                router.navigate(`/home/${result.data.clonePipelane.name}`)
+                            }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
+                                setLoading(false)
+                            })
+                        }
+                    },
+                    {
+                        id: 'execute',
+                        icon: 'play',
+                        title: 'Execute',
+                        onClick: () => {
+                            setLoading(true)
+                            api.executePipelane(pipe.name, pipe.input as string).then((result) => {
+                                let executionId = result.data.executePipelane.id
+                                router.navigate('/executions/' + executionId)
+                            }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
+                                setLoading(false)
+                            })
+                        }
+                    },
+                    {
+                        id: 'delete',
+                        icon: 'trash',
+                        title: 'Delete',
+                        onClick: () => {
+                            setLoading(true)
+                            api.deletePipelane(pipe.name).then(() => {
+                                router.navigate('/home')
+                            }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
+                                setLoading(false)
+                            })
+                        }
+                    }]}
                 title={pipe.name as string} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
-                    if (router.canGoBack())
-                        router.back()
-                    else
-                        router.navigate(`/home`)
+                    router.navigate(`/home`)
                 }} />
             <CardView>
                 <HBox style={{
