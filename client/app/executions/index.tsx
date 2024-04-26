@@ -1,11 +1,10 @@
 import { Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { useContext } from "react";
-import { AlertMessage, ButtonView, Center, Icon, SimpleDatalistView, TextView, ThemeContext, TransparentCenterToolbar, VPage } from "react-native-boxes";
+import { AlertMessage, ButtonView, Center, Icon, SimpleDatalistView, TextView, ThemeContext, TransparentCenterToolbar, VPage, StatusIcon } from "react-native-boxes";
 import { PipelaneExecution } from "../../../gen/model";
 import { AppContext } from "@/components/Context";
 import { getGraphErrorMessage } from "@/common/api";
-import { StatusIcon } from "@/components/StatusIcon";
 
 
 export default function ExecutionsPage() {

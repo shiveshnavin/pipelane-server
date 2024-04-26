@@ -35,7 +35,12 @@ function Main() {
         'Styled': require('../assets/fonts/Bold.ttf'),
       }),
       axios.get('/pipelane/config').then((respo) => {
-        const api = createApiClient(respo.data.host)
+        let api;
+        if (respo.data instanceof Object) {
+          api = createApiClient()
+        } else if (__DEV__) {
+          api = createApiClient('http://localhost:4001')
+        }
         setContext(new ContextData(api))
       })
     ]).finally(() => {

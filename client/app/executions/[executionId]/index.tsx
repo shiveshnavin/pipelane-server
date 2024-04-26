@@ -1,14 +1,12 @@
 import { getGraphErrorMessage } from "@/common/api";
 import { AppContext } from "@/components/Context";
-import { gql, useMutation } from "@apollo/client";
 import { Link, useLocalSearchParams } from "expo-router";
-import { useRouteInfo, useRouter } from "expo-router/build/hooks";
+import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { AlertMessage, BottomSheet, CardView, Center, CompositeTextInputView, Expand, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, Title, TransparentCenterToolbar, VBox, VPage } from "react-native-boxes";
+import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage } from "react-native-boxes";
 import { PipelaneExecution, PipetaskExecution } from "../../../../gen/model";
 import { prettyJson } from "@/common/utils/ReactUtils";
-import { StatusIcon } from "@/components/StatusIcon";
 
 
 export default function QueryPage() {

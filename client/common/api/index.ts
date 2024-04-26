@@ -2,8 +2,6 @@ import { ApolloClient, InMemoryCache, ApolloProvider, gql, ApolloQueryResult, De
 import {
     CreatePipelanePayload, CreatePipetaskPayload, Pipelane, Pipetask
 } from '../../../gen/model';
-import { Platform } from 'react-native';
-let HOST = Platform.OS == 'web' ? 'http://localhost:4001' : 'http://192.168.0.115:4001'
 const defaultOptions: DefaultOptions = {
     watchQuery: {
         fetchPolicy: 'no-cache',
@@ -296,9 +294,10 @@ export class Api {
     }
 }
 
-export function createApiClient(host: string) {
+export function createApiClient(host?: string) {
     const client = new ApolloClient({
-        uri: '/pipelane/graph',
+
+        uri: (host ? host : '') + '/pipelane/graph',
         cache: new InMemoryCache(),
         defaultOptions: defaultOptions,
     });

@@ -1,11 +1,10 @@
 import { AppContext } from "@/components/Context";
-import { gql, useMutation } from "@apollo/client";
 import { router, useLocalSearchParams } from "expo-router";
-import { useRouteInfo, useRouter } from "expo-router/build/hooks";
+import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Center, Expand, SimpleToolbar, TextView, ThemeContext, Title, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, SimpleDatatlistViewItem, Icon, ButtonView, TertiaryButtonView } from "react-native-boxes";
-import { AlertMessage, Spinner } from "react-native-boxes";
+import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, ButtonView, TertiaryButtonView } from "react-native-boxes";
+import { AlertMessage, Spinner, ConfirmationDialog } from "react-native-boxes";
 import { Maybe, Pipelane, PipelaneExecution, Pipetask } from "../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
 import { PipeExecutionsView } from "@/app/executions";
@@ -128,6 +127,8 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
             seterr(getGraphErrorMessage(e))
         })
     }
+
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     return (
         <VBox>
             <TransparentCenterToolbar
@@ -164,17 +165,28 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                         icon: 'trash',
                         title: 'Delete',
                         onClick: () => {
-                            setLoading(true)
-                            api.deletePipelane(pipe.name).then(() => {
-                                router.navigate('/home')
-                            }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
-                                setLoading(false)
-                            })
+                            setShowDeleteConfirm(true)
                         }
                     }]}
                 title={pipe.name as string} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
                     router.navigate(`/home`)
                 }} />
+            <ConfirmationDialog
+                title="Delete ?"
+                message=" This action is irreversible. Are you sure you want to delete this pipelane and all its tasks and executions?"
+                onDismiss={() => {
+                    setShowDeleteConfirm(false)
+                }}
+                onConfirm={function (): void {
+                    setLoading(true)
+                    api.deletePipelane(pipe.name).then(() => {
+                        router.navigate('/home')
+                    }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
+                        setLoading(false)
+                    })
+                }}
+                visible={showDeleteConfirm}
+            />
             <CardView>
                 <HBox style={{
                     padding: theme.dimens.space.md,
