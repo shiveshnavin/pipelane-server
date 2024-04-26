@@ -161,7 +161,7 @@ export class CronScheduler {
                         //@ts-ignore
                         data: {
                             endTime: `${Date.now()}`,
-                            status: Status.Failed,
+                            status: status,
                             id: plx.id,
                             output: 'Invalid output'
                         }
