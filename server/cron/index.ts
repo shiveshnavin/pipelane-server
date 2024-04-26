@@ -127,8 +127,9 @@ export class CronScheduler {
                 console.warn(`Invalid JSON input ${pl.input} for ${pl.name}. Using {} as input`)
             }
             let retryCountLeft = pl.retryCount
-            let onResult = (function (results) {
-                if (results == undefined || results[0].status == false) {
+            let onResult = (function (output) {
+                let status = Status.InProgress
+                if (output == undefined || output[0].status == false) {
                     if (retryCountLeft-- > 0) {
                         console.warn(`Pipe:${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}`)
                         //@ts-ignore
@@ -139,12 +140,35 @@ export class CronScheduler {
                         return
                     } else {
                         console.log(`Pipe:${pl.name} failed`)
+                        status = Status.Failed
                     }
 
                 } else {
                     console.log(`Pipe:${pl.name} success`)
+                    status = Status.Success
                 }
-
+                this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                    //@ts-ignore
+                    data: {
+                        endTime: `${Date.now()}`,
+                        status: status,
+                        id: plx.id,
+                        output: JSON.stringify(output)
+                    }
+                }).catch(e => {
+                    console.error('Error saving pipelane. Trying to save without output')
+                    this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                        //@ts-ignore
+                        data: {
+                            endTime: `${Date.now()}`,
+                            status: Status.Failed,
+                            id: plx.id,
+                            output: 'Invalid output'
+                        }
+                    }).catch(e => {
+                        console.error('Error saving pipelane', event, e.message)
+                    })
+                })
                 //@ts-ignore
                 this.currentExecutions = this.currentExecutions.filter(cei => cei.name != pipelaneInstance.name)
             }).bind(this)
@@ -160,43 +184,7 @@ export class CronScheduler {
             })
 
             const pipelaneListener = ((pl, event, task, output) => {
-                if (event == 'COMPLETE') {
-                    this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
-                        //@ts-ignore
-                        data: {
-                            endTime: `${Date.now()}`,
-                            status: this.mapStatus(output),
-                            id: plx.id,
-                            name: plx.name,
-                            output: JSON.stringify(output)
-                        }
-                    }).catch(e => {
-                        console.error('Error saving pipelane', event, e.message)
-                    })
-                } else if (event == 'KILLED') {
-                    this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
-                        //@ts-ignore
-                        data: {
-                            endTime: `${Date.now()}`,
-                            status: Status.Failed,
-                            id: plx.id,
-                            output: JSON.stringify(output)
-                        }
-                    }).catch(e => {
-                        console.error('Error saving pipelane. Trying to save without output')
-                        this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
-                            //@ts-ignore
-                            data: {
-                                endTime: `${Date.now()}`,
-                                status: Status.Failed,
-                                id: plx.id,
-                                output: 'Invalid output'
-                            }
-                        }).catch(e => {
-                            console.error('Error saving pipelane', event, e.message)
-                        })
-                    })
-                } else if (event == 'NEW_TASK') {
+                if (event == 'NEW_TASK') {
                     let taskName = task.uniqueStepName || task.variantType
                     this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                         //@ts-ignore
