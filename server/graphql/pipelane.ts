@@ -221,11 +221,18 @@ export function generatePipelaneResolvers(
                 existing.executionsRetentionCount = existing.executionsRetentionCount || defaultExecutionRetentionCountPerPipe
                 existing.updatedTimestamp = `${Date.now()}`
                 cronScheduler?.addToSchedule(existing)
+                if (request.oldPipeName && request.oldPipeName != input.name) {
+                    await db.update(TableName.PS_PIPELANE_TASK, {
+                        pipelaneName: request.oldPipeName
+                    }, {
+                        pipelaneName: input.name
+                    })
+                }
                 await Promise.all([
                     isUpdate ? db.update(TableName.PS_PIPELANE, {
                         name: request.oldPipeName || input.name
                     }, existing)
-                        : db.insert(TableName.PS_PIPELANE, existing)
+                        : db.insert(TableName.PS_PIPELANE, existing),
                     , ...tasks.map(async (tk) => {
                         tk.pipelaneName = input.name
                         //@ts-ignore
