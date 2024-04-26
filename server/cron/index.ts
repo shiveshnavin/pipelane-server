@@ -163,7 +163,7 @@ export class CronScheduler {
                             endTime: `${Date.now()}`,
                             status: status,
                             id: plx.id,
-                            output: 'Invalid output'
+                            output: 'Unsupported output.'
                         }
                     }).catch(e => {
                         console.error('Error saving pipelane', event, e.message)
