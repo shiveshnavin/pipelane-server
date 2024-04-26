@@ -197,7 +197,6 @@ export function generatePipelaneResolvers(
 
                 tasks.forEach(t => {
                     t.pipelaneName = existing.name
-                    t.name = t.name + `-${gens}`
                 })
                 existing.tasks = tasks
                 let newPl = await PipelaneResolvers.Mutation.createPipelane(undefined, {
