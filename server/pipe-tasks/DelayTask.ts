@@ -1,5 +1,5 @@
 import axios from "axios";
-import PipeLane, { PipeTask } from "pipelane";
+import PipeLane, { InputWithPreviousInputs, PipeTask } from "pipelane";
 
 export class DelayTask extends PipeTask<any, any> {
 
@@ -18,9 +18,8 @@ export class DelayTask extends PipeTask<any, any> {
         return true
     }
 
-    async execute(pipeWorkInstance: PipeLane, input: any): Promise<any[]> {
-        input = input.additionalInputs
-        if (!input.milis) {
+    async execute(pipeWorkInstance: PipeLane, input: InputWithPreviousInputs): Promise<any[]> {
+        if (!input.additionalInputs.milis) {
             return [{
                 status: false,
                 message: 'invalid input. required feild `milis` missing'
@@ -29,10 +28,13 @@ export class DelayTask extends PipeTask<any, any> {
 
         return await new Promise((resolve) => {
             this.timeoutId = setTimeout(() => {
-                resolve([{
-                    status: true
-                }])
-            }, input.milis)
+                if (!input.additionalInputs.last)
+                    resolve([{
+                        status: true
+                    }])
+                else
+                    resolve(input.last)
+            }, input.additionalInputs.milis)
         })
 
     }

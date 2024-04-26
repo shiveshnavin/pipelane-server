@@ -170,6 +170,8 @@ export class CronScheduler {
                             name: plx.name,
                             output: JSON.stringify(output)
                         }
+                    }).catch(e => {
+                        console.error('Error saving pipelane', event, e.message)
                     })
                 } else if (event == 'KILLED') {
                     this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
@@ -180,6 +182,8 @@ export class CronScheduler {
                             id: plx.id,
                             output: JSON.stringify(output)
                         }
+                    }).catch(e => {
+                        console.error('Error saving pipelane', event, e.message)
                     })
                 } else if (event == 'NEW_TASK') {
                     let taskName = task.uniqueStepName || task.variantType
@@ -192,6 +196,8 @@ export class CronScheduler {
                             status: Status.InProgress,
                             output: output
                         }
+                    }).catch(e => {
+                        console.error('Error saving pipelane', event, e.message)
                     })
                 } else if (event == 'TASK_FINISHED') {
                     let taskName = task.uniqueStepName || task.variantType
@@ -204,6 +210,8 @@ export class CronScheduler {
                             status: this.mapStatus(output),
                             output: JSON.stringify(output)
                         }
+                    }).catch(e => {
+                        console.error('Error saving pipelane', event, e.message)
                     })
                 }
             }).bind(this)
