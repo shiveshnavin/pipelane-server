@@ -183,7 +183,18 @@ export class CronScheduler {
                             output: JSON.stringify(output)
                         }
                     }).catch(e => {
-                        console.error('Error saving pipelane', event, e.message)
+                        console.error('Error saving pipelane. Trying to save without output')
+                        this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                            //@ts-ignore
+                            data: {
+                                endTime: `${Date.now()}`,
+                                status: Status.Failed,
+                                id: plx.id,
+                                output: 'Invalid output'
+                            }
+                        }).catch(e => {
+                            console.error('Error saving pipelane', event, e.message)
+                        })
                     })
                 } else if (event == 'NEW_TASK') {
                     let taskName = task.uniqueStepName || task.variantType
@@ -197,7 +208,7 @@ export class CronScheduler {
                             output: output
                         }
                     }).catch(e => {
-                        console.error('Error saving pipelane', event, e.message)
+                        console.error('Error saving pipelane task', event, e.message)
                     })
                 } else if (event == 'TASK_FINISHED') {
                     let taskName = task.uniqueStepName || task.variantType
@@ -211,7 +222,7 @@ export class CronScheduler {
                             output: JSON.stringify(output)
                         }
                     }).catch(e => {
-                        console.error('Error saving pipelane. Trying to save without output.')
+                        console.error('Error saving pipelane task. Trying to save without output.')
                         this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                             //@ts-ignore
                             data: {
