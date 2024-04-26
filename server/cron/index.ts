@@ -232,7 +232,7 @@ export class CronScheduler {
                                 output: 'Unsupported Output'
                             }
                         }).catch(e => {
-                            console.error('Error saving pipelane. Trying to save without output.', event, e.message)
+                            console.error('Error saving pipelane.', event, e.message)
                         })
                     })
                 }
