@@ -266,7 +266,7 @@ export function generatePipelaneResolvers(
                 })
                 let tx = request.data
                 if (tx.status != Status.InProgress) {
-                    trimExecution(tx)
+                    trimExecution(existing || tx)
                 }
                 if (!existing) {
                     delete tx.definition
