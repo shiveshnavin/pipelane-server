@@ -38,8 +38,11 @@ export function generatePipelaneResolvers(
                 pval: '0'
             })
         } else {
+            if (pipe.executionsRetentionCount == undefined) {
+                pipe.executionsRetentionCount = defaultExecutionRetentionCountPerPipe
+            }
             let count = parseInt(existingCounter.pval) + 1
-            if (pipe.executionsRetentionCount == 0 || count > (pipe.executionsRetentionCount || defaultExecutionRetentionCountPerPipe)) {
+            if (pipe.executionsRetentionCount == 0 || count > (pipe.executionsRetentionCount)) {
                 db.get(TableName.PS_PIPELANE_EXEC, {
                     name: pipe.name
                 }, {
@@ -53,7 +56,9 @@ export function generatePipelaneResolvers(
                         executions = executions.slice(0, Math.round(count / 2))
                         console.log('Trimming the oldest execution for ' + pipe.name, 'from', executions.map(e => e.id))
                         executions.forEach(e => {
-                            db.delete(TableName.PS_PIPELANE_EXEC, e)
+                            db.delete(TableName.PS_PIPELANE_EXEC, {
+                                id: e.id
+                            })
                             db.delete(TableName.PS_PIPELANE_TASK_EXEC, {
                                 pipelaneExId: e.id
                             })
