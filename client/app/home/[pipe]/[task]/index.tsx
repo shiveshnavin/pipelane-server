@@ -123,6 +123,8 @@ export default function PipeTaskPage() {
                             setCurPipetask(result.data.createPipelaneTask)
                             if (result.data.createPipelaneTask.name != name) {
                                 router.navigate(`/home/${result.data.createPipelaneTask.pipelaneName}/${result.data.createPipelaneTask.name}`)
+                            } else {
+                                router.navigate('/home/' + task.pipelaneName)
                             }
 
                         }).catch((error) => {

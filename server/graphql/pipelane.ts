@@ -1,6 +1,7 @@
 import { MultiDbORM } from "multi-db-orm"
+//@ts-ignore
 import { TaskVariantConfig } from "pipelane"
-import { CreatePipelanePayload, CreatePipetaskPayload, MutationClonePipelaneArgs, MutationCreatePipelaneArgs, MutationCreatePipelaneTaskArgs, Pipelane, PipelaneExecution, PipelaneMeta, Pipetask, PipetaskExecution, QueryPipelaneArgs, QueryPipelaneExecutionArgs, QueryPipelaneExecutionsArgs, Status } from "../../gen/model"
+import { MutationClonePipelaneArgs, MutationCreatePipelaneArgs, MutationCreatePipelaneTaskArgs, Pipelane, PipelaneExecution, PipelaneMeta, Pipetask, PipetaskExecution, QueryPipelaneArgs, QueryPipelaneExecutionArgs, QueryPipelaneExecutionsArgs, Status } from "../../gen/model"
 import { TableName } from "../db"
 import _ from 'lodash'
 import { CronScheduler } from "../cron"
