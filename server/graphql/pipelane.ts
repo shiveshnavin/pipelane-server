@@ -119,6 +119,12 @@ export function generatePipelaneResolvers(
                 let tasks = await db.get(TableName.PS_PIPELANE_TASK,
                     {
                         pipelaneName: parent.name
+                    },
+                    {
+                        sort: [{
+                            field: 'step',
+                            order: 'asc'
+                        }]
                     })
                 return tasks || []
             },
@@ -147,12 +153,27 @@ export function generatePipelaneResolvers(
                 return data
             },
             pipelanes: async (): Promise<Pipelane[]> => {
-                let pls = await db.get(TableName.PS_PIPELANE, {})
+                let pls = await db.get(TableName.PS_PIPELANE, {}, {
+                    sort: [
+                        {
+                            field: 'active',
+                            order: 'desc'
+                        },
+                        {
+                            field: 'updatedTimestamp',
+                            order: 'desc'
+                        }]
+                })
                 return pls
             },
             pipelaneTasks: async (parent, arg): Promise<Pipetask[]> => {
                 let pls = await db.get(TableName.PS_PIPELANE_TASK,
-                    { pipelaneName: arg.pipelaneName })
+                    { pipelaneName: arg.pipelaneName }, {
+                    sort: [{
+                        field: 'step',
+                        order: 'asc'
+                    }]
+                })
                 return pls
             },
             async executions(parent, request: { limit: number }) {
