@@ -1,4 +1,5 @@
 import axios from "axios";
+//@ts-ignore
 import PipeLane, { PipeTask } from "pipelane";
 
 export class ApiTask extends PipeTask<any, any> {
@@ -23,7 +24,7 @@ export class ApiTask extends PipeTask<any, any> {
         }
         let options = input
         try {
-            let response = await axios.get(input.url, options)
+            let response = await axios(options)
             if (response) {
                 return [{
                     status: response.status < 300,
