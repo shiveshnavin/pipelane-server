@@ -51,11 +51,11 @@ export function generatePipelaneResolvers(
                         order: 'asc'
                     }],
                     limit: Math.round(count / 2)
-                }).then(executions => {
+                }).then(async (executions) => {
                     if (executions && executions.length > 0) {
                         executions = executions.slice(0, Math.round(count / 2))
                         console.log('Trimming the oldest execution for ' + pipe.name, 'from', executions.map(e => e.id))
-                        executions.forEach(e => {
+                        executions.forEach((e) => {
                             db.delete(TableName.PS_PIPELANE_EXEC, {
                                 id: e.id
                             })
@@ -63,10 +63,15 @@ export function generatePipelaneResolvers(
                                 pipelaneExId: e.id
                             })
                         })
+                        let newCount = Math.max(0, count - executions.length)
+                        newCount = (await db.get(TableName.PS_PIPELANE_EXEC, {
+                            name: pipelaneName
+                        })).length
+
                         db.update(TableName.PS_PIPELANE_META, {
                             pkey: pkey
                         }, {
-                            pval: `${Math.max(0, count - executions.length)}`
+                            pval: `${newCount}`
                         })
                     }
                 })
