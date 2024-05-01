@@ -183,49 +183,7 @@ export class CronScheduler {
                 }
             })
 
-            const pipelaneListener = ((pl, event, task, output) => {
-                if (event == 'NEW_TASK') {
-                    let taskName = task.uniqueStepName || task.variantType
-                    this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
-                        //@ts-ignore
-                        data: {
-                            pipelaneExId: plx.id,
-                            name: taskName,
-                            startTime: `${Date.now()}`,
-                            status: Status.InProgress,
-                            output: output
-                        }
-                    }).catch(e => {
-                        console.error('Error saving pipelane task', event, e.message)
-                    })
-                } else if (event == 'TASK_FINISHED') {
-                    let taskName = task.uniqueStepName || task.variantType
-                    let taskId = `${plx.id}::${taskName}`
-                    this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
-                        //@ts-ignore
-                        data: {
-                            id: taskId,
-                            endTime: `${Date.now()}`,
-                            status: this.mapStatus(output),
-                            output: JSON.stringify(output)
-                        }
-                    }).catch(e => {
-                        console.error('Error saving pipelane task. Trying to save without output.')
-                        this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
-                            //@ts-ignore
-                            data: {
-                                id: taskId,
-                                endTime: `${Date.now()}`,
-                                status: this.mapStatus(output),
-                                output: 'Unsupported Output'
-                            }
-                        }).catch(e => {
-                            console.error('Error saving pipelane.', event, e.message)
-                        })
-                    })
-                }
-            }).bind(this)
-            pipelaneInstance.setListener(pipelaneListener)
+            this.listenToPipe(pipelaneInstance, plx)
             pipelaneInstance.start(input).then(onResult).catch((e) => {
                 console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
                 onResult([{ status: false }])
@@ -236,6 +194,52 @@ export class CronScheduler {
         }
 
         return undefined
+    }
+
+    public listenToPipe(pipelaneInstance: PipeLane, plx: PipelaneExecution) {
+        const pipelaneListener = ((pl, event, task, output) => {
+            if (event == 'NEW_TASK') {
+                let taskName = task.uniqueStepName || task.variantType
+                this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+                    //@ts-ignore
+                    data: {
+                        pipelaneExId: plx.id,
+                        name: taskName,
+                        startTime: `${Date.now()}`,
+                        status: Status.InProgress,
+                        output: output
+                    }
+                }).catch(e => {
+                    console.error('Error saving pipelane task', event, e.message)
+                })
+            } else if (event == 'TASK_FINISHED') {
+                let taskName = task.uniqueStepName || task.variantType
+                let taskId = `${plx.id}::${taskName}`
+                this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+                    //@ts-ignore
+                    data: {
+                        id: taskId,
+                        endTime: `${Date.now()}`,
+                        status: this.mapStatus(output),
+                        output: JSON.stringify(output)
+                    }
+                }).catch(e => {
+                    console.error('Error saving pipelane task. Trying to save without output.')
+                    this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+                        //@ts-ignore
+                        data: {
+                            id: taskId,
+                            endTime: `${Date.now()}`,
+                            status: this.mapStatus(output),
+                            output: 'Unsupported Output'
+                        }
+                    }).catch(e => {
+                        console.error('Error saving pipelane.', event, e.message)
+                    })
+                })
+            }
+        }).bind(this)
+        pipelaneInstance.setListener(pipelaneListener)
     }
 
     private mapStatus(output: ({ status: Status } & any)[]) {

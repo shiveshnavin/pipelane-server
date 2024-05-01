@@ -56,5 +56,21 @@ export async function creatPipelaneServer(
   await appoloServer.start()
   app.use('/graph', express.json(), expressMiddleware(appoloServer));
   app.use(ui)
+  let services: PipelaneServerServices = {
+    db: db,
+    cron: cronScheduler,
+    //@ts-ignore
+    resolvers: resolvers
+  }
+  app.set('services', services)
   return app
+}
+
+
+//@ts-ignore
+let dummyResolver = generatePipelaneResolvers({}, {})
+export type PipelaneServerServices = {
+  db: MultiDbORM,
+  cron: CronScheduler,
+  resolvers: typeof dummyResolver
 }
