@@ -1,9 +1,10 @@
-import PipeLane, { VariablePipeTask } from "pipelane";
+//@ts-ignore
+import PipeLane, { VariablePipeTask, TaskVariantConfig } from "pipelane";
 import { PipelaneExecution, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
 import Cron from "croner";
 import * as NodeCron from 'node-cron'
 import { generatePipelaneResolvers } from "../graphql/pipelane";
-import { TaskVariantConfig } from "pipelane";
+import AsyncLock from 'async-lock';
 
 const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
 
@@ -196,53 +197,79 @@ export class CronScheduler {
         return undefined
     }
 
-    public listenToPipe(pipelaneInstance: PipeLane, plx: PipelaneExecution) {
-        const pipelaneListener = ((pl, event, task, output) => {
-            if (event == 'NEW_TASK') {
-                let taskName = task.uniqueStepName || task.variantType
-                this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
-                    //@ts-ignore
-                    data: {
-                        pipelaneExId: plx.id,
-                        name: taskName,
-                        startTime: `${Date.now()}`,
-                        status: Status.InProgress,
-                        output: output
-                    }
-                }).catch(e => {
-                    console.error('Error saving pipelane task', event, e.message)
-                })
-            } else if (event == 'TASK_FINISHED') {
-                let taskName = task.uniqueStepName || task.variantType
-                let taskId = `${plx.id}::${taskName}`
-                this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
-                    //@ts-ignore
-                    data: {
-                        id: taskId,
-                        endTime: `${Date.now()}`,
-                        status: this.mapStatus(output),
-                        output: JSON.stringify(output)
-                    }
-                }).catch(e => {
-                    console.error('Error saving pipelane task. Trying to save without output.')
-                    this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+    private lock: AsyncLock = new AsyncLock()
+    public listenToPipe(
+        pipelaneInstance: PipeLane,
+        plx: PipelaneExecution,
+        onResult?: (output: ({ status: Status } & any)[]) => void) {
+
+
+        const pipelaneListener = (async (pl, event, task, output) => {
+            this.lock.acquire(plx.id, (async () => {
+
+                if (event == 'NEW_TASK') {
+                    let taskName = task.uniqueStepName || task.variantType || task.type
+                    let taskId = `${plx.id}::${taskName}`
+                    await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                         //@ts-ignore
                         data: {
                             id: taskId,
-                            endTime: `${Date.now()}`,
-                            status: this.mapStatus(output),
-                            output: 'Unsupported Output'
+                            pipelaneExId: plx.id,
+                            name: taskName,
+                            pipelaneName: plx.name,
+                            startTime: `${Date.now()}`,
+                            status: Status.InProgress,
+                            output: output
                         }
                     }).catch(e => {
-                        console.error('Error saving pipelane.', event, e.message)
+                        console.error('Error saving pipelane task', event, e.message)
                     })
-                })
-            }
+                } else if (event == 'TASK_FINISHED') {
+                    let taskName = task.uniqueStepName || task.variantType
+                    let taskId = `${plx.id}::${taskName}`
+                    let status = this.mapStatus(output)
+                    await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+                        //@ts-ignore
+                        data: {
+                            name: task.uniqueStepName || task.variantType || task.type,
+                            pipelaneName: plx.name,
+                            pipelaneExId: plx.id,
+                            id: taskId,
+                            endTime: `${Date.now()}`,
+                            status: status,
+                            output: JSON.stringify(output)
+                        }
+                    }).catch(async (e) => {
+                        console.error('Error saving pipelane task. Trying to save without output.')
+                        await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+                            //@ts-ignore
+                            data: {
+                                id: taskId,
+                                endTime: `${Date.now()}`,
+                                status: this.mapStatus(output),
+                                output: 'Unsupported Output'
+                            }
+                        }).catch(e => {
+                            console.error('Error saving pipelane.', event, e.message)
+                        })
+                    })
+                } else if (event == 'COMPLETE') {
+                    if (onResult) {
+                        await new Promise((resolve) => {
+                            onResult(output)
+                        }).catch(e => {
+                            console.log("error calling onResult. " + e.message)
+                        })
+                    }
+                }
+            }).bind(this))
+
         }).bind(this)
+
         pipelaneInstance.setListener(pipelaneListener)
     }
 
-    private mapStatus(output: ({ status: Status } & any)[]) {
+    public mapStatus(output: ({ status: Status } & any)[]) {
 
         let isAtleaseOneFail = (output as any[] || []).find(o => !o.status)
         let isAtleaseOneSuccess = (output as any[] || []).find(o => o.status)

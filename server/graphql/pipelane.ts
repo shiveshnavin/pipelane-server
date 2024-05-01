@@ -89,6 +89,12 @@ export function generatePipelaneResolvers(
                 let tasks = await db.get(TableName.PS_PIPELANE_TASK_EXEC,
                     {
                         pipelaneExId: parent.id
+                    },
+                    {
+                        sort: [{
+                            field: 'startTime',
+                            order: 'asc'
+                        }]
                     })
                 return tasks || []
             }
@@ -286,7 +292,7 @@ export function generatePipelaneResolvers(
                 })
                 let tx = request.data
                 if (!existing) {
-                    request.data.id = `${tx.pipelaneExId}::${tx.name}`
+                    request.data.id = request.data.id || `${tx.pipelaneExId}::${tx.name}`
                     await db.insert(TableName.PS_PIPELANE_TASK_EXEC, tx)
                 } else {
                     Object.assign(existing, tx)
