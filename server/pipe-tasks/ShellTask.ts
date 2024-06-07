@@ -40,7 +40,7 @@ export class ShellTask extends PipeTask<any, any> {
 
         let cmd = input.additionalInputs.cmd
 
-        if (!this.isExecutableAllowed(cmd, this.allowedCommands)) {
+        if (!this.isExecutableAllowed(input.additionalInputs.cmd, this.allowedCommands)) {
             return [{
                 status: false,
                 message: 'Command not allowed'
