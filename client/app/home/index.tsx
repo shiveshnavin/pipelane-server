@@ -4,7 +4,7 @@ import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
 import { ButtonView, CompositeTextInputView, PressableView, SimpleDatalistView, SimpleToolbar, SwitchView, ThemeContext, VPage, isDesktop } from "react-native-boxes";
 import { Pipelane } from '../../../gen/model'
-import KeyboardAvoidingScrollView, { CardView, HBox } from "react-native-boxes/src/Box";
+import { KeyboardAvoidingScrollView, CardView, HBox } from "react-native-boxes/src/Box";
 import { useRouter } from "expo-router";
 import { StatusBar } from "react-native";
 
