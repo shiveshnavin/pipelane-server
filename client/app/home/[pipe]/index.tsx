@@ -264,6 +264,7 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                     <CompositeTextInputView
                         icon="close"
                         placeholder="Inputs"
+                        numberOfLines={10}
                         _textInputProps={{
                             numberOfLines: 10,
                             multiline: true,
