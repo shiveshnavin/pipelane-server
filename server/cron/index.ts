@@ -207,7 +207,7 @@ export class CronScheduler {
                     definition: pl,
                     startTime: `${Date.now()}`,
                     status: Status.InProgress,
-                    id: undefined,
+                    id: pipelaneInstName,
                 }
             })
 

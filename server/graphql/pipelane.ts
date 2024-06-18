@@ -303,7 +303,7 @@ export function generatePipelaneResolvers(
                 if (!existing) {
                     delete tx.definition
                     delete tx.tasks
-                    request.data.id = `${tx.name}-${Date.now()}`
+                    request.data.id = request.data.id || `${tx.name}-${Date.now()}`
                     await db.insert(TableName.PS_PIPELANE_EXEC, tx)
                     existing = tx
                 } else {
