@@ -128,8 +128,9 @@ export function generatePipelaneResolvers(
                     })
                 return tasks || []
             },
-            executions(parent: Pipelane) {
-                return db.get(TableName.PS_PIPELANE_EXEC, { name: parent.name })
+            async executions(parent: Pipelane) {
+                let executions = await db.get(TableName.PS_PIPELANE_EXEC, { name: parent.name })
+                return executions
             },
         },
         Query: {
@@ -184,7 +185,7 @@ export function generatePipelaneResolvers(
                         order: 'desc'
                     }]
                 })
-                return data
+                return data?.filter(dt => dt.name && dt.id && dt.startTime)
             },
             pipelaneExecutions(pr, arg: QueryPipelaneExecutionsArgs) {
                 return db.get(TableName.PS_PIPELANE_EXEC, {
