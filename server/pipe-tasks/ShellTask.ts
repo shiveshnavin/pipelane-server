@@ -24,6 +24,8 @@ export class ShellTask extends PipeTask<any, any> {
 
 
     isExecutableAllowed(command, allowedExecutables) {
+        if (allowedExecutables.includes("*"))
+            return true
         const commands = command.split(/[&;&|&&|]/);
         // Iterate through each command
         for (let i = 0; i < commands.length; i++) {
