@@ -231,7 +231,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                 <CompositeTextInputView
                     icon="close"
                     placeholder="Inputs"
-                    _textInputProps={{
+                    textInputProps={{
                         numberOfLines: 10,
                         multiline: true,
                         style: {

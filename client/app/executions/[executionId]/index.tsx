@@ -93,7 +93,7 @@ export default function QueryPage() {
                                 <CompositeTextInputView
                                     editable={false}
                                     placeholder="Outputs"
-                                    _textInputProps={{
+                                    textInputProps={{
                                         numberOfLines: 10,
                                         multiline: true,
                                         style: {
@@ -141,7 +141,7 @@ export default function QueryPage() {
                                 <CompositeTextInputView
                                     editable={false}
                                     placeholder="Outputs"
-                                    _textInputProps={{
+                                    textInputProps={{
                                         numberOfLines: 10,
                                         multiline: true,
                                         style: {
