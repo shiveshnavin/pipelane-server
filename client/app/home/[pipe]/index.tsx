@@ -65,6 +65,13 @@ export default function PipelanePage() {
                             seterr('Please change the pipe name')
                             return
                         }
+                        try {
+                            JSON.parse(pipe.input as string)
+                            seterr(undefined)
+                        } catch (e) {
+                            seterr('Input must be a valid JSON string')
+                            return
+                        }
                         setLoading(true)
                         seterr(undefined)
                         delete pipe.nextRun
