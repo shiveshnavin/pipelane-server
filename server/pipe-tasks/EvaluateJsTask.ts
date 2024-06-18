@@ -62,7 +62,7 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         for (const match of matches) {
             const [fullMatch, placeholder] = match;
             const result = await this.evalInScope(placeholder.trim(), pl, input, prev, axios);
-            replacedString = replacedString.replace(fullMatch, result.toString());
+            replacedString = replacedString.replace(fullMatch, result?.toString());
         }
 
         return replacedString

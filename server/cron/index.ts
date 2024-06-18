@@ -102,21 +102,25 @@ export class CronScheduler {
             }
 
             const evalPlaceHolder = new EvaluateJsTask()
+            pipelaneInstance.setOnBeforeExecuteTask(async (pInst, task, inputProxy) => {
+
+                try {
+                    let stringInput = await evalPlaceHolder.evaluatePlaceholdersInString(
+                        pInst,
+                        inputProxy,
+                        JSON.stringify(inputProxy.additionalInputs)
+                    )
+                    inputProxy.additionalInputs = JSON.parse(stringInput)
+                } catch (e) {
+                    console.warn(`error evaluating placeholders in -> ${task.getTaskVariantName()}. ` + e.message)
+                }
+
+                return inputProxy
+            })
             for (const tkd of pl.tasks.filter(t => t.active)) {
                 let input = {}
                 try {
                     input = JSON.parse(tkd.input)
-                    try {
-                        let stringInput = await evalPlaceHolder.evaluatePlaceholdersInString(
-                            pipelaneInstance,
-                            JSON.parse(tkd.input),
-                            tkd.input
-                        )
-                        input = JSON.parse(stringInput)
-                    } catch (e) {
-                        console.warn(`error evaluating placeholders in -> ${tkd.taskVariantName}. ` + e.message)
-                        input = JSON.parse(tkd.input)
-                    }
                 } catch (e) {
                     console.warn(`Invalid JSON input ${tkd.input} for ${pl.name} -> ${tkd.taskVariantName}. Using {} as input`)
                 }
