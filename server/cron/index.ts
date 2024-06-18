@@ -5,6 +5,7 @@ import Cron from "croner";
 import * as NodeCron from 'node-cron'
 import { generatePipelaneResolvers } from "../graphql/pipelane";
 import AsyncLock from 'async-lock';
+import { EvaluateJsTask } from "../pipe-tasks/EvaluateJsTask";
 
 const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
 
@@ -99,11 +100,23 @@ export class CronScheduler {
                 console.warn(`No tasks of types ${invalidTasksFromSchedule.join(",")} found in variantconfig. Skipping triggering ${pl.name}`)
                 return
             }
-            pl.tasks.filter(t => t.active).forEach(tkd => {
+
+            const evalPlaceHolder = new EvaluateJsTask()
+            for (const tkd of pl.tasks.filter(t => t.active)) {
                 let input = {}
                 try {
-                    // todo: resolve placeholders
                     input = JSON.parse(tkd.input)
+                    try {
+                        let stringInput = await evalPlaceHolder.evaluatePlaceholdersInString(
+                            pipelaneInstance,
+                            JSON.parse(tkd.input),
+                            tkd.input
+                        )
+                        input = JSON.parse(stringInput)
+                    } catch (e) {
+                        console.warn(`error evaluating placeholders in -> ${tkd.taskVariantName}. ` + e.message)
+                        input = JSON.parse(tkd.input)
+                    }
                 } catch (e) {
                     console.warn(`Invalid JSON input ${tkd.input} for ${pl.name} -> ${tkd.taskVariantName}. Using {} as input`)
                 }
@@ -119,11 +132,21 @@ export class CronScheduler {
                 } else {
                     pipelaneInstance.pipe(pltConfig)
                 }
-            })
+            }
             let input = {}
             try {
-                // todo: resolve placeholders
                 input = JSON.parse(pl.input)
+                try {
+                    let stringInput = await evalPlaceHolder.evaluatePlaceholdersInString(
+                        pipelaneInstance,
+                        JSON.parse(pl.input),
+                        pl.input
+                    )
+                    input = JSON.parse(stringInput)
+                } catch (e) {
+                    console.warn(`error evaluating placeholders in -> ${pl.name}.`)
+                    input = JSON.parse(pl.input)
+                }
             } catch (e) {
                 console.warn(`Invalid JSON input ${pl.input} for ${pl.name}. Using {} as input`)
             }

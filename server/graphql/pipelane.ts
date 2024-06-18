@@ -340,6 +340,9 @@ export function generatePipelaneResolvers(
             async executePipelane(parent, request: { name: string, input: string }) {
                 let existing = await PipelaneResolvers.Query.Pipelane(parent, request)
                 let execution = await cronScheduler.triggerPipelane(existing, request.input || existing.input)
+                if (!execution) {
+                    throw new GraphQLError("Error triggering pipelane, perhaps it is disabled?")
+                }
                 return execution
             },
         }
