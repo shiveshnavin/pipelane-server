@@ -34,12 +34,7 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         }
 
         let js = input.additionalInputs.js
-        let prev = undefined
-        if (pipeWorkInstance.currentTaskIdx > 0) {
-            //@ts-ignore
-            prev = pipeWorkInstance.executedTasks[pipeWorkInstance.currentTaskIdx - 1]
-        }
-
+        let prev = input.last
         try {
             let output = await this.evalInScope(js, pipeWorkInstance, input, prev, axios)
             return [{
@@ -60,12 +55,7 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         input: InputWithPreviousInputs,
         jsInputString: string): Promise<string | undefined> {
         const placeholderRegex = /\${([^}]+)}/g;
-        let prev = undefined
-        if (pl.currentTaskIdx > 0) {
-            //@ts-ignore
-            prev = pl.executedTasks[pipeWorkInstance.currentTaskIdx - 1]
-        }
-
+        let prev = input.last
         //@ts-ignore
         let replacedString = jsInputString;
         const matches = jsInputString.matchAll(placeholderRegex);
