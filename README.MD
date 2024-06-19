@@ -10,6 +10,7 @@ Build the models
 
 ```
 cd pipelane-server
+yarn install
 npm run gen
 ```
 
