@@ -246,7 +246,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                 <Caption style={{
                     paddingBottom: theme.dimens.space.md
                 }}>
-                    You can also access pipelane data using contextual varialbles like pl (Pipelane Instance), input (Input to task, contains last and additionalInputs fields. AdditionalInputs is essentially what you are writing in the above box), prev (Output of previous task, same as input.last), axios (An instance of axios for making network calls if required). E.g. to access an output of a task by its index you can use pl.executedTasks[0].outputs[0].my_output_field similarly you can use prev[0].my_output_field to access previous output and input.additionalInputs.my_static_input to access the values entered in above box.
+                    You can access pipelane data using contextual varialbles like pl (Pipelane Instance), input (Input to task, contains last and additionalInputs fields. AdditionalInputs is essentially what you are writing in the above box), prev (Output of previous task, same as input.last), axios (An instance of axios for making network calls if required). E.g. to access an output of a task by its index you can use pl.executedTasks[0].outputs[0].my_output_field similarly you can use prev[0].my_output_field to access previous output and input.additionalInputs.my_static_input to access the values entered in above box.
                 </Caption>
                 <ConfirmationDialog
                     title="Delete ?"
