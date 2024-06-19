@@ -4,7 +4,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption } from "react-native-boxes";
+import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipetask, PipetaskExecution, TaskType } from "../../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
@@ -164,8 +164,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
         value: tt,
         title: tt,
     }))
-
-    console.log(task)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     return (
         <VBox>
             <TransparentCenterToolbar
@@ -174,9 +173,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     icon: 'trash',
                     title: 'Delete',
                     onClick: () => {
-                        api.deletePipelaneTask(task.pipelaneName, task.name).then(() => {
-                            router.navigate('/home/' + task.pipelaneName)
-                        }).catch(e => seterr(getGraphErrorMessage(e)))
+                        setShowDeleteConfirm(true)
                     }
                 }]}
                 title={`${task.pipelaneName}   ➤   ${task.name}`} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
@@ -251,7 +248,19 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                 }}>
                     You can also access pipelane data using contextual varialbles like pl (Pipelane Instance), input (Input to task, contains last and additionalInputs fields. AdditionalInputs is essentially what you are writing in the above box), prev (Output of previous task, same as input.last), axios (An instance of axios for making network calls if required). E.g. to access an output of a task by its index you can use pl.executedTasks[0].outputs[0].my_output_field similarly you can use prev[0].my_output_field to access previous output and input.additionalInputs.my_static_input to access the values entered in above box.
                 </Caption>
-
+                <ConfirmationDialog
+                    title="Delete ?"
+                    message=" This action is irreversible. Are you sure you want to delete this task?"
+                    onDismiss={() => {
+                        setShowDeleteConfirm(false)
+                    }}
+                    onConfirm={function (): void {
+                        api.deletePipelaneTask(task.pipelaneName, task.name).then(() => {
+                            router.navigate('/home/' + task.pipelaneName)
+                        }).catch(e => seterr(getGraphErrorMessage(e)))
+                    }}
+                    visible={showDeleteConfirm}
+                />
                 <ButtonView onPress={() => {
                     save(task)
                 }}>Save</ButtonView>
