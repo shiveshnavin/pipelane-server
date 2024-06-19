@@ -25,6 +25,12 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         return await eval(js)
     }
 
+    /**
+     * 
+     * @param pipeWorkInstance 
+     * @param input { additionalInputs: {js} }, No need to enclose js in this input with ${} as it is           understood that the value of field js is a javascript string
+     * @returns 
+     */
     async execute(pipeWorkInstance: PipeLane, input: EvaluateJsTaskInput): Promise<any[]> {
         if (!input.additionalInputs.js) {
             return [{
