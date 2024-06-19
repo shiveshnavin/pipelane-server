@@ -6,10 +6,16 @@ https://github.com/kelektiv/node-cron/issues/190
 
 ### Hosting
 
+Build the models
+
+```
+cd pipelane-server
+npm run gen
+```
+
 Host the app at
 
 ```
-
 creatPipelaneServer(
     variantConfig,
     db
