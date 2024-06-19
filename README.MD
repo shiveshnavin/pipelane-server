@@ -11,7 +11,6 @@ Build the models
 ```
 cd pipelane-server
 yarn install
-npm run gen
 ```
 
 Host the app at
