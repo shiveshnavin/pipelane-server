@@ -282,6 +282,7 @@ export function generatePipelaneResolvers(
                 await db.delete(TableName.PS_PIPELANE, { name: request.name })
                 await db.delete(TableName.PS_PIPELANE_TASK, { pipelaneName: request.name })
                 await db.delete(TableName.PS_PIPELANE_EXEC, { name: request.name })
+                cronScheduler.stopJob(request.name)
                 return 'SUCCESS'
             },
             async deletePipelaneTask(parent, request: { name: string, pipelaneName: string }) {
