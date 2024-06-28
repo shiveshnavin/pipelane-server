@@ -6,6 +6,7 @@ import * as NodeCron from 'node-cron'
 import { generatePipelaneResolvers } from "../graphql/pipelane";
 import AsyncLock from 'async-lock';
 import { EvaluateJsTask } from "../pipe-tasks/EvaluateJsTask";
+import axios from "axios";
 
 const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
 
@@ -123,6 +124,18 @@ export class CronScheduler {
             }
 
             const evalPlaceHolder = new EvaluateJsTask()
+            pipelaneInstance.setOnCheckCondition(async (pInst, task, input) => {
+                if (input.additionalInputs?.condition) {
+                    return await evalPlaceHolder.evalInScope(
+                        input.additionalInputs.condition,
+                        pInst,
+                        input,
+                        input.last,
+                        axios
+                    )
+                }
+                return true
+            })
             pipelaneInstance.setOnBeforeExecuteTask(async (pInst, task, inputProxy) => {
 
                 try {
