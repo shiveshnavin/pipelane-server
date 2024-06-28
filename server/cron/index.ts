@@ -285,10 +285,10 @@ export class CronScheduler {
                     }).catch(e => {
                         console.error('Error saving pipelane task', event, e.message)
                     })
-                } else if (event == 'TASK_FINISHED') {
+                } else if (event == 'TASK_FINISHED' || event == 'SKIPPED') {
                     let taskName = task.uniqueStepName || task.variantType
                     let taskId = `${plx.id}::${taskName}`
-                    let status = this.mapStatus(output)
+                    let status = this.mapStatus(event, output)
                     await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                         //@ts-ignore
                         data: {
@@ -307,7 +307,7 @@ export class CronScheduler {
                             data: {
                                 id: taskId,
                                 endTime: `${Date.now()}`,
-                                status: this.mapStatus(output),
+                                status: this.mapStatus(event, output),
                                 output: 'Unsupported Output'
                             }
                         }).catch(e => {
@@ -330,8 +330,9 @@ export class CronScheduler {
         pipelaneInstance.setListener(pipelaneListener)
     }
 
-    public mapStatus(output: ({ status: Status } & any)[]) {
-
+    public mapStatus(event, output: ({ status: Status } & any)[]): Status {
+        if (event == 'SKIPPED')
+            return Status.Skipped
         let isAtleaseOneFail = (output as any[] || []).find(o => !o.status)
         let isAtleaseOneSuccess = (output as any[] || []).find(o => o.status)
         let status = Status.Success

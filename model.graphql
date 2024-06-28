@@ -111,6 +111,7 @@ enum Status {
   PAUSED
   FAILED
   PARTIAL_SUCCESS
+  SKIPPED
 }
 
 type PipelaneMeta {
