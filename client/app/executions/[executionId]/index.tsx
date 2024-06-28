@@ -6,7 +6,7 @@ import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
 import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage } from "react-native-boxes";
 import { PipelaneExecution, PipetaskExecution } from "../../../../gen/model";
-import { prettyJson } from "@/common/utils/ReactUtils";
+import { prettyJson } from "../../../common/utils/ReactUtils";
 
 
 export default function QueryPage() {
@@ -123,8 +123,13 @@ export default function QueryPage() {
                                     },
                                     flexRatio: [0, 8, 3],
                                     action: (
-                                        <StatusIcon status={item.status
-                                        } />
+                                        <StatusIcon
+                                            status={item.status}
+                                            colorMap={[{
+                                                color: theme.colors.warning,
+                                                icon: "ban",
+                                                status: "SKIPPED"
+                                            }]} />
                                     ),
                                     title: item.name,
                                     body: (`${new Date(parseInt(item.startTime as string)).toLocaleString()}` + (item.endTime ? ` -> ${new Date(parseInt(item.endTime as string)).toLocaleString()}` : ''))

@@ -3,8 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useContext } from "react";
 import { AlertMessage, ButtonView, Center, Icon, SimpleDatalistView, TextView, ThemeContext, TransparentCenterToolbar, VPage, StatusIcon } from "react-native-boxes";
 import { PipelaneExecution } from "../../../gen/model";
-import { AppContext } from "@/components/Context";
-import { getGraphErrorMessage } from "@/common/api";
+import { AppContext } from "../../components/Context";
+import { getGraphErrorMessage } from "../../common/api";
 
 
 export default function ExecutionsPage() {
@@ -38,7 +38,7 @@ export default function ExecutionsPage() {
 }
 
 export function PipeExecutionsView({ executions, router }: { executions: PipelaneExecution[], router: any }) {
-
+    const theme = useContext(ThemeContext)
     return (
         <SimpleDatalistView
             loading={executions == undefined}
@@ -51,7 +51,15 @@ export function PipeExecutionsView({ executions, router }: { executions: Pipelan
                     },
                     flexRatio: [0, 8, 2],
                     action: (
-                        <StatusIcon status={item.status} />
+                        <StatusIcon
+                            status={item.status}
+                            colorMap={[{
+                                color: theme.colors.warning,
+                                icon: "ban",
+                                status: "SKIPPED"
+                            }]}
+
+                        />
                     ),
                     title: item.id,
                     body: (`${new Date(parseInt(item.startTime as string)).toLocaleString()}` + (item.endTime ? ` -> ${new Date(parseInt(item.endTime as string)).toLocaleString()}` : ''))
