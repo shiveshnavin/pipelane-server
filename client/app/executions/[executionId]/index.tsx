@@ -26,7 +26,7 @@ export default function QueryPage() {
             } else if (!stop) {
                 setTimeout(() => {
                     refresh(true)
-                }, 1000)
+                }, 5000)
             }
         }).catch(e => {
             setErr(getGraphErrorMessage(e))
@@ -94,20 +94,6 @@ export default function QueryPage() {
                                         <TextView>{new Date(parseInt(execution.endTime as string)).toLocaleString()}</TextView>
                                     </HBox>
                                 }
-                                <CompositeTextInputView
-                                    editable={false}
-                                    placeholder="Outputs"
-                                    textInputProps={{
-                                        numberOfLines: 10,
-                                        multiline: true,
-                                        style: {
-                                            textAlignVertical: 'top',
-                                            verticalAlign: 'top',
-                                            alignContent: 'flex-start',
-                                        }
-                                    }}
-                                    value={prettyJson(execution.output) || ''}
-                                    initialText={prettyJson(execution.output) || ''} />
 
                             </VBox>
                         </CardView>
@@ -139,6 +125,28 @@ export default function QueryPage() {
                                     body: (`${new Date(parseInt(item.startTime as string)).toLocaleString()}` + (item.endTime ? ` -> ${new Date(parseInt(item.endTime as string)).toLocaleString()}` : ''))
                                 }
                             }} />
+
+                        <Subtitle style={{
+                            fontWeight: '900',
+                            paddingStart: theme.dimens.space.lg,
+                        }}>Output</Subtitle>
+                        <CardView>
+                            <CompositeTextInputView
+                                editable={false}
+                                placeholder="Outputs"
+                                textInputProps={{
+                                    numberOfLines: 10,
+                                    multiline: true,
+                                    style: {
+                                        textAlignVertical: 'top',
+                                        verticalAlign: 'top',
+                                        alignContent: 'flex-start',
+                                    }
+                                }}
+                                value={prettyJson(execution.output) || ''}
+                                initialText={prettyJson(execution.output) || ''} />
+
+                        </CardView>
                         <BottomSheet
                             title={taskDetails?.name}
                             visible={taskDetails != undefined}
