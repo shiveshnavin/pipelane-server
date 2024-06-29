@@ -22,7 +22,7 @@ export default function QueryPage() {
         api.pipelaneExecution(executionId as string).then(data => {
             setExecution(data.data.PipelaneExecution)
             if (data.data.PipelaneExecution.status == 'IN_PROGRESS') {
-                setTimeout(refresh, 5000)
+                setTimeout(refresh, 500)
             }
         }).catch(e => {
             setErr(getGraphErrorMessage(e))
