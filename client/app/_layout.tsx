@@ -37,7 +37,7 @@ function Main() {
       axios.get('/pipelane/config').then((respo) => {
         let api;
         if (__DEV__) {
-          api = createApiClient('http://localhost:8080')
+          api = createApiClient('http://localhost:4001')
         }
         else {
           api = createApiClient(respo.data.host)
