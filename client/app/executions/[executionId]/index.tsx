@@ -18,11 +18,15 @@ export default function QueryPage() {
     const [err, setErr] = useState(undefined)
     const api = context.context.api
     const [taskDetails, setTaskDetails] = useState<PipetaskExecution | undefined>(undefined)
-    function refresh() {
+    function refresh(stop?: Boolean) {
         api.pipelaneExecution(executionId as string).then(data => {
             setExecution(data.data.PipelaneExecution)
             if (data.data.PipelaneExecution.status == 'IN_PROGRESS') {
                 setTimeout(refresh, 500)
+            } else if (!stop) {
+                setTimeout(() => {
+                    refresh(true)
+                }, 1000)
             }
         }).catch(e => {
             setErr(getGraphErrorMessage(e))
