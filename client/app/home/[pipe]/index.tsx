@@ -80,7 +80,7 @@ export default function PipelanePage() {
                         delete pipe.__typename
                         pipe.retryCount = parseInt(`${pipe.retryCount || 0}`)
                         pipe.executionsRetentionCount = parseInt(`${pipe.executionsRetentionCount || 5}`)
-                        api.upsertPipelane({ ...pipe, tasks: undefined }, pipeName as string).then(result => {
+                        api.upsertPipelane({ ...pipe }, pipeName as string).then(result => {
                             setPipe(result.data.createPipelane)
                             if (result.data.createPipelane.name != pipeName) {
                                 router.navigate(`/home/${result.data.createPipelane.name}`)
@@ -121,6 +121,9 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
     function getTasks() {
         api.getPipelaneTasks(pipe.name as string).then(result => {
             pipe.tasks = result.data.pipelaneTasks
+            pipe.tasks?.forEach(task => {
+                delete task?.__typename
+            })
             forceUpdate()
         })
     }
@@ -292,14 +295,36 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                         }}>
                             <SimpleDatalistView
                                 loading={pipe.tasks == undefined}
-                                items={(pipe.tasks || []) as any}
+                                items={(pipe.tasks || []).sort((a, b) => (a?.step || 0) - (b?.step || 0)) as any}
                                 itemAdapter={(item: Pipetask) => {
                                     return {
                                         flexRatio: [0, 9, 1],
                                         action: (
                                             <Icon
+                                                onPress={() => {
+                                                    const index = pipe.tasks?.indexOf(item);
+                                                    if (index !== undefined && index >= 0) {
+                                                        const updatedTasks = [...pipe.tasks!];
+                                                        if (index > 0) {
+                                                            updatedTasks.splice(index, 1); // Remove the item
+                                                            updatedTasks.splice(index - 1, 0, item); // Insert it one position to the left
+                                                        } else {
+                                                            // Move the item to the bottom
+                                                            updatedTasks.splice(index, 1); // Remove the item
+                                                            updatedTasks.push(item); // Add it to the end
+                                                        }
+                                                        // Update the steps to match their new positions
+                                                        updatedTasks.forEach((task, idx) => {
+                                                            task!.step = idx;
+                                                        });
+                                                        setPipe({
+                                                            ...pipe,
+                                                            tasks: updatedTasks
+                                                        });
+                                                    }
+                                                }}
                                                 color={theme.colors.text}
-                                                name="arrow-right" />
+                                                name="arrow-up" />
                                         ),
                                         title: item.name + (item.active ? '' : ' (Disabled)'),
                                         body: `Type: ${item.taskVariantName} (${item.taskTypeName})`,
