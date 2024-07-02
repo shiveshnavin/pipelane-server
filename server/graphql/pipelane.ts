@@ -54,7 +54,6 @@ export function generatePipelaneResolvers(
                 }).then(async (executions) => {
                     if (executions && executions.length > 0) {
                         executions = executions.slice(0, Math.round(count / 2))
-                        console.log('Trimming the oldest execution for ' + pipe.name, 'from', executions.map(e => e.id))
                         executions.forEach((e) => {
                             db.delete(TableName.PS_PIPELANE_EXEC, {
                                 id: e.id
