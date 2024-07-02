@@ -21,7 +21,8 @@ ui.all('*',
 
 export async function creatPipelaneServer(
   variantConfig: TaskVariantConfig,
-  persistance?: MultiDbORM | MySQLDBConfig
+  persistance?: MultiDbORM | MySQLDBConfig,
+  pipelaneLogLevel: 0 | 1 | 2 | 3 | 4 | 5 = 2
 ) {
 
   let db
@@ -37,7 +38,7 @@ export async function creatPipelaneServer(
     throw new Error('Unable to intialize pipelane server. persistance must be either and instance of MultiDbORM or MySQLDBConfig')
   }
 
-  const cronScheduler = new CronScheduler(variantConfig)
+  const cronScheduler = new CronScheduler(variantConfig, pipelaneLogLevel)
   const resolvers = generateResolvers(db, variantConfig, cronScheduler)
   const pipelaneResolver = generatePipelaneResolvers(db, variantConfig)
   pipelaneResolver.Query.pipelanes().then(pls => {

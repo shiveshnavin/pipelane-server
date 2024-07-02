@@ -17,9 +17,11 @@ export class CronScheduler {
     currentExecutions: PipeLane[] = []
     pipelaneResolver = pipelaneResolver
     variantConfig: TaskVariantConfig
+    pipelaneLogLevel: 0 | 1 | 2 | 3 | 4 | 5
 
-    constructor(variantConfig: TaskVariantConfig) {
+    constructor(variantConfig: TaskVariantConfig, pipelaneLogLevel?: 0 | 1 | 2 | 3 | 4 | 5) {
         this.variantConfig = variantConfig
+        this.pipelaneLogLevel = pipelaneLogLevel || 2
     }
 
     async getPipelaneDefinition(pipeName): Promise<PipelaneSchedule | undefined> {
@@ -115,6 +117,7 @@ export class CronScheduler {
         }
         if (pl.active) {
             let pipelaneInstance = new PipeLane(this.variantConfig)
+            pipelaneInstance.logLevel = this.pipelaneLogLevel
             let pipelaneInstName = `${pl.name}-${Date.now()}`
             pipelaneInstance.enableCheckpoints(pipelaneInstName, `pipelane/${pipelaneInstName}`)
             let invalidTasksFromSchedule = pl.tasks?.filter(pt => this.variantConfig[pt.taskTypeName] == undefined).map(t => t.taskTypeName)
