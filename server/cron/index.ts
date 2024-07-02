@@ -21,7 +21,7 @@ export class CronScheduler {
 
     constructor(variantConfig: TaskVariantConfig, pipelaneLogLevel?: 0 | 1 | 2 | 3 | 4 | 5) {
         this.variantConfig = variantConfig
-        this.pipelaneLogLevel = pipelaneLogLevel || 2
+        this.pipelaneLogLevel = pipelaneLogLevel != undefined ? pipelaneLogLevel : 2
     }
 
     async getPipelaneDefinition(pipeName): Promise<PipelaneSchedule | undefined> {

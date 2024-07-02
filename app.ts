@@ -8,7 +8,7 @@ import express from 'express'
 const app = express()
 const port = process.env.PORT || 4001
 const dbConfig: MySQLDBConfig = JSON.parse(readFileSync(path.join(__dirname, 'creds.json')).toString())
-creatPipelaneServer(VariantConfig, dbConfig).then(pipelane => {
+creatPipelaneServer(VariantConfig, dbConfig, 2).then(pipelane => {
     app.use('/pipelane', pipelane)
     app.use('/', (req, res) => res.redirect('/pipelane'))
     app.listen(port, () => {
