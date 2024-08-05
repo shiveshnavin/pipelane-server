@@ -4,6 +4,8 @@
 gen/
 .vscode
 test.db
+*.db
+*.csv
 *.sqlite
 creds.json
 node_modules/
