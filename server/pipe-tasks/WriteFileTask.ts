@@ -52,6 +52,7 @@ export class WriteFileTask extends PipeTask<any, any> {
 
         return [{
             file,
+            lines:jsonData.length,
             status: true
         }];
 
