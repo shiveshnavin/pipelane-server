@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "start": "ts-node-dev --ignore-watch client --watch *.graphql app.ts",
+    "serve": "ts-node app.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "gen": "node gql-ts.js",
     "postinstall": "npm run gen && cd client && yarn install && npm run build",
