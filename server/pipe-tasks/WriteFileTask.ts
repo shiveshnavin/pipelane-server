@@ -18,7 +18,7 @@ export class WriteFileTask extends PipeTask<any, any> {
     }
     async execute(pipeWorkInstance: PipeLane, inputs: any): Promise<any[]> {
 
-        let jsonData = inputs.last;
+        let jsonData = inputs.last.filter(item => item.status == true);
         let format = inputs.additionalInputs?.format || "csv";
         let file = inputs.additionalInputs?.file || `${pipeWorkInstance.name}.${format}`;
         let incremental = inputs.additionalInputs?.incremental || true;
@@ -52,7 +52,7 @@ export class WriteFileTask extends PipeTask<any, any> {
 
         return [{
             file,
-            lines:jsonData.length,
+            lines: jsonData.length,
             status: true
         }];
 
