@@ -168,7 +168,7 @@ export class CronScheduler {
                     variantType: tkd.taskVariantName,
                     additionalInputs: input
                 }
-                if (tkd.isParallel) {
+                if (tkd.isParallel === true) {
                     pipelaneInstance.parallelPipe(pltConfig)
                 } else {
                     pipelaneInstance.pipe(pltConfig)
@@ -295,6 +295,7 @@ export class CronScheduler {
                     let taskName = task.uniqueStepName || task.variantType
                     let taskId = `${plx.id}::${taskName}`
                     let status = this.mapStatus(event, output)
+                    const jsonStr = JSON.stringify(output)
                     await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                         //@ts-ignore
                         data: {
@@ -304,20 +305,32 @@ export class CronScheduler {
                             id: taskId,
                             endTime: `${Date.now()}`,
                             status: status,
-                            output: JSON.stringify(output)
+                            output: jsonStr
                         }
-                    }).catch(async (e) => {
-                        console.error('Error saving pipelane task. Trying to save without output.')
+                    }).catch(async (ebase) => {
+                        console.error('Error saving pipelane task. Trying to save with base64 output.')
+                        const base64op = 'base64;' + Buffer.from(jsonStr).toString('base64')
                         await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                             //@ts-ignore
                             data: {
                                 id: taskId,
                                 endTime: `${Date.now()}`,
                                 status: this.mapStatus(event, output),
-                                output: 'Unsupported Output'
+                                output: base64op
                             }
-                        }).catch(e => {
-                            console.error('Error saving pipelane.', event, e.message)
+                        }).catch(async (e) => {
+                            console.error('Error saving pipelane task. Trying to save without output.')
+                            await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
+                                //@ts-ignore
+                                data: {
+                                    id: taskId,
+                                    endTime: `${Date.now()}`,
+                                    status: this.mapStatus(event, output),
+                                    output: 'Unsupported Output'
+                                }
+                            }).catch(e => {
+                                console.error('Error saving pipelane.', event, e.message)
+                            })
                         })
                     })
                 } else if (event == 'COMPLETE') {
@@ -358,8 +371,10 @@ export class CronScheduler {
     getNextRun(cronExpression: string) {
         let timestamp = new Date()
         const adjustedTimestamp = new Date(timestamp.getTime() - 1000);
+        const timeZone = ['Asia/Calcutta', 'Asia/Kolkata']
+            .includes(Intl.DateTimeFormat().resolvedOptions().timeZone) ? undefined : 'Asia/Kolkata'
         const cronJob = new Cron(cronExpression, {
-            timezone: 'Asia/Kolkata'
+            timezone: timeZone
         });
         const nextRunTime = cronJob.nextRun(adjustedTimestamp);
         return nextRunTime
