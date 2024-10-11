@@ -11,6 +11,7 @@ export type PipeManagerInput = {
     status: boolean
     trigger_inputs?: any
     endpoint: string
+    message?: string
 }
 
 export class PipeManagerTask extends PipeTask<any, any> {
@@ -95,6 +96,7 @@ export class PipeManagerTask extends PipeTask<any, any> {
                     return pipe
                 }).catch(e => {
                     pipe.status = false
+                    pipe.message = e.message
                     return pipe
                 }))
 
