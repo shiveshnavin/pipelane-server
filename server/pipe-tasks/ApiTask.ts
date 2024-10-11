@@ -29,6 +29,7 @@ export class ApiTask extends PipeTask<any, any> {
                 return [{
                     status: response.status < 300,
                     statusCode: response.status,
+                    headers: response.headers,
                     data: response?.data
                 }]
             }
@@ -38,6 +39,7 @@ export class ApiTask extends PipeTask<any, any> {
                 status: false,
                 message: e.message,
                 statusCode: e.response?.status,
+                headers: e?.response.headers,
                 data: e.response?.data
             }]
         }

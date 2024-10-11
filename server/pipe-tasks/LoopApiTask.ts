@@ -15,8 +15,8 @@ export class LoopApiTask extends PipeTask<any, any> {
     kill(): boolean {
         return true
     }
-    
-    
+
+
     async execute(pipeWorkInstance: PipeLane, inputs: any): Promise<any[]> {
         const last = inputs.last;
         const outputs = [];
@@ -24,7 +24,7 @@ export class LoopApiTask extends PipeTask<any, any> {
             tokensPerInterval: inputs.additionalInputs?.rate || 10,
             interval: 'second'
         });
-    
+
         // Function to handle each request with rate limiting
         const handleRequest = async (options) => {
             await limiter.removeTokens(1);
@@ -33,6 +33,7 @@ export class LoopApiTask extends PipeTask<any, any> {
                 return {
                     status: response.status < 300,
                     statusCode: response.status,
+                    headers: response.headers,
                     data: response?.data
                 };
             } catch (e) {
@@ -41,18 +42,19 @@ export class LoopApiTask extends PipeTask<any, any> {
                     status: false,
                     message: e.message,
                     statusCode: e.response?.status,
+                    headers: e?.response.headers,
                     data: e.response?.data
                 };
             }
         };
-    
+
         // Create a queue to manage parallel requests
         const promises = last.map(options => handleRequest(options));
-    
+
         // Execute requests in parallel with rate limiting
         const results = await Promise.all(promises);
         outputs.push(...results);
-    
+
         return outputs;
     }
 

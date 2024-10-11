@@ -4,6 +4,7 @@ import { generateTaskTypeResolvers } from "./tasktypes"
 import { generatePipelaneResolvers } from "./pipelane"
 import _ from 'lodash'
 import { CronScheduler } from "../cron"
+
 export function generateResolvers(
     db: MultiDbORM,
     variantConfig: TaskVariantConfig,

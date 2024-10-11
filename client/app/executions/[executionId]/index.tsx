@@ -105,7 +105,8 @@ export default function QueryPage() {
                             style={{
                                 padding: theme.dimens.space.md,
                             }}
-                            items={execution?.tasks || []} itemAdapter={(item: PipetaskExecution, idx) => {
+                            items={execution?.tasks || []}
+                            itemAdapter={(item: PipetaskExecution, idx) => {
 
                                 return {
                                     onPress: () => {
@@ -121,7 +122,9 @@ export default function QueryPage() {
                                                 status: "SKIPPED"
                                             }]} />
                                     ),
-                                    title: item.name,
+                                    title: (<Link style={{
+                                        color: theme.colors.accent
+                                    }} href={`/home/${execution?.name}/${item.name}`}>{execution?.name}</Link>) as any,
                                     body: (`${new Date(parseInt(item.startTime as string)).toLocaleString()}` + (item.endTime ? ` -> ${new Date(parseInt(item.endTime as string)).toLocaleString()}` : ''))
                                 }
                             }} />

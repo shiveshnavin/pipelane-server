@@ -4,10 +4,11 @@ import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog } from "react-native-boxes";
+import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog, Box, Center } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipetask, PipetaskExecution, TaskType } from "../../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
+import Editor from "@monaco-editor/react";
 
 export default function PipeTaskPage() {
     const theme = useContext(ThemeContext)
@@ -214,7 +215,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                         id: tt.type,
                         value: tt.type,
                         title: tt.type,
-                    }) || [])} />
+                    })) || []} />
                 <DropDownView
                     title="Task Variant"
                     forceDialogSelectOnWeb={true}
@@ -225,7 +226,33 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     selectedId={task.taskVariantName}
                     //@ts-ignore
                     options={taskVariants} />
-                <CompositeTextInputView
+                <Center style={{
+                    borderWidth: 0.1,
+                    borderColor: theme.colors.caption,
+                    borderRadius: 10,
+                    padding: 3,
+                    margin: theme.dimens.space.sm
+                }}>
+                    <Editor
+                        onChange={(t: Maybe<string> | undefined) => {
+                            task.input = t
+                            forceUpdate()
+                        }}
+                        height="30vh"
+                        defaultLanguage="json"
+                        defaultValue={task.input as string}
+                        theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
+                        options={{
+                            tabSize: 2,
+                            formatOnPaste: true,
+                            formatOnType: true,
+                            lineNumbers: "off",
+                            wordWrap: "on",
+                            minimap: { enabled: false }
+                        }}
+                    />
+                </Center>
+                {/* <CompositeTextInputView
                     icon="close"
                     placeholder="Inputs"
                     textInputProps={{
@@ -242,7 +269,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                         forceUpdate()
                     }}
                     value={task.input as string}
-                    initialText={task.input as string} />
+                    initialText={task.input as string} /> */}
                 <Caption style={{
                     paddingBottom: theme.dimens.space.md
                 }}>
