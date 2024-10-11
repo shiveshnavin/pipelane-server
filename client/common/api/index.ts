@@ -79,7 +79,7 @@ export class Api {
             }
         })
     }
-    upsertPipelane(pipe: CreatePipelanePayload, oldPipeName: String) {
+    upsertPipelane(pipe: CreatePipelanePayload, oldPipeName?: String) {
         this.clearCache()
         return this.graph.mutate({
             mutation: gql`mutation Mutation($data: CreatePipelanePayload!, $oldPipeName: ID) {
