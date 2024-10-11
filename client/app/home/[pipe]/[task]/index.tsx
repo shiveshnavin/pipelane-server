@@ -252,24 +252,6 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                         }}
                     />
                 </Center>
-                {/* <CompositeTextInputView
-                    icon="close"
-                    placeholder="Inputs"
-                    textInputProps={{
-                        numberOfLines: 10,
-                        multiline: true,
-                        style: {
-                            textAlignVertical: 'top',
-                            verticalAlign: 'top',
-                            alignContent: 'flex-start',
-                        }
-                    }}
-                    onChangeText={(t: Maybe<string> | undefined) => {
-                        task.input = t
-                        forceUpdate()
-                    }}
-                    value={task.input as string}
-                    initialText={task.input as string} /> */}
                 <Caption style={{
                     paddingBottom: theme.dimens.space.md
                 }}>

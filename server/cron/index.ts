@@ -128,6 +128,9 @@ export class CronScheduler {
 
             const evalPlaceHolder = new EvaluateJsTask()
             pipelaneInstance.setOnCheckCondition(async (pInst, task, input) => {
+                if (input.additionalInputs?.condition === false) {
+                    return input.additionalInputs?.condition
+                }
                 if (input.additionalInputs?.condition) {
                     return await evalPlaceHolder.evalInScope(
                         input.additionalInputs.condition,

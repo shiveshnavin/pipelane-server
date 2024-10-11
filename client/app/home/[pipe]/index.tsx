@@ -3,11 +3,12 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, ButtonView, TertiaryButtonView } from "react-native-boxes";
+import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, ButtonView, TertiaryButtonView, Center } from "react-native-boxes";
 import { AlertMessage, Spinner, ConfirmationDialog } from "react-native-boxes";
 import { Maybe, Pipelane, PipelaneExecution, Pipetask } from "../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
 import { PipeExecutionsView } from "@/app/executions";
+import { Editor } from "@monaco-editor/react";
 
 export default function PipelanePage() {
     const theme = useContext(ThemeContext)
@@ -264,26 +265,32 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                         }}
                     />
 
-                    <CompositeTextInputView
-                        icon="close"
-                        placeholder="Inputs"
-                        numberOfLines={10}
-                        textInputProps={{
-                            numberOfLines: 10,
-                            multiline: true,
-                            style: {
-                                textAlignVertical: 'top',
-                                verticalAlign: 'top',
-                                alignContent: 'flex-start',
-                            }
-                        }}
-                        onChangeText={(t: Maybe<string> | undefined) => {
-                            pipe.input = t
-                            forceUpdate()
-                        }}
-                        value={pipe.input as string}
-                        initialText={pipe.input as string} />
-
+                    <Center style={{
+                        borderWidth: 0.1,
+                        borderColor: theme.colors.caption,
+                        borderRadius: 10,
+                        padding: 3,
+                        margin: theme.dimens.space.sm
+                    }}>
+                        <Editor
+                            onChange={(t: Maybe<string> | undefined) => {
+                                pipe.input = t
+                                forceUpdate()
+                            }}
+                            height="30vh"
+                            defaultLanguage="json"
+                            defaultValue={pipe.input as string}
+                            theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
+                            options={{
+                                tabSize: 2,
+                                formatOnPaste: true,
+                                formatOnType: true,
+                                lineNumbers: "off",
+                                wordWrap: "on",
+                                minimap: { enabled: false }
+                            }}
+                        />
+                    </Center>
                 </Expand>
             </CardView>
             {

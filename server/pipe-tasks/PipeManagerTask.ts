@@ -72,6 +72,7 @@ export class PipeManagerTask extends PipeTask<any, any> {
                 "variables": { "name": pipe.pipeName, "input": JSON.stringify(pipe.trigger_inputs || {}) }, "query": "mutation executePipelane($name: ID!, $input: String!) {\n  executePipelane(name: $name, input: $input) {\n    id\n    __typename\n  }\n}"
             }
         }
+        return req
     }
 
     async execute(pipeWorkInstance: PipeLane, input: any): Promise<any[]> {
@@ -92,8 +93,8 @@ export class PipeManagerTask extends PipeTask<any, any> {
                 }
                 let request: any = this.getConfig(pipe)
                 promises.push(axios(request).then(res => {
-                    pipe.status = true
-                    return pipe
+                    res.data.status = true
+                    return res.data
                 }).catch(e => {
                     pipe.status = false
                     pipe.message = e.message
