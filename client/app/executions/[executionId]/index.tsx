@@ -124,7 +124,7 @@ export default function QueryPage() {
                                     ),
                                     title: (<Link style={{
                                         color: theme.colors.accent
-                                    }} href={`/home/${execution?.name}/${item.name}`}>{execution?.name}</Link>) as any,
+                                    }} href={`/home/${execution?.name}/${item.name}`}>{item?.name}</Link>) as any,
                                     body: (`${new Date(parseInt(item.startTime as string)).toLocaleString()}` + (item.endTime ? ` -> ${new Date(parseInt(item.endTime as string)).toLocaleString()}` : ''))
                                 }
                             }} />
