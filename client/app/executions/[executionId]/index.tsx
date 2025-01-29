@@ -146,8 +146,8 @@ export default function QueryPage() {
                                         alignContent: 'flex-start',
                                     }
                                 }}
-                                value={prettyJson(execution.output) || ''}
-                                initialText={prettyJson(execution.output) || ''} />
+                                value={prettyJson(execution.output!) || ''}
+                                initialText={prettyJson(execution.output!) || ''} />
 
                         </CardView>
                         <BottomSheet
@@ -170,8 +170,8 @@ export default function QueryPage() {
                                             alignContent: 'flex-start',
                                         }
                                     }}
-                                    value={prettyJson(taskDetails?.output) || ''}
-                                    initialText={prettyJson(taskDetails?.output) || ''} />
+                                    value={prettyJson(taskDetails?.output!) || ''}
+                                    initialText={prettyJson(taskDetails?.output!) || ''} />
 
                             </VBox>
 
