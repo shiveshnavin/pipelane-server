@@ -1,4 +1,11 @@
-export function prettyJson(input: any): string {
+import base64 from "base64-js";
+
+export function prettyJson(input: string): string {
+
+    if(input?.startsWith("base64")){
+        input = input.replace('base64;','')
+        input = new TextDecoder().decode(base64.toByteArray(input));
+    }
 
     try {
         let output = '';
