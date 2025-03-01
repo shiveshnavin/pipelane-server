@@ -123,16 +123,16 @@ export function generatePipelaneResolvers(
                   return Boolean(parent.active);
             },
              isParallel: (parent: any)=>{
-                 if (typeof parent.active === "boolean") {
-                    return parent.active; 
+                 if (typeof parent.isParallel === "boolean") {
+                    return parent.isParallel; 
                   }
-                  if (typeof parent.active === "string") {
-                    return parent.active.toLowerCase() === "true"; 
+                  if (typeof parent.isParallel === "string") {
+                    return parent.isParallel.toLowerCase() === "true"; 
                   }
-                  if (typeof parent.active === "number") {
-                    return parent.active === 1; 
+                  if (typeof parent.isParallel === "number") {
+                    return parent.isParallel === 1; 
                   }
-                  return Boolean(parent.active);
+                  return Boolean(parent.isParallel);
             }
         },
         Pipelane: {
