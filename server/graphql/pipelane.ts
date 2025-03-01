@@ -110,7 +110,7 @@ export function generatePipelaneResolvers(
             }
         },
         Pipelane: {
-            active: (parent: Pipelane)=>{
+            active: (parent: any)=>{
                  if (typeof parent.active === "boolean") {
                     return parent.active; 
                   }
