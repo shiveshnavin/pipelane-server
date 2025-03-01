@@ -110,6 +110,18 @@ export function generatePipelaneResolvers(
             }
         },
         Pipelane: {
+            active: (parent: Pipelane)=>{
+                 if (typeof parent.active === "boolean") {
+                    return parent.active; 
+                  }
+                  if (typeof parent.active === "string") {
+                    return parent.active.toLowerCase() === "true"; 
+                  }
+                  if (typeof parent.active === "number") {
+                    return parent.active === 1; 
+                  }
+                  return Boolean(parent.active);
+            },
             nextRun: (parent: Pipelane) => cronScheduler.getNextRun(parent.schedule).toLocaleString('en-IN', {
                 timeZone: 'Asia/Kolkata'
             }),
