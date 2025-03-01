@@ -121,6 +121,18 @@ export function generatePipelaneResolvers(
                     return parent.active === 1; 
                   }
                   return Boolean(parent.active);
+            },
+             isParallel: (parent: any)=>{
+                 if (typeof parent.active === "boolean") {
+                    return parent.active; 
+                  }
+                  if (typeof parent.active === "string") {
+                    return parent.active.toLowerCase() === "true"; 
+                  }
+                  if (typeof parent.active === "number") {
+                    return parent.active === 1; 
+                  }
+                  return Boolean(parent.active);
             }
         },
         Pipelane: {
