@@ -57,7 +57,7 @@ export class ShellTask extends PipeTask<any, any> {
                     if (error !== null) {
                         resolve([{
                             status: false,
-                            message: 'Error in exec: ' + error
+                            message: 'Error in exec: ' + error + ' : ' + stderr
                         }])
                     } else {
                         resolve([{
