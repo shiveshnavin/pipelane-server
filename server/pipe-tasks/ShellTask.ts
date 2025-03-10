@@ -51,7 +51,7 @@ export class ShellTask extends PipeTask<any, any> {
 
         return new Promise((resolve, reject) => {
 
-            console.log('Executing command:', `bash -c "source ~/.bashrc && ${cmd}" `)
+            console.log('Executing command:', `bash -c "source ~/.bash_profile && ${cmd}" `)
             exec(cmd,
                 (error, stdout, stderr) => {
                     if (error !== null) {
