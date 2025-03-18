@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Theme, ThemeContext, Colors, TextView, Spinner } from "react-native-boxes";
+import { Theme, ThemeContext, Colors, TextView, Spinner, DarkColors } from "react-native-boxes";
 import { loadAsync } from "expo-font";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppContext, ContextData } from "../components/Context";
@@ -21,9 +21,7 @@ function Main() {
   }
 
   context.appname = 'client'
-  const theme = new Theme('client', Object.assign(Colors, {
-    background: '#F5F5F5'
-  }))
+  const theme = new Theme('client', Object.assign(DarkColors))
   theme.insets = useSafeAreaInsets()
   const [init, setInit] = useState(false)
 
