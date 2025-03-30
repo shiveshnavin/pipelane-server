@@ -141,6 +141,7 @@ export default function QueryPage() {
                                     numberOfLines: 10,
                                     multiline: true,
                                     style: {
+                                        color: theme.colors.text,
                                         textAlignVertical: 'top',
                                         verticalAlign: 'top',
                                         alignContent: 'flex-start',
@@ -165,6 +166,7 @@ export default function QueryPage() {
                                         numberOfLines: 10,
                                         multiline: true,
                                         style: {
+                                            color: theme.colors.text,
                                             textAlignVertical: 'top',
                                             verticalAlign: 'top',
                                             alignContent: 'flex-start',
