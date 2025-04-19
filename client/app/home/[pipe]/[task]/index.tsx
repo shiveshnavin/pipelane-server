@@ -272,6 +272,8 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                 </Caption>
                 <ConfirmationDialog
                     title="Delete ?"
+                    confirmText="Confirm"
+                    cancelText="Cancel"
                     message=" This action is irreversible. Are you sure you want to delete this task?"
                     onDismiss={() => {
                         setShowDeleteConfirm(false)

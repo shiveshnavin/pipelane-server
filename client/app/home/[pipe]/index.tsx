@@ -184,6 +184,8 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                 }} />
             <ConfirmationDialog
                 title="Delete ?"
+                confirmText="Confirm"
+                cancelText="Cancel"
                 message=" This action is irreversible. Are you sure you want to delete this pipelane and all its tasks and executions?"
                 onDismiss={() => {
                     setShowDeleteConfirm(false)
