@@ -97,7 +97,7 @@ function Main() {
                     height: '100%',
                     margin: 0,
                     padding: 0,
-                    marginBottom: bottombarHeight
+                    paddingBottom: bottombarHeight
                   }}>
                     <Slot />
                   </KeyboardAvoidingScrollView>
