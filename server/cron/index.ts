@@ -158,7 +158,7 @@ export class CronScheduler {
                 return inputProxy
             })
             for (const tkd of pl.tasks.filter(t => t.active)) {
-                let input = {}
+                let input = {} as any
                 try {
                     input = JSON.parse(tkd.input)
                 } catch (e) {
@@ -168,6 +168,10 @@ export class CronScheduler {
                 let pltConfig: VariablePipeTask = {
                     uniqueStepName: tkd.name,
                     type: tkd.taskTypeName,
+                    isParallel: tkd.isParallel,
+                    numberOfShards: input.numberOfShards,
+                    itemsPerShard: input.itemsPerShard,
+                    cutoffLoadThreshold: input.cutoffLoadThreshold,
                     variantType: tkd.taskVariantName,
                     additionalInputs: input
                 }
