@@ -194,6 +194,19 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                         }}
                     />
                 </HBox>
+                <HBox style={{
+                    padding: theme.dimens.space.md,
+                    justifyContent: 'space-between'
+                }}>
+                    <TextView>Parallel execution</TextView>
+                    <SwitchView
+                        value={task.isParallel as boolean}
+                        onValueChange={(newV) => {
+                            task.isParallel = newV
+                            forceUpdate()
+                        }}
+                    />
+                </HBox>
                 <CompositeTextInputView
                     icon="close"
                     placeholder="Name"
