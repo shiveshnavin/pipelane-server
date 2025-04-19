@@ -44,7 +44,7 @@ type Pipetask {
   name: ID!
   step: Int
   pipelaneName: ID!
-  taskVariantName: ID!
+  taskVariantName: String
   taskTypeName: ID!
   active: Boolean
   isParallel: Boolean
@@ -55,7 +55,7 @@ type Pipetask {
 input CreatePipetaskPayload {
   name: ID!
   pipelaneName: ID!
-  taskVariantName: ID!
+  taskVariantName: String
   taskTypeName: ID!
   isParallel: Boolean
   active: Boolean

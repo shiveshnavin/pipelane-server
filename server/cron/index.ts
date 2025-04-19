@@ -172,7 +172,7 @@ export class CronScheduler {
                     numberOfShards: input.numberOfShards,
                     itemsPerShard: input.itemsPerShard,
                     cutoffLoadThreshold: input.cutoffLoadThreshold,
-                    variantType: tkd.taskVariantName,
+                    variantType: (!tkd.taskVariantName || tkd.taskVariantName == 'auto') ? undefined : tkd.taskVariantName,
                     additionalInputs: input
                 }
                 if (tkd.isParallel === true) {

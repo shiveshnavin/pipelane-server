@@ -128,6 +128,7 @@ export default function PipeTaskPage() {
                         setLoading(true)
                         seterr(undefined)
                         delete task.__typename
+
                         api.upsertPipelaneTask({ ...task }, (name && name != 'new' ? name : task.name) as string).then(result => {
                             setCurPipetask(result.data.createPipelaneTask)
                             if (result.data.createPipelaneTask.name != name) {
@@ -165,6 +166,11 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
         value: tt,
         title: tt,
     }))
+    taskVariants?.unshift({
+        id: 'auto',
+        value: 'auto',
+        title: 'auto'
+    })
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     return (
         <VBox>
@@ -189,7 +195,10 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     <SwitchView
                         value={task.active as boolean}
                         onValueChange={(newV) => {
-                            task.active = newV
+                            setTask((task) => {
+                                task.active = newV
+                                return task
+                            })
                             forceUpdate()
                         }}
                     />
@@ -202,7 +211,10 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     <SwitchView
                         value={task.isParallel as boolean}
                         onValueChange={(newV) => {
-                            task.isParallel = newV
+                            setTask((task) => {
+                                task.isParallel = newV
+                                return task
+                            })
                             forceUpdate()
                         }}
                     />
@@ -211,7 +223,10 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     icon="close"
                     placeholder="Name"
                     onChangeText={(t: string) => {
-                        task.name = t
+                        setTask((task) => {
+                            task.name = t
+                            return task
+                        })
                         forceUpdate()
                     }}
                     value={task.name as string}
@@ -220,7 +235,13 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     title="Task Type"
                     forceDialogSelectOnWeb={true}
                     onSelect={(taskTypeName) => {
-                        task.taskTypeName = taskTypeName
+                        setTask((task) => {
+                            task.taskTypeName = taskTypeName
+                            if (task.taskTypeName !== taskTypeName) {
+                                task.taskVariantName = 'auto'
+                            }
+                            return task
+                        })
                         forceUpdate()
                     }}
                     selectedId={task.taskTypeName}
@@ -233,10 +254,13 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     title="Task Variant"
                     forceDialogSelectOnWeb={true}
                     onSelect={(taskVariantName) => {
-                        task.taskVariantName = taskVariantName
+                        setTask((task) => {
+                            task.taskVariantName = taskVariantName
+                            return task
+                        })
                         forceUpdate()
                     }}
-                    selectedId={task.taskVariantName}
+                    selectedId={task.taskVariantName || 'auto'}
                     //@ts-ignore
                     options={taskVariants} />
                 <Center style={{
@@ -248,7 +272,11 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                 }}>
                     <Editor
                         onChange={(t: Maybe<string> | undefined) => {
-                            task.input = t
+
+                            setTask((task) => {
+                                task.input = t
+                                return task
+                            })
                             forceUpdate()
                         }}
                         height="30vh"
@@ -286,6 +314,9 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     visible={showDeleteConfirm}
                 />
                 <ButtonView onPress={() => {
+                    if (!taskVariants.map(t => t.value).includes(task.taskVariantName as string)) {
+                        task.taskVariantName = 'auto'
+                    }
                     save(task)
                 }}>Save</ButtonView>
             </CardView>
