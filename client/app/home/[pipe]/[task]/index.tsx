@@ -7,14 +7,14 @@ import { useContext } from "react";
 import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog, Box, Center } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipetask, PipetaskExecution, TaskType } from "../../../../../gen/model";
-import { getGraphErrorMessage } from "@/common/api";
+import { getGraphErrorMessage, removeFieldRecursively } from "@/common/api";
 import Editor from "@monaco-editor/react";
 
 export default function PipeTaskPage() {
     const theme = useContext(ThemeContext)
     const { task: name, pipe: pipelaneName } = useLocalSearchParams();
     const [curPipetask, setCurPipetask] = useState<Pipetask | undefined>(undefined)
-    const [taskTypes, setTaskTypes] = useState([])
+    const [taskTypes, setTaskTypes] = useState<TaskType[]>([])
     const [err, seterr] = useState<undefined | string>(undefined)
     const [loading, setLoading] = useState(false)
     const appContext = useContext(AppContext)
@@ -41,6 +41,13 @@ export default function PipeTaskPage() {
                     taskTypes {
                       type
                       variants
+                      description {
+                        summary
+                        inputs {
+                            last
+                            additionalInputs
+                        }
+                      }
                     }
                   }
                   `,
@@ -151,10 +158,18 @@ export default function PipeTaskPage() {
 
 function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pipetask: Pipetask, taskTypes: TaskType[], save: Function, seterr: Function }) {
     const router = useRouter()
+    let taskInput = JSON.stringify(JSON.parse(inputPipetask.input as string), null, 2)
+    if (!taskInput || taskInput == '{}') {
+        const matchingTaskType = taskTypes.find(t => t.type == inputPipetask.taskTypeName)
+        if (matchingTaskType && matchingTaskType?.description) {
+            const desc = removeFieldRecursively(matchingTaskType?.description, "__typename")
+            taskInput = JSON.stringify(desc, null, 2)
+        }
+    }
     const [task, setTask] = useState<Pipetask>(
         {
             ...inputPipetask,
-            input: JSON.stringify(JSON.parse(inputPipetask.input as string), null, 2)
+            input: taskInput
         })
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useContext(ThemeContext)

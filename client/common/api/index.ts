@@ -303,3 +303,43 @@ export function createApiClient(host?: string) {
     });
     return new Api(client)
 }
+
+
+/**
+* Recursively removes a specified field from an object.
+*
+* @param obj The object to remove the field from.
+* @param fieldName The name of the field to remove.
+* @returns The object with the specified field removed recursively.
+*/
+export function removeFieldRecursively<T>(obj: T, fieldName: string): T {
+    // If the object is null or not an object type, return it as is.
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+
+    // If the object is an array, iterate through it and apply the function to each element.
+    if (Array.isArray(obj)) {
+        return obj.map(item => removeFieldRecursively(item, fieldName)) as T;
+    }
+
+    // If the object is a regular object, iterate through its keys.
+    const newObj: any = {};
+    for (const key in obj) {
+        // Check if the key is directly on the object (not inherited).
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            // If the current key matches the fieldName, skip it (effectively removing it).
+            if (key === fieldName) {
+                continue;
+            }
+
+            // Get the value of the current key.
+            const value = obj[key];
+
+            // Recursively call the function on the value if it's an object or array.
+            newObj[key] = removeFieldRecursively(value, fieldName);
+        }
+    }
+
+    return newObj as T;
+}

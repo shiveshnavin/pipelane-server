@@ -15,6 +15,19 @@ type Query {
 type TaskType {
   type: ID!
   variants: [ID]
+  description: TaskTypeDescription
+}
+
+scalar ANY
+
+type TaskTypeInput {
+  last: [ANY]
+  additionalInputs: ANY
+}
+
+type TaskTypeDescription {
+  summary: String
+  inputs: TaskTypeInput
 }
 
 type Pipelane {

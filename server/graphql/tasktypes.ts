@@ -4,6 +4,11 @@ import { PipeTask, TaskVariantConfig } from "pipelane"
 export function generateTaskTypeResolvers(variantConfig: TaskVariantConfig) {
     return {
         TaskType: {
+            description: (parent) => {
+                let types: PipeTask<any, any>[] = variantConfig[parent.type] || []
+                let anyType = types[0]
+                return anyType.describe()
+            },
             variants: (parent) => {
                 if (parent.variants)
                     return parent.variants
