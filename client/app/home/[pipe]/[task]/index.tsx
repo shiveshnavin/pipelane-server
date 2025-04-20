@@ -267,6 +267,11 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                         value: tt.type,
                         title: tt.type,
                     })) || []} />
+                {
+                    taskDesc?.summary && (
+                        <Caption>{taskDesc?.summary}</Caption>
+                    )
+                }
                 <DropDownView
                     title="Task Variant"
                     forceDialogSelectOnWeb={true}
