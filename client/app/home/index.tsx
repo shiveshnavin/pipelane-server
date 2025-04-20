@@ -1,8 +1,8 @@
-import { AppContext } from "@/components/Context";
+import { AppContext, ContextData } from "@/components/Context";
 import { gql } from "@apollo/client";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { ButtonView, CompositeTextInputView, PressableView, SimpleDatalistView, SimpleToolbar, SwitchView, ThemeContext, VPage, isDesktop } from "react-native-boxes";
+import { ButtonView, Colors, CompositeTextInputView, DarkColors, Icon, PressableView, SimpleDatalistView, SimpleToolbar, Storage, SwitchView, Theme, ThemeContext, VPage, isDesktop, isWeb } from "react-native-boxes";
 import { Pipelane } from '../../../gen/model'
 import { KeyboardAvoidingScrollView, CardView, HBox } from "react-native-boxes/src/Box";
 import { useRouter } from "expo-router";
@@ -11,6 +11,7 @@ import { StatusBar } from "react-native";
 export default function HomeLayout() {
     const theme = useContext(ThemeContext)
     const appContext = useContext(AppContext)
+    const setContext = appContext.setContext
     const api = appContext.context.api
     const graph = appContext.context.api.graph
     const [loading, setLoading] = useState(true)
@@ -18,6 +19,7 @@ export default function HomeLayout() {
     const [pipes, setUsers] = useState<Pipelane[]>([])
     const router = useRouter()
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
+    console.log('re-render')
     //@ts-ignores
     function getPipes(text?) {
         let query = `
@@ -43,6 +45,36 @@ export default function HomeLayout() {
     return (
         <VPage>
             <SimpleToolbar
+                options={[
+                    {
+                        id: 'theme',
+                        icon: (<Icon name="lightbulb-o" color={
+                            theme.colors.text
+                        } />),
+                        onClick() {
+                            if (appContext.context.themeName == 'dark') {
+                                setContext((c) => {
+                                    c.themeName = "light"
+                                    c.theme = new Theme('client', Colors)
+                                    return c
+                                })
+                                Storage.setKeyAsync('theme', 'light')
+                                console.log('settign to light')
+                                router.navigate('/home?theme=light')
+                            }
+                            else {
+                                setContext((c) => {
+                                    c.themeName = "dark"
+                                    c.theme = new Theme('client', DarkColors)
+                                    return c
+                                })
+                                Storage.setKeyAsync('theme', 'dark')
+                                router.navigate('/home?theme=dark')
+
+                            }
+                        }
+                    }
+                ]}
                 textStyle={{
                     color: theme.colors.text
                 }}

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Theme, ThemeContext, Colors, TextView, Spinner, DarkColors } from "react-native-boxes";
+import { Theme, ThemeContext, Colors, TextView, Spinner, DarkColors, Storage } from "react-native-boxes";
 import { loadAsync } from "expo-font";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppContext, ContextData } from "../components/Context";
@@ -21,11 +21,24 @@ function Main() {
   }
 
   context.appname = 'client'
-  const theme = new Theme('client', Object.assign(DarkColors))
-  theme.insets = useSafeAreaInsets()
+  context.theme = new Theme('client', context?.themeName == "dark" ? DarkColors : Colors)
+  context.theme.insets = useSafeAreaInsets()
   const [init, setInit] = useState(false)
 
   useEffect(() => {
+    Storage.getKeyAsync('theme').then((theme) => {
+      console.log('theme', theme)
+      if (theme) {
+        setContext(c => {
+          c.themeName = theme
+          c.theme = new Theme('client', theme == "dark" ? DarkColors : Colors)
+          return c
+        })
+      }
+      else {
+        Storage.setKeyAsync('theme', context.themeName)
+      }
+    })
     Promise.all([
       loadAsync({
         'Regular': require('../assets/fonts/Regular.ttf'),
@@ -40,7 +53,10 @@ function Main() {
         else {
           api = createApiClient(respo.data.host)
         }
-        setContext(new ContextData(api))
+        setContext(c => {
+          c.api = api
+          return c
+        })
       })
     ]).finally(() => {
       setTimeout(() => {
@@ -81,7 +97,7 @@ function Main() {
     )
   }
   return (
-    <ThemeContext.Provider value={theme} >
+    <ThemeContext.Provider value={context.theme} >
       <ApolloProvider client={context.api?.graph}>
         <AppContext.Provider value={{ context, setContext }}>
           <SafeAreaView style={{
