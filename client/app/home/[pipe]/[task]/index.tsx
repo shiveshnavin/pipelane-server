@@ -6,9 +6,10 @@ import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
 import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog, Box, Center } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
-import { Maybe, Pipetask, PipetaskExecution, TaskType } from "../../../../../gen/model";
+import { Maybe, Pipetask, PipetaskExecution, TaskType, TaskTypeDescription } from "../../../../../gen/model";
 import { getGraphErrorMessage, removeFieldRecursively } from "@/common/api";
 import Editor from "@monaco-editor/react";
+import { prettyJson } from "../../../../common/utils/ReactUtils";
 
 export default function PipeTaskPage() {
     const theme = useContext(ThemeContext)
@@ -158,12 +159,13 @@ export default function PipeTaskPage() {
 
 function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pipetask: Pipetask, taskTypes: TaskType[], save: Function, seterr: Function }) {
     const router = useRouter()
+    let taskDesc: TaskTypeDescription | undefined = undefined
     let taskInput = JSON.stringify(JSON.parse(inputPipetask.input as string), null, 2)
     if (!taskInput || taskInput == '{}') {
         const matchingTaskType = taskTypes.find(t => t.type == inputPipetask.taskTypeName)
         if (matchingTaskType && matchingTaskType?.description) {
-            const desc = removeFieldRecursively(matchingTaskType?.description, "__typename")
-            taskInput = JSON.stringify(desc, null, 2)
+            taskDesc = removeFieldRecursively(matchingTaskType?.description, "__typename")
+            taskInput = JSON.stringify(taskDesc?.inputs?.additionalInputs, null, 2)
         }
     }
     const [task, setTask] = useState<Pipetask>(
@@ -313,6 +315,28 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                 }}>
                     You can access pipelane data using contextual varialbles like pl (Pipelane Instance), input (Input to task, contains last and additionalInputs fields. AdditionalInputs is essentially what you are writing in the above box), prev (Output of previous task, same as input.last), axios (An instance of axios for making network calls if required). E.g. to access an output of a task by its index you can use pl.executedTasks[0].outputs[0].my_output_field similarly you can use prev[0].my_output_field to access previous output and input.additionalInputs.my_static_input to access the values entered in above box.
                 </Caption>
+                {
+                    taskDesc && (
+                        <Expand title="Task description">
+                            <CompositeTextInputView
+                                editable={false}
+                                placeholder="Outputs"
+                                textInputProps={{
+                                    numberOfLines: 10,
+                                    multiline: true,
+                                    style: {
+                                        color: theme.colors.text,
+                                        textAlignVertical: 'top',
+                                        verticalAlign: 'top',
+                                        alignContent: 'flex-start',
+                                    }
+                                }}
+                                value={prettyJson(JSON.stringify(taskDesc)) || ''}
+                                initialText={prettyJson(JSON.stringify(taskDesc)) || ''} />
+
+                        </Expand>
+                    )
+                }
                 <ConfirmationDialog
                     title="Delete ?"
                     confirmText="Confirm"
