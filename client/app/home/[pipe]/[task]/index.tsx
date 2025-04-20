@@ -4,7 +4,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog, Box, Center } from "react-native-boxes";
+import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog, Box, Center, TitleText } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipetask, PipetaskExecution, TaskType, TaskTypeDescription } from "../../../../../gen/model";
 import { getGraphErrorMessage, removeFieldRecursively } from "@/common/api";
@@ -165,7 +165,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
     if (matchingTaskType && matchingTaskType?.description) {
         taskDesc = removeFieldRecursively(matchingTaskType?.description, "__typename")
     }
-    if (!taskInput || taskInput == '{}' && taskDesc?.inputs?.additionalInputs) {
+    if (inputPipetask?.name == 'new' && taskDesc?.inputs?.additionalInputs) {
         taskInput = JSON.stringify(taskDesc?.inputs?.additionalInputs, null, 2)
     }
     const [task, setTask] = useState<Pipetask>(
@@ -203,7 +203,16 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                 title={`${task.pipelaneName}   ➤   ${task.name}`} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
                     router.navigate(`/home/${task.pipelaneName}`)
                 }} />
+            {
+                taskDesc?.summary && (
+                    <TextView style={{
+                        padding: theme.dimens.space.md,
+                        marginLeft: theme.dimens.space.lg,
+                    }}>{taskDesc?.summary}</TextView>
+                )
+            }
             <CardView>
+
                 <HBox style={{
                     padding: theme.dimens.space.md,
                     justifyContent: 'space-between'
@@ -248,6 +257,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     }}
                     value={task.name as string}
                     initialText={task.name as string} />
+
                 <DropDownView
                     title="Task Type"
                     forceDialogSelectOnWeb={true}
@@ -267,11 +277,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                         value: tt.type,
                         title: tt.type,
                     })) || []} />
-                {
-                    taskDesc?.summary && (
-                        <Caption>{taskDesc?.summary}</Caption>
-                    )
-                }
+
                 <DropDownView
                     title="Task Variant"
                     forceDialogSelectOnWeb={true}
@@ -285,6 +291,10 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     selectedId={task.taskVariantName || 'auto'}
                     //@ts-ignore
                     options={taskVariants} />
+                <Caption style={{
+                    marginTop: theme.dimens.space.md,
+                    marginLeft: theme.dimens.space.sm
+                }}>Additional Inputs</Caption>
                 <Center style={{
                     borderWidth: 0.1,
                     borderColor: theme.colors.caption,
@@ -357,12 +367,16 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     }}
                     visible={showDeleteConfirm}
                 />
-                <ButtonView onPress={() => {
-                    if (!taskVariants.map(t => t.value).includes(task.taskVariantName as string)) {
-                        task.taskVariantName = 'auto'
-                    }
-                    save(task)
-                }}>Save</ButtonView>
+                <ButtonView
+                    style={{
+                        marginTop: theme.dimens.space.md
+                    }}
+                    onPress={() => {
+                        if (!taskVariants.map(t => t.value).includes(task.taskVariantName as string)) {
+                            task.taskVariantName = 'auto'
+                        }
+                        save(task)
+                    }}>Save</ButtonView>
             </CardView>
         </VBox>
 
