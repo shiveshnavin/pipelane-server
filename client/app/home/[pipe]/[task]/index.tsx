@@ -161,12 +161,12 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
     const router = useRouter()
     let taskDesc: TaskTypeDescription | undefined = undefined
     let taskInput = JSON.stringify(JSON.parse(inputPipetask.input as string), null, 2)
-    if (!taskInput || taskInput == '{}') {
-        const matchingTaskType = taskTypes.find(t => t.type == inputPipetask.taskTypeName)
-        if (matchingTaskType && matchingTaskType?.description) {
-            taskDesc = removeFieldRecursively(matchingTaskType?.description, "__typename")
-            taskInput = JSON.stringify(taskDesc?.inputs?.additionalInputs, null, 2)
-        }
+    const matchingTaskType = taskTypes.find(t => t.type == inputPipetask.taskTypeName)
+    if (matchingTaskType && matchingTaskType?.description) {
+        taskDesc = removeFieldRecursively(matchingTaskType?.description, "__typename")
+    }
+    if (!taskInput || taskInput == '{}' && taskDesc?.inputs?.additionalInputs) {
+        taskInput = JSON.stringify(taskDesc?.inputs?.additionalInputs, null, 2)
     }
     const [task, setTask] = useState<Pipetask>(
         {
