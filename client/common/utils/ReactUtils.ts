@@ -1,9 +1,22 @@
 import base64 from "base64-js";
 
+
+export function isObject(str?: string | any) {
+    if (!str) {
+        return false
+    }
+    try {
+        JSON.parse(str)
+        return true
+    } catch (e) {
+        return false
+    }
+}
+
 export function prettyJson(input: string): string {
 
-    if(input?.startsWith("base64")){
-        input = input.replace('base64;','')
+    if (input?.startsWith("base64")) {
+        input = input.replace('base64;', '')
         input = new TextDecoder().decode(base64.toByteArray(input));
     }
 

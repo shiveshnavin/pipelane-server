@@ -4,12 +4,12 @@ import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog, Box, Center, TitleText } from "react-native-boxes";
+import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog, Box, Center, TitleText, LoadingButton } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipetask, PipetaskExecution, TaskType, TaskTypeDescription } from "../../../../../gen/model";
 import { getGraphErrorMessage, removeFieldRecursively } from "@/common/api";
 import Editor from "@monaco-editor/react";
-import { prettyJson } from "../../../../common/utils/ReactUtils";
+import { isObject, prettyJson } from "../../../../common/utils/ReactUtils";
 
 export default function PipeTaskPage() {
     const theme = useContext(ThemeContext)
@@ -111,6 +111,7 @@ export default function PipeTaskPage() {
             }
             {
                 curPipetask && <PipetaskView
+                    loading={loading}
                     seterr={seterr}
                     save={(task: Pipetask) => {
                         if (task.taskTypeName == 'new') {
@@ -157,7 +158,7 @@ export default function PipeTaskPage() {
     );
 }
 
-function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pipetask: Pipetask, taskTypes: TaskType[], save: Function, seterr: Function }) {
+function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seterr }: { pipetask: Pipetask, taskTypes: TaskType[], loading: boolean, save: Function, seterr: Function }) {
     const router = useRouter()
     let taskDesc: TaskTypeDescription | undefined = undefined
     let taskInput = JSON.stringify(JSON.parse(inputPipetask.input as string), null, 2)
@@ -176,6 +177,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useContext(ThemeContext)
 
+    const [editingField, setEditingField] = useState<string | undefined>(undefined)
     const appContext = useContext(AppContext)
     const api = appContext.context.api
     const taskVariants = (taskTypes?.find(t => t.type == task.taskTypeName)?.variants || [])?.map(tt => ({
@@ -312,8 +314,9 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                             forceUpdate()
                         }}
                         height="30vh"
+                        value={task.input as string}
                         defaultLanguage="json"
-                        defaultValue={task.input as string}
+                        // defaultValue={task.input as string}
                         theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
                         options={{
                             tabSize: 2,
@@ -325,6 +328,76 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                         }}
                     />
                 </Center>
+
+                {
+                    isObject(task.input) && (
+
+                        <Expand title="Edit field as code" leftPadding={0}>
+                            <DropDownView
+                                title="Select field"
+                                forceDialogSelectOnWeb={true}
+                                placeholder="Select field to edit separately"
+                                selectedId={editingField!}
+                                onSelect={(id) => {
+                                    setEditingField(id)
+                                    forceUpdate()
+                                }}
+                                options={
+                                    Object.keys(JSON.parse(task.input!) || {}).map(key => {
+                                        return {
+                                            id: key,
+                                            value: key,
+                                            title: key
+                                        }
+                                    })
+                                }
+                            />
+                            {
+                                editingField && (
+                                    <Center style={{
+                                        borderWidth: 0.1,
+                                        borderColor: theme.colors.caption,
+                                        borderRadius: 10,
+                                        padding: 3,
+                                        margin: theme.dimens.space.sm
+                                    }}>
+                                        <Editor
+                                            onChange={(t: Maybe<string> | undefined) => {
+
+                                                try {
+                                                    setTask((task) => {
+                                                        let inputObj = JSON.parse(task.input!)
+                                                        inputObj[editingField] = t
+                                                        task.input = JSON.stringify(inputObj, null, 2)
+                                                        console.log(task.input)
+                                                        return task
+                                                    })
+                                                    seterr(undefined)
+                                                } catch (e) {
+                                                    seterr('Please enter a valid input')
+                                                }
+                                                forceUpdate()
+                                            }}
+                                            height="30vh"
+                                            defaultLanguage="javascript"
+                                            value={JSON.parse(task.input!)[editingField]}
+                                            theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
+                                            options={{
+                                                tabSize: 2,
+                                                formatOnPaste: true,
+                                                formatOnType: true,
+                                                lineNumbers: "on",
+                                                wordWrap: "on",
+                                                minimap: { enabled: false }
+                                            }}
+                                        />
+                                    </Center>
+                                )
+                            }
+                        </Expand>
+
+                    )
+                }
                 <Caption style={{
                     paddingBottom: theme.dimens.space.md
                 }}>
@@ -367,7 +440,8 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                     }}
                     visible={showDeleteConfirm}
                 />
-                <ButtonView
+                <LoadingButton
+                    loading={loading}
                     style={{
                         marginTop: theme.dimens.space.md
                     }}
@@ -376,7 +450,7 @@ function PipetaskView({ pipetask: inputPipetask, taskTypes, save, seterr }: { pi
                             task.taskVariantName = 'auto'
                         }
                         save(task)
-                    }}>Save</ButtonView>
+                    }}>Save</LoadingButton>
             </CardView>
         </VBox>
 
