@@ -10,6 +10,8 @@ import { Maybe, Pipetask, PipetaskExecution, TaskType, TaskTypeDescription } fro
 import { getGraphErrorMessage, removeFieldRecursively } from "@/common/api";
 import Editor from "@monaco-editor/react";
 import { isObject, prettyJson } from "../../../../common/utils/ReactUtils";
+import { Try } from "expo-router/build/views/Try";
+import { ErrorBoundary } from "../../../../components/Errorboundary";
 
 export default function PipeTaskPage() {
     const theme = useContext(ThemeContext)
@@ -361,36 +363,38 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                                         padding: 3,
                                         margin: theme.dimens.space.sm
                                     }}>
-                                        <Editor
-                                            onChange={(t: Maybe<string> | undefined) => {
+                                        <Try catch={ErrorBoundary}>
+                                            <Editor
+                                                onChange={(t: Maybe<string> | undefined) => {
 
-                                                try {
-                                                    setTask((task) => {
-                                                        let inputObj = JSON.parse(task.input!)
-                                                        inputObj[editingField] = t
-                                                        task.input = JSON.stringify(inputObj, null, 2)
-                                                        console.log(task.input)
-                                                        return task
-                                                    })
-                                                    seterr(undefined)
-                                                } catch (e) {
-                                                    seterr('Please enter a valid input')
-                                                }
-                                                forceUpdate()
-                                            }}
-                                            height="30vh"
-                                            defaultLanguage="javascript"
-                                            value={JSON.parse(task.input!)[editingField]}
-                                            theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
-                                            options={{
-                                                tabSize: 2,
-                                                formatOnPaste: true,
-                                                formatOnType: true,
-                                                lineNumbers: "on",
-                                                wordWrap: "on",
-                                                minimap: { enabled: false }
-                                            }}
-                                        />
+                                                    try {
+                                                        setTask((task) => {
+                                                            let inputObj = JSON.parse(task.input!)
+                                                            inputObj[editingField] = t
+                                                            task.input = JSON.stringify(inputObj, null, 2)
+                                                            console.log(task.input)
+                                                            return task
+                                                        })
+                                                        seterr(undefined)
+                                                    } catch (e) {
+                                                        seterr('Please enter a valid input')
+                                                    }
+                                                    forceUpdate()
+                                                }}
+                                                height="30vh"
+                                                // defaultLanguage="javascript"
+                                                value={JSON.parse(task.input!)[editingField]}
+                                                theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
+                                                options={{
+                                                    tabSize: 2,
+                                                    formatOnPaste: true,
+                                                    formatOnType: true,
+                                                    lineNumbers: "off",
+                                                    wordWrap: "on",
+                                                    minimap: { enabled: false }
+                                                }}
+                                            />
+                                        </Try>
                                     </Center>
                                 )
                             }
