@@ -7,6 +7,10 @@ export type EvaluateJsTaskInput = InputWithPreviousInputs & {
         js: string
     }
 }
+
+/**
+ * Deprecated. Use LoopEvaluateJsTask instead
+ */
 export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
 
     static TASK_VARIANT_NAME: string = "eval-js"
