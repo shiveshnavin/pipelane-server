@@ -42,6 +42,13 @@ export class LoopEvaluateJsTask extends EvaluateJsTask {
         let prev: any = input.last
         try {
             let output = await this.evalInScope(js, pipeWorksInstance, input, prev, axios)
+            if (output == undefined || output.length == undefined) {
+                return [{
+                    status: false,
+                    output,
+                    message: 'The output must be an array in format [{status:true}]'
+                }]
+            }
             return output
         } catch (e) {
             return [{
