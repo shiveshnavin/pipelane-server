@@ -1,6 +1,6 @@
 import axios from "axios";
 import { MultiDbORM, SQLiteDB } from "multi-db-orm";
-import PipeLane, { InputWithPreviousInputs, PipeTask } from "pipelane";
+import PipeLane, { InputWithPreviousInputs, PipeTask, PipeTaskDescription } from "pipelane";
 
 
 export type PersistedKeyValue = {
@@ -42,16 +42,37 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
         } as PersistedKeyValue)
     }
 
-    async execute(pipeWorkInstance: PipeLane, input: InputWithPreviousInputs): Promise<any[]> {
-        if (!input.additionalInputs.key) {
-            return [{
-                status: false,
-                message: 'invalid input. required feild `milis` missing'
-            }]
+    describe(): PipeTaskDescription | undefined {
+        return {
+            summary: 'Persists key-value pairs for using later on. if last does not have a key field then the input will pass through to output (it will try to persist from additionalInputs if provided)',
+            inputs: {
+                last: [{
+                    pipelane: 'optional, will auto pick if not provided',
+                    key: 'key',
+                    value: 'value',
+                    group: 'optional, defaults to pipelane name'
+                }],
+                additionalInputs: {
+                    group: 'optional, the group in inputs (if provided) will override this',
+                    pipelane: 'optional, will auto pick if not provided',
+                    key: 'key',
+                    value: 'value'
+                }
+            }
+        }
+    }
+
+    async execute(pipeWorksInstance: PipeLane,
+        input: { last: PersistedKeyValue[] | any[], additionalInputs: PersistedKeyValue }): Promise<any[]> {
+        let output = []
+        let group = input.additionalInputs?.group
+        let pipelaneName = pipeWorksInstance.name
+        let perisistFromInput = input.last?.find(y => y.key != undefined)
+        for (let _input of input.last) {
+
         }
 
-        return await new Promise((resolve) => {
-        })
+        return output
 
     }
 

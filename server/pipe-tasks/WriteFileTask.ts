@@ -16,11 +16,11 @@ export class WriteFileTask extends PipeTask<any, any> {
     kill(): boolean {
         return true
     }
-    async execute(pipeWorkInstance: PipeLane, inputs: any): Promise<any[]> {
+    async execute(pipeWorksInstance: PipeLane, inputs: any): Promise<any[]> {
 
         let jsonData = inputs.last.filter(item => item.status == true);
         let format = inputs.additionalInputs?.format || "csv";
-        let file = inputs.additionalInputs?.file || `${pipeWorkInstance.name}.${format}`;
+        let file = inputs.additionalInputs?.file || `${pipeWorksInstance.instanceId}.${format}`;
         let incremental = inputs.additionalInputs?.incremental || true;
 
         const fields = Object.keys(jsonData[0]);

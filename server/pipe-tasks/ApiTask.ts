@@ -14,7 +14,7 @@ export class ApiTask extends PipeTask<any, any> {
     kill(): boolean {
         return true
     }
-    async execute(pipeWorkInstance: PipeLane, input: any): Promise<any[]> {
+    async execute(pipeWorksInstance: PipeLane, input: any): Promise<any[]> {
         input = input.additionalInputs
         if (!input.url) {
             return [{
@@ -34,7 +34,7 @@ export class ApiTask extends PipeTask<any, any> {
                 }]
             }
         } catch (e) {
-            pipeWorkInstance.onLog(e.message)
+            pipeWorksInstance.onLog(e.message)
             return [{
                 status: false,
                 message: e.message,

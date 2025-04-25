@@ -12,11 +12,11 @@ export class LoopEvaluateJsTask extends EvaluateJsTask {
 
     /**
      * 
-     * @param pipeWorkInstance 
+     * @param pipeWorksInstance 
      * @param input { additionalInputs: {js} }, No need to enclose js in this input with ${} as it is           understood that the value of field js is a javascript string
      * @returns 
      */
-    async execute(pipeWorkInstance: PipeLane, input: EvaluateJsTaskInput): Promise<any[]> {
+    async execute(pipeWorksInstance: PipeLane, input: EvaluateJsTaskInput): Promise<any[]> {
         if (!input.additionalInputs.js) {
             return [{
                 status: false,
@@ -25,9 +25,9 @@ export class LoopEvaluateJsTask extends EvaluateJsTask {
         }
 
         let js = input.additionalInputs.js
-        let prev:any = input.last
+        let prev: any = input.last
         try {
-            let output = await this.evalInScope(js, pipeWorkInstance, input, prev, axios)
+            let output = await this.evalInScope(js, pipeWorksInstance, input, prev, axios)
             return output
         } catch (e) {
             return [{

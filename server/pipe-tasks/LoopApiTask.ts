@@ -17,7 +17,7 @@ export class LoopApiTask extends PipeTask<any, any> {
     }
 
 
-    async execute(pipeWorkInstance: PipeLane, inputs: any): Promise<any[]> {
+    async execute(pipeWorksInstance: PipeLane, inputs: any): Promise<any[]> {
         const last = inputs.last;
         const outputs = [];
         const limiter = new RateLimiter({
@@ -37,7 +37,7 @@ export class LoopApiTask extends PipeTask<any, any> {
                     data: response?.data
                 };
             } catch (e) {
-                pipeWorkInstance.onLog(e.message);
+                pipeWorksInstance.onLog(e.message);
                 return {
                     status: false,
                     message: e.message,

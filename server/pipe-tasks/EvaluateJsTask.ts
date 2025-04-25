@@ -27,11 +27,11 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
 
     /**
      * 
-     * @param pipeWorkInstance 
+     * @param pipeWorksInstance 
      * @param input { additionalInputs: {js} }, No need to enclose js in this input with ${} as it is           understood that the value of field js is a javascript string
      * @returns 
      */
-    async execute(pipeWorkInstance: PipeLane, input: EvaluateJsTaskInput): Promise<any[]> {
+    async execute(pipeWorksInstance: PipeLane, input: EvaluateJsTaskInput): Promise<any[]> {
         if (!input.additionalInputs.js) {
             return [{
                 status: false,
@@ -42,7 +42,7 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         let js = input.additionalInputs.js
         let prev = input.last
         try {
-            let output = await this.evalInScope(js, pipeWorkInstance, input, prev, axios)
+            let output = await this.evalInScope(js, pipeWorksInstance, input, prev, axios)
             return [{
                 status: true,
                 output: output

@@ -95,7 +95,7 @@ export class LoopGeminiApiTask extends PipeTask<any, any> {
         return result
     }
 
-    async execute(pipeWorkInstance: PipeLane, data: GeminiApiTaskInput): Promise<any[]> {
+    async execute(pipeWorksInstance: PipeLane, data: GeminiApiTaskInput): Promise<any[]> {
         let inputs = data.last || [data.additionalInputs]
         if (!inputs) {
             return [{
@@ -117,7 +117,7 @@ export class LoopGeminiApiTask extends PipeTask<any, any> {
                 let response = await this.callGemini(input.parts)
                 outputs.push({ ...response, status: true })
             } catch (e) {
-                pipeWorkInstance.onLog(e.message)
+                pipeWorksInstance.onLog(e.message)
                 outputs.push({ message: e.message, status: false })
             }
         }

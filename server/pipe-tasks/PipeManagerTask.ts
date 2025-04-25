@@ -75,7 +75,7 @@ export class PipeManagerTask extends PipeTask<any, any> {
         return req
     }
 
-    async execute(pipeWorkInstance: PipeLane, input: any): Promise<any[]> {
+    async execute(pipeWorksInstance: PipeLane, input: any): Promise<any[]> {
 
         let pipeManagerInput: PipeManagerInput[] = []
         if (input.last && input.last.length > 0) {

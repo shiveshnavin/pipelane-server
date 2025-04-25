@@ -116,10 +116,10 @@ export class CronScheduler {
             pl.input = input
         }
         if (pl.active) {
-            let pipelaneInstance = new PipeLane(this.variantConfig)
-            pipelaneInstance.logLevel = this.pipelaneLogLevel
+            let pipeWorksInstance = new PipeLane(this.variantConfig, pl.name)
+            pipeWorksInstance.logLevel = this.pipelaneLogLevel
             let pipelaneInstName = `${pl.name}-${Date.now()}`
-            pipelaneInstance.enableCheckpoints(pipelaneInstName, `pipelane/${pipelaneInstName}`)
+            pipeWorksInstance.enableCheckpoints(pipelaneInstName, `pipelane/${pipelaneInstName}`)
             let invalidTasksFromSchedule = pl.tasks?.filter(pt => this.variantConfig[pt.taskTypeName] == undefined).map(t => t.taskTypeName)
             if (invalidTasksFromSchedule && invalidTasksFromSchedule.length > 0) {
                 console.warn(`No tasks of types ${invalidTasksFromSchedule.join(",")} found in variantconfig. Skipping triggering ${pl.name}`)
@@ -127,7 +127,7 @@ export class CronScheduler {
             }
 
             const evalPlaceHolder = new EvaluateJsTask()
-            pipelaneInstance.setOnCheckCondition(async (pInst, task, input) => {
+            pipeWorksInstance.setOnCheckCondition(async (pInst, task, input) => {
                 if (input.additionalInputs?.condition === false) {
                     return input.additionalInputs?.condition
                 }
@@ -142,7 +142,7 @@ export class CronScheduler {
                 }
                 return true
             })
-            pipelaneInstance.setOnBeforeExecuteTask(async (pInst, task, inputProxy) => {
+            pipeWorksInstance.setOnBeforeExecuteTask(async (pInst, task, inputProxy) => {
 
                 try {
                     let stringInput = await evalPlaceHolder.evaluatePlaceholdersInString(
@@ -176,9 +176,9 @@ export class CronScheduler {
                     additionalInputs: input
                 }
                 if (tkd.isParallel === true) {
-                    pipelaneInstance.parallelPipe(pltConfig)
+                    pipeWorksInstance.parallelPipe(pltConfig)
                 } else {
-                    pipelaneInstance.pipe(pltConfig)
+                    pipeWorksInstance.pipe(pltConfig)
                 }
             }
             let input = {}
@@ -186,7 +186,7 @@ export class CronScheduler {
                 input = JSON.parse(pl.input)
                 try {
                     let stringInput = await evalPlaceHolder.evaluatePlaceholdersInString(
-                        pipelaneInstance,
+                        pipeWorksInstance,
                         JSON.parse(pl.input),
                         pl.input
                     )
@@ -206,10 +206,10 @@ export class CronScheduler {
                         if (this.pipelaneLogLevel > 0)
                             console.warn(`Pipe:${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}`)
                         //@ts-ignore
-                        pipelaneInstance.currentTaskIdx = 0
+                        pipeWorksInstance.currentTaskIdx = 0
                         //@ts-ignore
-                        pipelaneInstance.executedTasks = []
-                        pipelaneInstance.start(input).then(onResult)
+                        pipeWorksInstance.executedTasks = []
+                        pipeWorksInstance.start(input).then(onResult)
                         return
                     } else {
                         if (this.pipelaneLogLevel > 0)
@@ -245,7 +245,7 @@ export class CronScheduler {
                     })
                 })
                 //@ts-ignore
-                this.currentExecutions = this.currentExecutions.filter(cei => cei.name != pipelaneInstance.name)
+                this.currentExecutions = this.currentExecutions.filter(cei => cei.name != pipeWorksInstance.name)
             }).bind(this)
 
             let plx: PipelaneExecution = await this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
@@ -258,12 +258,12 @@ export class CronScheduler {
                 }
             })
 
-            this.listenToPipe(pipelaneInstance, plx)
-            pipelaneInstance.start(input).then(onResult).catch((e) => {
+            this.listenToPipe(pipeWorksInstance, plx)
+            pipeWorksInstance.start(input).then(onResult).catch((e) => {
                 console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
                 onResult([{ status: false }])
             })
-            this.currentExecutions.push(pipelaneInstance)
+            this.currentExecutions.push(pipeWorksInstance)
 
             return plx
         }

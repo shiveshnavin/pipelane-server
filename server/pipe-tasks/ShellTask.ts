@@ -38,7 +38,7 @@ export class ShellTask extends PipeTask<any, any> {
     }
 
 
-    async execute(pipeWorkInstance: PipeLane, input: { inputs: any[], additionalInputs: ShellTaskAdditionalInput }): Promise<any[]> {
+    async execute(pipeWorksInstance: PipeLane, input: { inputs: any[], additionalInputs: ShellTaskAdditionalInput }): Promise<any[]> {
 
         let cmd = input.additionalInputs.cmd
 

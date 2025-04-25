@@ -18,7 +18,7 @@ export class DelayTask extends PipeTask<any, any> {
         return true
     }
 
-    async execute(pipeWorkInstance: PipeLane, input: InputWithPreviousInputs): Promise<any[]> {
+    async execute(pipeWorksInstance: PipeLane, input: InputWithPreviousInputs): Promise<any[]> {
         if (!input.additionalInputs.milis) {
             return [{
                 status: false,
