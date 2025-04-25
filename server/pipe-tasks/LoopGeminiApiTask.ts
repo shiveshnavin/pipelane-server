@@ -3,31 +3,6 @@ import axios from "axios";
 import PipeLane, { PipeTask } from "pipelane";
 
 
-const {
-    GoogleGenerativeAI,
-    HarmCategory,
-    HarmBlockThreshold,
-} = require("@google/generative-ai");
-
-const { GoogleAIFileManager } = require("@google/generative-ai/server");
-
-const apiKey = 'AIzaSyDS1Q3rcXkSGygRYYr99vBU_Oo_DyAbj78';
-const genAI = new GoogleGenerativeAI(apiKey);
-const fileManager = new GoogleAIFileManager(apiKey);
-
-async function uploadToGemini(path, mimeType): Promise<{ uri: string, mimeType: string }> {
-    const uploadResult = await fileManager.uploadFile(path, {
-        mimeType,
-        displayName: path,
-    });
-    const file = uploadResult.file;
-    console.log(`Uploaded file ${file.displayName} as: ${file.name}`);
-    return file;
-}
-
-const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-});
 
 const generationConfig = {
     temperature: 0.9,
@@ -56,13 +31,43 @@ export class LoopGeminiApiTask extends PipeTask<any, any> {
 
     static TASK_VARIANT_NAME: string = "gemini"
     static TASK_TYPE_NAME: string = "llm"
-
-    constructor(variantName?: string) {
+    fileManager
+    model
+    apiKey = process.env.GEMINI_API_KEY
+    constructor(variantName?: string, apiKey?: string) {
         super(LoopGeminiApiTask.TASK_TYPE_NAME, variantName || LoopGeminiApiTask.TASK_VARIANT_NAME)
+        this.apiKey = apiKey || this.apiKey
     }
 
     kill(): boolean {
         return true
+    }
+
+    async init() {
+
+        const {
+            GoogleGenerativeAI,
+        } = require("@google/generative-ai");
+
+        const { GoogleAIFileManager } = require("@google/generative-ai/server");
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        const genAI = new GoogleGenerativeAI(apiKey);
+        this.fileManager = new GoogleAIFileManager(apiKey);
+        this.model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+        });
+
+    }
+
+    async uploadToGemini(path, mimeType): Promise<{ uri: string, mimeType: string }> {
+        const uploadResult = await this.fileManager.uploadFile(path, {
+            mimeType,
+            displayName: path,
+        });
+        const file = uploadResult.file;
+        console.log(`Uploaded file ${file.displayName} as: ${file.name}`);
+        return file;
     }
 
     private async callGemini(parts: InputPart[]) {
@@ -73,7 +78,7 @@ export class LoopGeminiApiTask extends PipeTask<any, any> {
 
                 try {
                     if (part.fileData?.localFileUri) {
-                        let fileRes = (await uploadToGemini(part.fileData?.localFileUri, part.fileData.mimeType))
+                        let fileRes = (await this.uploadToGemini(part.fileData?.localFileUri, part.fileData.mimeType))
                         part.fileData.fileUri = fileRes.uri
                         part.fileData.mimeType = fileRes.mimeType
                         delete part.fileData?.localFileUri
@@ -87,7 +92,7 @@ export class LoopGeminiApiTask extends PipeTask<any, any> {
             })
         }))
 
-        const result = await model.generateContent({
+        const result = await this.model.generateContent({
             contents: [{ role: "user", parts: finalParts }],
             generationConfig,
         });

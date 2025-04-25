@@ -1,5 +1,5 @@
 import axios from "axios";
-import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask } from "pipelane";
+import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask, PipeTaskDescription } from "pipelane";
 import { EvaluateJsTask, EvaluateJsTaskInput } from "./EvaluateJsTask";
 
 export class LoopEvaluateJsTask extends EvaluateJsTask {
@@ -8,6 +8,20 @@ export class LoopEvaluateJsTask extends EvaluateJsTask {
 
     constructor(variantName?: string) {
         super(LoopEvaluateJsTask.TASK_VARIANT_NAME)
+    }
+
+    describe(): PipeTaskDescription | undefined {
+        return {
+            summary: "Process last output using JS. Must return in format [{status:true}]",
+            inputs: {
+                additionalInputs: {
+                    js: "JS code"
+                },
+                last: [{
+                    status: true
+                }]
+            }
+        }
     }
 
     /**
@@ -41,7 +55,7 @@ export class LoopEvaluateJsTask extends EvaluateJsTask {
 
 const cut = new EvaluateJsTask()
 function test() {
-    cut.execute(new PipeLane({}), {
+    cut.execute(new PipeLane({}, 'js'), {
         additionalInputs: {
             js: "${task.taskTypeName}"
         },

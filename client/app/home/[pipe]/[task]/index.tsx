@@ -382,7 +382,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                                                     forceUpdate()
                                                 }}
                                                 height="30vh"
-                                                // defaultLanguage="javascript"
+                                                defaultLanguage="javascript"
                                                 value={JSON.parse(task.input!)[editingField]}
                                                 theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
                                                 options={{

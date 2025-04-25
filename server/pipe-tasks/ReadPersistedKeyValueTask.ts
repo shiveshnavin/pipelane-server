@@ -1,25 +1,18 @@
 import axios from "axios";
 import { MultiDbORM, SQLiteDB } from "multi-db-orm";
 import PipeLane, { InputWithPreviousInputs, PipeTask, PipeTaskDescription } from "pipelane";
+import { PersistedKeyValue } from "./PersistKeyValueTask";
 
+export class ReadPersistedKeyValueTask extends PipeTask<any, any> {
 
-export type PersistedKeyValue = {
-    pipelane: string,
-    pkey: string,
-    pval: string
-    grp: string
-}
-
-export class PersistKeyValueTask extends PipeTask<any, any> {
-
-    static TASK_VARIANT_NAME: string = "persist-key-value"
-    static TASK_TYPE_NAME: string = "persist"
+    static TASK_VARIANT_NAME: string = "read-persisted-key-value"
+    static TASK_TYPE_NAME: string = "read-persisted"
 
     private db: MultiDbORM = undefined
     public tableName = `ps_pipelane_persisted_kv`
     private initialized = false;
     constructor(variantName?: string, db?: MultiDbORM) {
-        super(PersistKeyValueTask.TASK_TYPE_NAME, variantName || PersistKeyValueTask.TASK_VARIANT_NAME)
+        super(ReadPersistedKeyValueTask.TASK_TYPE_NAME, variantName || ReadPersistedKeyValueTask.TASK_VARIANT_NAME)
         if (!db) {
             try {
                 db = new SQLiteDB('pipelane.sqlite')
@@ -52,19 +45,17 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
 
     describe(): PipeTaskDescription | undefined {
         return {
-            summary: 'Persists key-value pairs for using later on. if last does not have a key field then the input will pass through to output (it will try to persist from additionalInputs if provided)',
+            summary: 'Read key-value pairs for using later on. if last does not have a key field then it will try to read from additionalInputs if provided',
             inputs: {
                 last: [{
                     pipelane: 'optional, will auto pick if not provided',
                     pkey: 'key',
-                    pval: 'value',
                     grp: 'optional, defaults to pipelane name'
                 } as PersistedKeyValue],
                 additionalInputs: {
                     grp: 'optional, the group in inputs (if provided) will override this',
                     pipelane: 'optional, will auto pick if not provided',
-                    pkey: 'key',
-                    pval: 'value'
+                    pkey: 'key'
                 } as PersistedKeyValue
             }
         }
@@ -75,10 +66,9 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
         if (!this.initialized) {
             await this.initDb()
         }
-        let output = []
         let pipelaneName = pipeWorksInstance.name
         let grp = input.additionalInputs?.grp ?? pipelaneName
-        let toInsert = []
+        let toRead = []
 
         let perisistFromInput = input.last?.find(y => y.pkey != undefined)
         if (perisistFromInput) {
@@ -86,54 +76,51 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
                 _input.grp = _input.grp || grp
                 _input.pipelane = _input.pipelane || pipelaneName
                 //@ts-ignore
-                toInsert.push({
+                toRead.push({
                     pkey: _input.pkey,
-                    pval: _input.pval,
                     grp: _input.grp,
                     pipelane: _input.pipelane
                 } as PersistedKeyValue)
             }
-            output = toInsert
         } else {
             if (input.additionalInputs?.pkey) {
                 let _input = {} as PersistedKeyValue
                 _input.pkey = input.additionalInputs.pkey
-                _input.pval = input.additionalInputs.pval
                 _input.grp = _input.grp || grp
                 _input.pipelane = _input.pipelane || pipelaneName
-                toInsert.push(_input)
+                toRead.push(_input)
             }
-            output = input.last
         }
 
-        if (toInsert.length > 0) {
-            let promises = toInsert.map(_input => {
+        let output = []
+        if (toRead.length > 0) {
+            let promises = toRead.map(_input => {
                 //@ts-ignore
                 let dbFilter = {
                     pkey: _input.pkey,
                     grp: _input.grp,
                     pipelane: _input.pipelane
                 } as PersistedKeyValue
-                return this.db.getOne(this.tableName, dbFilter).then(existing => {
-                    if (existing) {
-                        return this.db.update(this.tableName, dbFilter, _input)
-                    } else {
-                        return this.db.insert(this.tableName, _input)
-                    }
-                })
-                    .then(() => {
-                        _input.status = true
+                return this.db.getOne(this.tableName, dbFilter)
+                    .then((result) => {
+                        if (result) {
+                            result.status = true
+                            return result
+                        }
+                        _input.status = false
+                        return _input
                     })
                     .catch(e => {
                         _input.status = false
-                        _input.message = 'Error persisting. ' + e.message
+                        _input.message = 'Error reading. ' + e.message
+                        return _input
                     })
             })
-            await Promise.all(promises)
-            this.onLog('Persisted ', toInsert.map(t => t.pkey).join(","), " values")
+            output = await Promise.all(promises)
+            this.onLog('Loaded ', toRead.map(t => t.pkey).join(","), " values")
         }
 
-        return output || [{ status: false }]
+        return output
 
     }
 

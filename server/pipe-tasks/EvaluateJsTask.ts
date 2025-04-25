@@ -78,7 +78,7 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
 
 const cut = new EvaluateJsTask()
 function test() {
-    cut.execute(new PipeLane({}), {
+    cut.execute(new PipeLane({}, 'js'), {
         additionalInputs: {
             js: "${task.taskTypeName}"
         },
