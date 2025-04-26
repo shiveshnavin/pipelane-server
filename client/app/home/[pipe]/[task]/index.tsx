@@ -191,6 +191,11 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
             })
             forceUpdate()
         }
+        if (task.taskTypeName == 'eval-js') {
+            setEditingField('js')
+        } else {
+            setEditingField(undefined)
+        }
     }, [task.taskVariantName, task.taskTypeName])
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useContext(ThemeContext)
