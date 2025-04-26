@@ -7,7 +7,7 @@ import { generatePipelaneResolvers } from "../graphql/pipelane";
 import AsyncLock from 'async-lock';
 import { EvaluateJsTask } from "../pipe-tasks/EvaluateJsTask";
 import axios from "axios";
-import { existsSync, unlinkSync } from "fs";
+import { existsSync, rmdirSync, unlinkSync } from "fs";
 
 const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
 
@@ -266,7 +266,7 @@ export class CronScheduler {
                 onResult([{ status: false }])
             }).finally(() => {
                 if (existsSync(pipelaneFolderPath)) {
-                    unlinkSync(pipelaneFolderPath)
+                    rmdirSync(pipelaneFolderPath, { recursive: true });
                 }
             })
             this.currentExecutions.push(pipeWorksInstance)
