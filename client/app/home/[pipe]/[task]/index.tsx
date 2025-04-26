@@ -78,6 +78,13 @@ export default function PipeTaskPage() {
                         taskTypes {
                             type
                             variants
+                            description {
+                            summary
+                            inputs {
+                                    last
+                                    additionalInputs
+                                }
+                            }
                         }
                         }`,
                 variables: {}

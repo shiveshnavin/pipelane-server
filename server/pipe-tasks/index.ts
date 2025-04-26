@@ -1,4 +1,4 @@
-import { TaskVariantConfig } from "pipelane";
+import { OutputWithStatus, TaskVariantConfig } from "pipelane";
 import { ApiTask } from "./ApiTask";
 import { ShellTask } from "./ShellTask";
 import { DelayTask } from "./DelayTask";
@@ -15,6 +15,10 @@ export const VariantConfig: TaskVariantConfig = {
     [EvaluateJsTask.TASK_TYPE_NAME]: [new EvaluateJsTask(EvaluateJsTask.TASK_VARIANT_NAME), new LoopEvaluateJsTask(LoopEvaluateJsTask.TASK_VARIANT_NAME)],
     [WriteFileTask.TASK_TYPE_NAME]: [new WriteFileTask(WriteFileTask.TASK_VARIANT_NAME)],
     [PipeManagerTask.TASK_TYPE_NAME]: [new PipeManagerTask()]
+}
+
+export type ErrorOutput = OutputWithStatus & {
+    message?: string
 }
 
 export * from './'
