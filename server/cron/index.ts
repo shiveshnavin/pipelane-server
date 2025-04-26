@@ -7,6 +7,7 @@ import { generatePipelaneResolvers } from "../graphql/pipelane";
 import AsyncLock from 'async-lock';
 import { EvaluateJsTask } from "../pipe-tasks/EvaluateJsTask";
 import axios from "axios";
+import { existsSync, unlinkSync } from "fs";
 
 const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
 
@@ -119,7 +120,8 @@ export class CronScheduler {
             let pipeWorksInstance = new PipeLane(this.variantConfig, pl.name)
             pipeWorksInstance.logLevel = this.pipelaneLogLevel
             let pipelaneInstName = `${pl.name}-${Date.now()}`
-            pipeWorksInstance.enableCheckpoints(pipelaneInstName, `pipelane/${pipelaneInstName}`)
+            let pipelaneFolderPath = `pipelane/${pipelaneInstName}`
+            pipeWorksInstance.enableCheckpoints(pipelaneInstName, pipelaneFolderPath)
             let invalidTasksFromSchedule = pl.tasks?.filter(pt => this.variantConfig[pt.taskTypeName] == undefined).map(t => t.taskTypeName)
             if (invalidTasksFromSchedule && invalidTasksFromSchedule.length > 0) {
                 console.warn(`No tasks of types ${invalidTasksFromSchedule.join(",")} found in variantconfig. Skipping triggering ${pl.name}`)
@@ -262,6 +264,10 @@ export class CronScheduler {
             pipeWorksInstance.start(input).then(onResult).catch((e) => {
                 console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
                 onResult([{ status: false }])
+            }).finally(() => {
+                if (existsSync(pipelaneFolderPath)) {
+                    unlinkSync(pipelaneFolderPath)
+                }
             })
             this.currentExecutions.push(pipeWorksInstance)
 
