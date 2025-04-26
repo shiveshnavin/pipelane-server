@@ -112,6 +112,8 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
             ...inputPipe,
             input: JSON.stringify(JSON.parse(inputPipe.input as string), null, 2)
         })
+        getTasks()
+        getExecutions()
     }, [inputPipe])
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useContext(ThemeContext)
@@ -121,9 +123,12 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
 
     function getTasks() {
         api.getPipelaneTasks(pipe.name as string).then(result => {
-            pipe.tasks = result.data.pipelaneTasks
-            pipe.tasks?.forEach(task => {
-                delete task?.__typename
+            setPipe((pipe) => {
+                pipe.tasks = result.data.pipelaneTasks
+                pipe.tasks?.forEach(task => {
+                    delete task?.__typename
+                })
+                return pipe
             })
             forceUpdate()
         })
@@ -132,7 +137,10 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
 
     function getExecutions() {
         api.pipelaneExecutions(pipe.name).then((plx) => {
-            pipe.executions = plx.data.pipelaneExecutions
+            setPipe(pipe => {
+                pipe.executions = plx.data.pipelaneExecutions
+                return pipe
+            })
             forceUpdate()
         }).catch(e => {
             seterr(getGraphErrorMessage(e))
@@ -300,7 +308,8 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                     <CardView>
 
                         <Expand title="Tasks" onExpand={() => {
-                            getTasks()
+                            if (pipe.tasks == undefined || pipe.tasks.length == 0)
+                                getTasks()
                         }}>
                             <SimpleDatalistView
                                 loading={pipe.tasks == undefined}
@@ -354,7 +363,8 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
             <CardView>
 
                 <Expand title="Executions" onExpand={() => {
-                    getExecutions()
+                    if (pipe.executions == undefined || pipe.executions.length == 0)
+                        getExecutions()
                 }}>
                     <PipeExecutionsView executions={pipe.executions as PipelaneExecution[]} router={router} />
                 </Expand>
