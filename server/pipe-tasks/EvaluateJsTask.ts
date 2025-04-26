@@ -8,6 +8,13 @@ export type EvaluateJsTaskInput = InputWithPreviousInputs & {
     }
 }
 
+export const EvalJSUtils = {
+    escapeJSONString(str: string) {
+        return str
+            .replace(/"/g, '\\"');
+    }
+}
+
 /**
  * Deprecated. Use LoopEvaluateJsTask instead
  */
@@ -25,7 +32,7 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         return true
     }
 
-    async evalInScope(js, pl, input, prev, axios) {
+    async evalInScope(js, pl, input, prev, axios, Utils = EvalJSUtils) {
         return await eval(js)
     }
 
@@ -46,7 +53,7 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         let js = input.additionalInputs.js
         let prev = input.last
         try {
-            let output = await this.evalInScope(js, pipeWorksInstance, input, prev, axios)
+            let output = await this.evalInScope(js, pipeWorksInstance, input, prev, axios, EvalJSUtils)
             return [{
                 status: true,
                 output: output
@@ -71,7 +78,7 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         const matches = jsInputString.matchAll(placeholderRegex);
         for (const match of matches) {
             const [fullMatch, placeholder] = match;
-            const result = await this.evalInScope(placeholder.trim(), pl, input, prev, axios);
+            const result = await this.evalInScope(placeholder.trim(), pl, input, prev, axios, EvalJSUtils);
             replacedString = replacedString.replace(fullMatch, result?.toString());
         }
 
