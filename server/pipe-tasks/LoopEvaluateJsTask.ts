@@ -15,7 +15,7 @@ export class LoopEvaluateJsTask extends EvaluateJsTask {
             summary: "Process last output using JS. Must return in format [{status:true}]",
             inputs: {
                 additionalInputs: {
-                    js: "JS code"
+                    js: "console.log(pl.inputs);\n//must return an array in output\n[{status:true, pl_inputs:pl.inputs}]"
                 },
                 last: [{
                     status: true
