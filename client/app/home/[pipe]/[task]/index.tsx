@@ -169,26 +169,29 @@ export default function PipeTaskPage() {
 
 function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seterr }: { pipetask: Pipetask, taskTypes: TaskType[], loading: boolean, save: Function, seterr: Function }) {
     const router = useRouter()
-    let taskDesc: TaskTypeDescription | undefined = undefined
-    let taskInput = JSON.stringify(JSON.parse(inputPipetask.input as string), null, 2)
-    const matchingTaskType = taskTypes.find(t => t.type == inputPipetask.taskTypeName)
-    if (matchingTaskType && matchingTaskType?.description) {
-        taskDesc = removeFieldRecursively(matchingTaskType?.description, "__typename")
-    }
-
-    if (inputPipetask?.name == 'new' && taskDesc?.inputs?.additionalInputs) {
-        taskInput = JSON.stringify(taskDesc?.inputs?.additionalInputs, null, 2)
-    }
+    const [taskDesc, setTaskDesc] = useState<any>(undefined)
     const [task, setTask] = useState<Pipetask>(
         {
-            ...inputPipetask,
-            input: taskInput
+            ...inputPipetask
         })
+
     useEffect(() => {
-        if (taskInput) {
-            task.input = taskInput
+        let taskDesc: TaskTypeDescription | undefined = undefined
+        let taskInput = JSON.stringify(JSON.parse(inputPipetask.input as string), null, 2)
+        const matchingTaskType = taskTypes.find(t => t.type == task.taskTypeName)
+        if (matchingTaskType && matchingTaskType?.description) {
+            taskDesc = removeFieldRecursively(matchingTaskType?.description, "__typename")
+            setTaskDesc(taskDesc)
         }
-    }, [inputPipetask])
+        if (inputPipetask?.name == 'new' && taskDesc?.inputs?.additionalInputs) {
+            taskInput = JSON.stringify(taskDesc?.inputs?.additionalInputs, null, 2)
+            setTask(t => {
+                t.input = taskInput
+                return t
+            })
+            forceUpdate()
+        }
+    }, [task.taskVariantName, task.taskTypeName])
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useContext(ThemeContext)
 
