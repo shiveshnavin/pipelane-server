@@ -356,7 +356,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                 {
                     isObject(task.input) && (
 
-                        <Expand title="Edit field as code" leftPadding={0}>
+                        <Expand title="Edit field as code" leftPadding={0} initialExpand={task.taskTypeName == 'eval-js'}>
                             <DropDownView
                                 title="Select field"
                                 forceDialogSelectOnWeb={true}
