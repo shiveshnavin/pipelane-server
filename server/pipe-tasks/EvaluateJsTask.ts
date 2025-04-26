@@ -1,4 +1,5 @@
 import axios from "axios";
+import fs from 'fs'
 import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask } from "pipelane";
 
 export type EvaluateJsTaskInput = InputWithPreviousInputs & {
@@ -9,6 +10,11 @@ export type EvaluateJsTaskInput = InputWithPreviousInputs & {
 }
 
 export const EvalJSUtils = {
+    mkdir(path: string) {
+        if (!fs.existsSync(path)) {
+            fs.mkdirSync(path)
+        }
+    },
     escapeJSONString(str: string) {
         return str
             .replace(/"/g, '\\"');
