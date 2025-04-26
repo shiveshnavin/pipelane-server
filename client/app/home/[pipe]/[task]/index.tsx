@@ -175,6 +175,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
     if (matchingTaskType && matchingTaskType?.description) {
         taskDesc = removeFieldRecursively(matchingTaskType?.description, "__typename")
     }
+
     if (inputPipetask?.name == 'new' && taskDesc?.inputs?.additionalInputs) {
         taskInput = JSON.stringify(taskDesc?.inputs?.additionalInputs, null, 2)
     }
@@ -183,6 +184,11 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
             ...inputPipetask,
             input: taskInput
         })
+    useEffect(() => {
+        if (taskInput) {
+            task.input = taskInput
+        }
+    }, [inputPipetask])
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useContext(ThemeContext)
 
