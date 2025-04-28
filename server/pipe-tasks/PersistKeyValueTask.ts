@@ -130,7 +130,8 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
                     })
             })
             await Promise.all(promises)
-            this.onLog('Persisted ', toInsert.map(t => t.pkey).join(","), " values")
+            this.onLog('Persisted ', JSON.stringify(toInsert.map(o => (`${o.pkey}=${o.pval}`))))
+
         }
 
         return output || [{ status: false }]

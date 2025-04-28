@@ -117,7 +117,7 @@ export class ReadPersistedKeyValueTask extends PipeTask<any, any> {
                     })
             })
             output = await Promise.all(promises)
-            this.onLog('Loaded ', toRead.map(t => t.pkey).join(","), " values")
+            this.onLog('Loaded ', JSON.stringify(output.map(o => (`${o.pkey}=${o.pval}`))))
         }
 
         return output
