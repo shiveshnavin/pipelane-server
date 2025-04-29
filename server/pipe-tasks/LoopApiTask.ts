@@ -1,6 +1,6 @@
 import axios from "axios";
 //@ts-ignore
-import PipeLane, { PipeTask } from "pipelane";
+import PipeLane, { PipeTask, PipeTaskDescription } from "pipelane";
 import { RateLimiter } from "limiter";
 
 export class LoopApiTask extends PipeTask<any, any> {
@@ -16,18 +16,34 @@ export class LoopApiTask extends PipeTask<any, any> {
         return true
     }
 
+    describe(): PipeTaskDescription | undefined {
+        return {
+            summary: "Call APIs in parallel with rate limiting",
+            inputs: {
+                additionalInputs: {
+                    sequential: "boolean, if true, other rate fields will be ignored",
+                    rate: "Number, x requests / Y interval",
+                    interval: "day | hour | min | sec"
+                },
+                last: [{
+                    url: "axios request config",
+                }]
+            }
+        }
+    }
 
     async execute(pipeWorksInstance: PipeLane, inputs: any): Promise<any[]> {
         const last = inputs.last;
         const outputs = [];
         const limiter = new RateLimiter({
             tokensPerInterval: inputs.additionalInputs?.rate || 10,
-            interval: 'second'
+            interval: inputs.additionalInputs?.interval || 'second'
         });
 
         // Function to handle each request with rate limiting
         const handleRequest = async (options) => {
-            await limiter.removeTokens(1);
+            if (!inputs.additionalInputs.sequential)
+                await limiter.removeTokens(1);
             try {
                 let response = await axios(options);
                 return {
@@ -49,11 +65,19 @@ export class LoopApiTask extends PipeTask<any, any> {
         };
 
         // Create a queue to manage parallel requests
-        const promises = last.map(options => handleRequest(options));
-
-        // Execute requests in parallel with rate limiting
-        const results = await Promise.all(promises);
-        outputs.push(...results);
+        if (!inputs.additionalInputs.sequential) {
+            const promises = last.map(options => handleRequest(options));
+            const results = await Promise.all(promises);
+            outputs.push(...results);
+        } else {
+            for (let options of last) {
+                let response = await handleRequest(options).catch(e => ({
+                    status: false,
+                    message: `Request failed. ${e.message} ${e.response?.status} ${JSON.stringify(e.response?.data)}`
+                }))
+                outputs.push(response)
+            }
+        }
 
         return outputs;
     }

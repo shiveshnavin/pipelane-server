@@ -45,7 +45,7 @@ export class ReadPersistedKeyValueTask extends PipeTask<any, any> {
 
     describe(): PipeTaskDescription | undefined {
         return {
-            summary: 'Read key-value pairs for using later on. if last does not have a key field then it will try to read from additionalInputs if provided',
+            summary: 'Read key-value pairs for using later on. if additionalInputs does not have a pkey field then it will try to read pkey from last if provided, By default, sets the keys in pipelane inputs',
             inputs: {
                 last: [{
                     pipelane: 'optional, will auto pick if not provided',
@@ -53,10 +53,11 @@ export class ReadPersistedKeyValueTask extends PipeTask<any, any> {
                     grp: 'optional, defaults to pipelane name'
                 } as PersistedKeyValue],
                 additionalInputs: {
-                    grp: 'optional, the group in inputs (if provided) will override this',
+                    skipSetInInputs: 'boolean, skip setting the key values in pl inputs. default is false',
+                    grp: 'optional',
                     pipelane: 'optional, will auto pick if not provided',
                     pkey: 'key'
-                } as PersistedKeyValue
+                }
             }
         }
     }
@@ -71,7 +72,14 @@ export class ReadPersistedKeyValueTask extends PipeTask<any, any> {
         let toRead = []
 
         let perisistFromInput = input.last?.find(y => y.pkey != undefined)
-        if (perisistFromInput) {
+        if (input.additionalInputs?.pkey) {
+            let _input = {} as PersistedKeyValue
+            _input.pkey = input.additionalInputs.pkey
+            _input.grp = _input.grp || grp
+            _input.pipelane = _input.pipelane || pipelaneName
+            toRead.push(_input)
+        }
+        else if (perisistFromInput) {
             for (let _input of input.last as PersistedKeyValue[]) {
                 _input.grp = _input.grp || grp
                 _input.pipelane = _input.pipelane || pipelaneName
@@ -82,15 +90,8 @@ export class ReadPersistedKeyValueTask extends PipeTask<any, any> {
                     pipelane: _input.pipelane
                 } as PersistedKeyValue)
             }
-        } else {
-            if (input.additionalInputs?.pkey) {
-                let _input = {} as PersistedKeyValue
-                _input.pkey = input.additionalInputs.pkey
-                _input.grp = _input.grp || grp
-                _input.pipelane = _input.pipelane || pipelaneName
-                toRead.push(_input)
-            }
         }
+
 
         let output = []
         if (toRead.length > 0) {
@@ -118,6 +119,11 @@ export class ReadPersistedKeyValueTask extends PipeTask<any, any> {
             })
             output = await Promise.all(promises)
             this.onLog('Loaded ', JSON.stringify(output.map(o => (`${o.pkey}=${o.pval}`))))
+            let plInputs = pipeWorksInstance.getInputs()
+            if (!input.additionalInputs.skipSetInInputs)
+                output.forEach((p) => {
+                    plInputs[p.pkey] = p.pval
+                })
         }
 
         return output

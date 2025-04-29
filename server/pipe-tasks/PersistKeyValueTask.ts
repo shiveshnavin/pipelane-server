@@ -4,6 +4,7 @@ import PipeLane, { InputWithPreviousInputs, PipeTask, PipeTaskDescription } from
 
 
 export type PersistedKeyValue = {
+    skipSetInInputs: boolean
     pipelane: string,
     pkey: string,
     pval: string
@@ -52,7 +53,7 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
 
     describe(): PipeTaskDescription | undefined {
         return {
-            summary: 'Persists key-value pairs for using later on. if last does not have a key field then the input will pass through to output (it will try to persist from additionalInputs if provided)',
+            summary: 'Persists key-value pairs for using later on.it will try to persist from additionalInputs if provided and input.last passes through to output. if additionalInputs does not have a key field then the it will check in input.last and the output is the persisted objects',
             inputs: {
                 last: [{
                     pipelane: 'optional, will auto pick if not provided',
@@ -81,7 +82,17 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
         let toInsert = []
 
         let perisistFromInput = input.last?.find(y => y.pkey != undefined)
-        if (perisistFromInput) {
+
+        output = input.last
+        if (input.additionalInputs?.pkey) {
+            let _input = {} as PersistedKeyValue
+            _input.pkey = input.additionalInputs.pkey
+            _input.pval = input.additionalInputs.pval
+            _input.grp = _input.grp || grp
+            _input.pipelane = _input.pipelane || pipelaneName
+            toInsert.push(_input)
+        }
+        else if (perisistFromInput) {
             for (let _input of input.last as PersistedKeyValue[]) {
                 _input.grp = _input.grp || grp
                 _input.pipelane = _input.pipelane || pipelaneName
@@ -94,16 +105,6 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
                 } as PersistedKeyValue)
             }
             output = toInsert
-        } else {
-            if (input.additionalInputs?.pkey) {
-                let _input = {} as PersistedKeyValue
-                _input.pkey = input.additionalInputs.pkey
-                _input.pval = input.additionalInputs.pval
-                _input.grp = _input.grp || grp
-                _input.pipelane = _input.pipelane || pipelaneName
-                toInsert.push(_input)
-            }
-            output = input.last
         }
 
         if (toInsert.length > 0) {
