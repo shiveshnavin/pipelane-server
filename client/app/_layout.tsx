@@ -10,7 +10,7 @@ import { BottomNavBar, SimpleToolbar, VBox, VPage } from 'react-native-boxes';
 import { useRouteInfo } from "expo-router/build/hooks";
 import { Center, KeyboardAvoidingScrollView } from "react-native-boxes/src/Box";
 import { ApolloProvider } from "@apollo/client";
-import { createApiClient } from "@/common/api";
+import { createApiClient } from "../common/api";
 import axios from 'axios'
 
 function Main() {
