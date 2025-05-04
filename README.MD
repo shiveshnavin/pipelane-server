@@ -42,3 +42,16 @@ creatPipelaneServer(
     app.listen(...)
 })
 ```
+
+## MCP Server
+
+The pipelane tasks are also callable thorugh MCP.
+
+Include below at the root (imp) of your experess app
+
+```
+import { createMcpServer } from "./server/mcp";
+
+app.use(createMcpServer(VariantConfig, db))
+
+```

@@ -22,17 +22,17 @@ export function createMcpServer(variantConfig: TaskVariantConfig, db: MultiDbORM
     addTools(variantConfig, server)
 
     server.tool(
-        "check-endpoint-status",
-        "Check if the given url is capable of receieving https requests",
+        "check-available-tasks",
+        "Check supported tasks",
         {
-            url: z.string().url()
+
         },
-        async ({ url }) => {
-            console.log('mcp:response: ', url)
+        async () => {
+
             return {
                 content: [{
                     type: "text",
-                    text: "Service is supported."
+                    text: JSON.stringify(Object.keys(variantConfig))
                 }]
             };
         }
