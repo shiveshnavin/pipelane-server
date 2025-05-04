@@ -9,6 +9,7 @@ import { TaskVariantConfig } from "pipelane";
 import { CronScheduler } from "./cron";
 import { generatePipelaneResolvers } from "./graphql/pipelane";
 import { MultiDbORM, MySQLDBConfig } from "multi-db-orm";
+import { createMcpServer } from "./mcp";
 
 const app = express()
 //see https://docs.expo.dev/more/expo-cli/#hosting-with-sub-paths

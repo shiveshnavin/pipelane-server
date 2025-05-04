@@ -1,6 +1,6 @@
 {
   "name": "pipelane-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "index.ts",
   "scripts": {
@@ -16,6 +16,7 @@
   "dependencies": {
     "@apollo/server": "^4.10.2",
     "@graphql-codegen/cli": "^5.0.2",
+    "@modelcontextprotocol/sdk": "^1.11.0",
     "async-lock": "^1.4.1",
     "axios": "^1.6.8",
     "croner": "^8.0.2",
@@ -31,9 +32,10 @@
     "path": "^0.12.7",
     "pipelane": "^2.1.14",
     "sqlite3": "^5.1.7",
-    "typescript": "^5.4.4"
+    "zod": "^3.24.3"
   },
   "devDependencies": {
+    "typescript": "^5.4.4",
     "ts-node-dev": "^2.0.0"
   }
 }

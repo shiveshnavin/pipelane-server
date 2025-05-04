@@ -4,11 +4,13 @@ import { VariantConfig } from "./server/pipe-tasks";
 import { readFileSync } from "fs";
 import path from "path";
 import express from 'express'
+import { createMcpServer } from "./server/mcp";
 
 const app = express()
 const port = process.env.PORT || 4001
-const dbConfig = new SQLiteDB('database.sqlite')
-creatPipelaneServer(VariantConfig, dbConfig, 2).then(pipelane => {
+const db = new SQLiteDB('database.sqlite')
+app.use(createMcpServer(VariantConfig, db))
+creatPipelaneServer(VariantConfig, db, 2).then(pipelane => {
     app.use('/pipelane', pipelane)
     app.use('/', (req, res) => res.redirect('/pipelane'))
     app.listen(port, () => {
