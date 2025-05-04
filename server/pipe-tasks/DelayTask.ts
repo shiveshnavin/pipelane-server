@@ -1,5 +1,5 @@
 import axios from "axios";
-import PipeLane, { InputWithPreviousInputs, PipeTask } from "pipelane";
+import PipeLane, { InputWithPreviousInputs, PipeTask, PipeTaskDescription } from "pipelane";
 
 export class DelayTask extends PipeTask<any, any> {
 
@@ -18,6 +18,17 @@ export class DelayTask extends PipeTask<any, any> {
         return true
     }
 
+    describe(): PipeTaskDescription | undefined {
+        return {
+            summary: "Delays execution for the specified period",
+            inputs: {
+                additionalInputs: {
+                    milis: "number, the period to wait for in milis"
+                },
+                last: []
+            }
+        }
+    }
     async execute(pipeWorksInstance: PipeLane, input: InputWithPreviousInputs): Promise<any[]> {
         if (!input.additionalInputs.milis) {
             return [{

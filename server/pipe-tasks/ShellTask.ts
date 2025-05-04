@@ -1,5 +1,5 @@
 import axios from "axios";
-import PipeLane, { PipeTask } from "pipelane";
+import PipeLane, { PipeTask, PipeTaskDescription } from "pipelane";
 import { exec } from 'child_process'
 
 export type ShellTaskAdditionalInput = {
@@ -22,6 +22,18 @@ export class ShellTask extends PipeTask<any, any> {
         return true
     }
 
+
+    describe(): PipeTaskDescription | undefined {
+        return {
+            summary: 'Task to execute shell commands',
+            inputs: {
+                last: [],
+                additionalInputs: {
+                    cmd: "string, the shell command to run"
+                }
+            }
+        }
+    }
 
     isExecutableAllowed(command, allowedExecutables) {
         if (allowedExecutables.includes("*"))

@@ -1,6 +1,6 @@
 import axios from "axios";
 import fs from 'fs'
-import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask } from "pipelane";
+import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask, PipeTaskDescription } from "pipelane";
 
 export type EvaluateJsTaskInput = InputWithPreviousInputs & {
     last: OutputWithStatus[],
@@ -38,6 +38,19 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         return true
     }
 
+    describe(): PipeTaskDescription | undefined {
+        return {
+            summary: "Process JS. Must return in format [{status:true}]",
+            inputs: {
+                additionalInputs: {
+                    js: "string, The js code, for example: console.log(pl.inputs);\n//the last line of the must be an array in output\n[{status:true, ...other data}]"
+                },
+                last: [{
+                    status: true
+                }]
+            }
+        }
+    }
     async evalInScope(js, pl, input, prev, axios, Utils = EvalJSUtils) {
         return await eval(js)
     }

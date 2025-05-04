@@ -1,6 +1,6 @@
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 //@ts-ignore
-import PipeLane, { PipeTask } from "pipelane";
+import PipeLane, { PipeTask, PipeTaskDescription } from "pipelane";
 
 export class ApiTask extends PipeTask<any, any> {
 
@@ -14,6 +14,21 @@ export class ApiTask extends PipeTask<any, any> {
     kill(): boolean {
         return true
     }
+
+    describe(): PipeTaskDescription | undefined {
+        return {
+            summary: "Call an API",
+            inputs: {
+                last: [],
+                additionalInputs: {
+                    url: "string, the url of the API",
+                    method: "string, Http method",
+                    headers: "object, an object of headers"
+                }
+            }
+        }
+    }
+
     async execute(pipeWorksInstance: PipeLane, input: any): Promise<any[]> {
         input = input.additionalInputs
         if (!input.url) {

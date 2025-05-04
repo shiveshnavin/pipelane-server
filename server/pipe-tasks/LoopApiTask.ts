@@ -26,7 +26,9 @@ export class LoopApiTask extends PipeTask<any, any> {
                     interval: "day | hour | min | sec"
                 },
                 last: [{
-                    url: "axios request config",
+                    url: "string, the url of the API",
+                    method: "string, Http method",
+                    headers: "object, an object of headers"
                 }]
             }
         }
