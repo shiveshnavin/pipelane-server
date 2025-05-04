@@ -48,6 +48,11 @@ creatPipelaneServer(
 The pipelane tasks are also callable thorugh MCP.
 
 Include below at the root (imp) of your experess app
+Install the below dependencies in your root project
+
+```
+npm i  @modelcontextprotocol/sdk zod
+```
 
 ```
 import { createMcpServer } from "./server/mcp";
