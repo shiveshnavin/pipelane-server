@@ -1,8 +1,8 @@
 # Pipelane server
 
 ## Summary
-
-The Pipelane server is the backend component of the Pipelane system, a platform for defining, scheduling, and executing automated pipelines. It provides a GraphQL API for managing pipelines, tasks, and executions, and supports various task types for automating different operations.
+# Pipelane UI Server
+This is the UI server for Pipelane, a system for defining and executing automated pipelines. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side application for a user interface to interact with the Pipelane backend.
 
 ## Features
 
@@ -12,12 +12,15 @@ The Pipelane server is the backend component of the Pipelane system, a platform 
 - **Scheduling:** Schedule pipelines to run at specific times using cron expressions.
 - **Execution Management:** Track pipeline and task executions, view logs, and monitor status.
 - **Client Application:** Designed to work with a separate client application for a user interface.
+- **Express.js Integration:** Easily integrate the Pipelane UI server into your existing Express.js applications.
 
 ## Installation
 
 To set up and run the Pipelane server:
 
-1. Clone the repository:
+1. **Clone the repository:**
+
+
 
 ### cron
 
