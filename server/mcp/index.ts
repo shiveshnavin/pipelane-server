@@ -59,6 +59,8 @@ function addTools(variantConfig: TaskVariantConfig, server: McpServer) {
                 async (additionalInputs) => {
                     let pl = new PipeLane(variantConfig, 'mcp')
                     try {
+                        //@ts-ignore
+                        task.pipeWorkInstance = pl
                         let response = await task.execute(pl, {
                             inputs: [],
                             additionalInputs: additionalInputs
