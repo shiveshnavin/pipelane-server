@@ -1,7 +1,5 @@
 # Pipelane server
 
-## Summary
-# Pipelane UI Server
 This is the UI server for Pipelane, a system for defining and executing automated pipelines. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side application for a user interface to interact with the Pipelane backend.
 
 ## Features
@@ -16,26 +14,23 @@ This is the UI server for Pipelane, a system for defining and executing automate
 
 ## Installation
 
-To set up and run the Pipelane server:
+To set up a express app and run the Pipelane server:
 
-1. **Clone the repository:**
-
-
-
-### cron
-
-https://github.com/kelektiv/node-cron/issues/190
-
-### Hosting
-
-Build the models
+Clone the repository
 
 ```
 cd pipelane-server
 yarn install
+cd client 
+npm run build
 ```
 
-Host the app at
+Run standalone
+```
+npm start
+```
+
+Or Host the app in your existing express js app
 
 ```
 creatPipelaneServer(
