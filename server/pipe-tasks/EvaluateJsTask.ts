@@ -1,6 +1,7 @@
 import axios from "axios";
 import fs from 'fs'
 import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask, PipeTaskDescription } from "pipelane";
+import { createHash } from "crypto";
 
 export type EvaluateJsTaskInput = InputWithPreviousInputs & {
     last: OutputWithStatus[],
@@ -18,6 +19,70 @@ export const EvalJSUtils = {
     escapeJSONString(str: string) {
         return str
             .replace(/"/g, '\\"');
+    },
+    randomElement<T>(arr: T[]): T {
+        return arr[Math.floor(Math.random() * arr.length)];
+    },
+    generateUID(input: string): string {
+        return createHash("sha256").update(input).digest("hex").substring(0, 10);
+    },
+    extractEnclosedObjString(inputString) {
+        const regex = /\{[^\}]*\}/g;
+        const results = inputString.match(regex);
+        return results[0];
+    },
+    extractCodeFromMarkdown(markdown) {
+        let codeBlocks = [];
+        let regex = /```(.+?)\s*([\s\S]+?)```/gs;
+        let match;
+        while ((match = regex.exec(markdown))) {
+            codeBlocks.push(match[2]);
+        }
+        return codeBlocks;
+    },
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            // Generate a random index between 0 and i (inclusive)
+            const j = Math.floor(Math.random() * (i + 1));
+
+            // Swap elements at i and j
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    },
+    refineString(str, replacementChar = "_") {
+        const regexPattern = new RegExp(`[^a-zA-Z0-9]`, "g");
+        return str.replace(regexPattern, replacementChar);
+    },
+    generateRandomID(length = 10) {
+        const characters =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let result = "";
+
+        for (let i = 0; i < length; i++) {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            result += characters.charAt(randomIndex);
+        }
+
+        return result;
+    },
+    getFileNameFromURL(url: string) {
+        const parsedURL = new URL(url);
+        const pathname = parsedURL.pathname;
+        const parts = pathname.split("/");
+        const filename = parts[parts.length - 1];
+        return filename;
+    },
+    decodeBase64(base64: string): string {
+        return Buffer.from(base64, "base64").toString("utf8");
+    },
+    encodeBase64(normalString: string): string {
+        return Buffer.from(normalString).toString("base64");
+    },
+    async sleep(ms) {
+        return await new Promise((resolve) => {
+            setTimeout(resolve, ms);
+        })
     }
 }
 
