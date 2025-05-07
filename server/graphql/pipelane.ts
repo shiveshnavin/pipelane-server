@@ -110,43 +110,43 @@ export function generatePipelaneResolvers(
             }
         },
         Pipetask: {
-            active: (parent: any)=>{
-                 if (typeof parent.active === "boolean") {
-                    return parent.active; 
-                  }
-                  if (typeof parent.active === "string") {
-                    return parent.active.toLowerCase() === "true"; 
-                  }
-                  if (typeof parent.active === "number") {
-                    return parent.active === 1; 
-                  }
-                  return Boolean(parent.active);
+            active: (parent: any) => {
+                if (typeof parent.active === "boolean") {
+                    return parent.active;
+                }
+                if (typeof parent.active === "string") {
+                    return parent.active.toLowerCase() === "true";
+                }
+                if (typeof parent.active === "number") {
+                    return parent.active === 1;
+                }
+                return Boolean(parent.active);
             },
-             isParallel: (parent: any)=>{
-                 if (typeof parent.isParallel === "boolean") {
-                    return parent.isParallel; 
-                  }
-                  if (typeof parent.isParallel === "string") {
-                    return parent.isParallel.toLowerCase() === "true"; 
-                  }
-                  if (typeof parent.isParallel === "number") {
-                    return parent.isParallel === 1; 
-                  }
-                  return Boolean(parent.isParallel);
+            isParallel: (parent: any) => {
+                if (typeof parent.isParallel === "boolean") {
+                    return parent.isParallel;
+                }
+                if (typeof parent.isParallel === "string") {
+                    return parent.isParallel.toLowerCase() === "true";
+                }
+                if (typeof parent.isParallel === "number") {
+                    return parent.isParallel === 1;
+                }
+                return Boolean(parent.isParallel);
             }
         },
         Pipelane: {
-            active: (parent: any)=>{
-                 if (typeof parent.active === "boolean") {
-                    return parent.active; 
-                  }
-                  if (typeof parent.active === "string") {
-                    return parent.active.toLowerCase() === "true"; 
-                  }
-                  if (typeof parent.active === "number") {
-                    return parent.active === 1; 
-                  }
-                  return Boolean(parent.active);
+            active: (parent: any) => {
+                if (typeof parent.active === "boolean") {
+                    return parent.active;
+                }
+                if (typeof parent.active === "string") {
+                    return parent.active.toLowerCase() === "true";
+                }
+                if (typeof parent.active === "number") {
+                    return parent.active === 1;
+                }
+                return Boolean(parent.active);
             },
             nextRun: (parent: Pipelane) => cronScheduler.getNextRun(parent.schedule).toLocaleString('en-IN', {
                 timeZone: 'Asia/Kolkata'
@@ -257,7 +257,7 @@ export function generatePipelaneResolvers(
                     }, existing)
                 else {
                     let existingTasks = await PipelaneResolvers.Pipelane.tasks({ name: input.pipelaneName }) || []
-                    existing.step = existingTasks.length
+                    existing.step = existing.step ?? existingTasks.length
                     await db.insert(TableName.PS_PIPELANE_TASK, existing)
                 }
                 return existing
