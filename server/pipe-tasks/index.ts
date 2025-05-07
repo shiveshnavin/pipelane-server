@@ -5,7 +5,7 @@ import { DelayTask } from "./DelayTask";
 import { EvaluateJsTask } from "./EvaluateJsTask";
 import { LoopApiTask } from "./LoopApiTask";
 import { LoopEvaluateJsTask } from "./LoopEvaluateJsTask";
-import { WriteFileTask } from "./WriteFileTask";
+import { WriteCsvFileTask } from "./WriteFileTask";
 import { PipeManagerTask } from "./PipeManagerTask";
 
 export const VariantConfig: TaskVariantConfig = {
@@ -13,7 +13,7 @@ export const VariantConfig: TaskVariantConfig = {
     [ShellTask.TASK_TYPE_NAME]: [new ShellTask(ShellTask.TASK_VARIANT_NAME, ["*"])],
     [DelayTask.TASK_TYPE_NAME]: [new DelayTask(DelayTask.TASK_VARIANT_NAME)],
     [EvaluateJsTask.TASK_TYPE_NAME]: [new EvaluateJsTask(EvaluateJsTask.TASK_VARIANT_NAME), new LoopEvaluateJsTask(LoopEvaluateJsTask.TASK_VARIANT_NAME)],
-    [WriteFileTask.TASK_TYPE_NAME]: [new WriteFileTask(WriteFileTask.TASK_VARIANT_NAME)],
+    [WriteCsvFileTask.TASK_TYPE_NAME]: [new WriteCsvFileTask(WriteCsvFileTask.TASK_VARIANT_NAME)],
     [PipeManagerTask.TASK_TYPE_NAME]: [new PipeManagerTask()]
 }
 

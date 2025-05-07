@@ -4,13 +4,13 @@ import PipeLane, { PipeTask } from "pipelane";
 import fs from 'fs';
 import { Parser } from 'json2csv';
 
-export class WriteFileTask extends PipeTask<any, any> {
+export class WriteCsvFileTask extends PipeTask<any, any> {
 
-    static TASK_VARIANT_NAME: string = "write-file"
     static TASK_TYPE_NAME: string = "write-file"
+    static TASK_VARIANT_NAME: string = "csv"
 
     constructor(variantName?: string) {
-        super(WriteFileTask.TASK_TYPE_NAME, variantName || WriteFileTask.TASK_VARIANT_NAME)
+        super(WriteCsvFileTask.TASK_TYPE_NAME, variantName || WriteCsvFileTask.TASK_VARIANT_NAME)
     }
 
     kill(): boolean {

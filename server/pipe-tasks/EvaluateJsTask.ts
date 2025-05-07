@@ -11,6 +11,7 @@ export type EvaluateJsTaskInput = InputWithPreviousInputs & {
 }
 
 export const EvalJSUtils = {
+    fs: fs,
     mkdir(path: string) {
         if (!fs.existsSync(path)) {
             fs.mkdirSync(path, { recursive: true })
