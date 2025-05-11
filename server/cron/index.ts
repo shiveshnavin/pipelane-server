@@ -1,7 +1,7 @@
 //@ts-ignore
 import PipeLane, { VariablePipeTask, TaskVariantConfig } from "pipelane";
 import { PipelaneExecution, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
-import Cron from "croner";
+import { Cron } from "croner";
 import * as NodeCron from 'node-cron'
 import { generatePipelaneResolvers } from "../graphql/pipelane";
 import AsyncLock from 'async-lock';
