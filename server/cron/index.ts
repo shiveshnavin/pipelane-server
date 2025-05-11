@@ -86,7 +86,7 @@ export class CronScheduler {
 
     schedulePipelaneCronjob(pl: PipelaneSchedule) {
         let existing = this.findScheduledJob(pl)
-        let cronJob = Cron(pl.schedule, (() => {
+        let cronJob = new Cron(pl.schedule, (() => {
             this.triggerPipelane(pl).catch(e => {
                 console.error(`Fatal error triggering pipelane ${pl.name}. ` + e.message)
             })
