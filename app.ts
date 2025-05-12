@@ -5,6 +5,7 @@ import { readFileSync } from "fs";
 import path from "path";
 import https from 'https'
 import express from 'express'
+import fs from 'fs'
 import { createMcpServer } from "./server/mcp";
 
 const app = express()
