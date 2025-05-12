@@ -19,8 +19,7 @@ creatPipelaneServer(VariantConfig, db, 2).then(pipelane => {
         console.log(`Running a GraphQL API server at http://localhost:${port}/graph. Current time: ${new Date().toLocaleString()}`)
     })
 
-    console.log('process.env',process.env)
-    if(process.env.PIPELANE_HTTPS_PORT && process.env.PIPELANE_HTTPS_KEY_PATH && process.env.PIPELANE_HTTPS_CERT_PATH){
+    if(process.env.PIPELANE_HTTPS_KEY_PATH && process.env.PIPELANE_HTTPS_CERT_PATH){
         let HTTPS_PORT = process.env.PIPELANE_HTTPS_PORT || 8443
         var privateKey = fs.readFileSync(process.env.PIPELANE_HTTPS_KEY_PATH);
         var certificate = fs.readFileSync(process.env.PIPELANE_HTTPS_CERT_PATH);
