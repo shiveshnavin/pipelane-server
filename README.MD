@@ -60,3 +60,12 @@ import { createMcpServer } from "./server/mcp";
 app.use(createMcpServer(VariantConfig, db))
 
 ```
+
+## SSL
+Pass via env.
+
+```
+PIPELANE_HTTPS_PORT=8443
+PIPELANE_HTTPS_KEY_PATH=/path/to/private.key.pem
+PIPELANE_HTTPS_CERT_PATH=/path/to/certificate.pem
+```
