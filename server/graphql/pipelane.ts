@@ -21,6 +21,10 @@ export function generatePipelaneResolvers(
     cronScheduler?: CronScheduler,
     defaultExecutionRetentionCountPerPipe: number = 5) {
 
+    if (db == undefined) {
+        throw new Error('db supplied to pipelane must not be null')
+    }
+
     async function trimExecution(pipeEx: PipelaneExecution) {
         let pipe = await PipelaneResolvers.Query.Pipelane(undefined, {
             name: pipeEx.name
