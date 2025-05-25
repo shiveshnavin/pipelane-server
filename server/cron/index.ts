@@ -171,7 +171,8 @@ export class CronScheduler {
                 let pltConfig: VariablePipeTask = {
                     uniqueStepName: tkd.name,
                     type: tkd.taskTypeName,
-                    isParallel: tkd.isParallel,
+                    //@ts-ignore
+                    isParallel: tkd.isParallel === true || tkd.isParallel === 'true',
                     numberOfShards: input.numberOfShards,
                     itemsPerShard: input.itemsPerShard,
                     cutoffLoadThreshold: input.cutoffLoadThreshold,
