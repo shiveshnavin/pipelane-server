@@ -9,14 +9,14 @@ import { EvaluateJsTask } from "../pipe-tasks/EvaluateJsTask";
 import axios from "axios";
 import { existsSync, rmdirSync, unlinkSync } from "fs";
 
-const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
+// const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
 
 export class CronScheduler {
     stopped: boolean = false
     cronJobs: { name: string, job: Cron }[] = []
     schedules: PipelaneSchedule[] = []
     currentExecutions: PipeLane[] = []
-    pipelaneResolver = pipelaneResolver
+    pipelaneResolver 
     variantConfig: TaskVariantConfig
     pipelaneLogLevel: 0 | 1 | 2 | 3 | 4 | 5
 
