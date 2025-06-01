@@ -1,5 +1,5 @@
 import { AppContext } from "@/components/Context";
-import { router, useLocalSearchParams } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
@@ -312,6 +312,40 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                                 getTasks()
                         }}>
                             <SimpleDatalistView
+                                onRender={(item: Pipetask, idx: number) => (
+                                    <Link
+                                        href={`/home/${item.pipelaneName}/${item.name}`}
+                                        style={{ marginRight: 12, flex: 1, width: '100%' }}
+                                    >
+                                        <HBox
+                                            key={item.name}
+                                            style={{
+                                                alignItems: 'center',
+                                                paddingVertical: 8,
+                                                paddingHorizontal: 12,
+                                                flex: 1,
+                                                width: '100%'
+                                            }}
+                                        >
+                                            <VBox style={{ flex: 1 }}>
+                                                <TextView style={{
+                                                    color: theme.colors.accent,
+                                                    fontWeight: 'bold', fontSize: 16
+                                                }}>
+                                                    {item.name}
+                                                    {!item.active && <TextView style={{ color: theme.colors.caption }}> (Disabled)</TextView>}
+                                                </TextView>
+                                                <TextView style={{
+                                                    color: theme.colors.caption,
+                                                    fontSize: 13
+                                                }}>
+                                                    {item.taskVariantName} ({item.taskTypeName})
+                                                </TextView>
+                                            </VBox>
+                                            <Icon name="arrow-right" color={theme.colors.text} size={20} />
+                                        </HBox>
+                                    </Link>
+                                )}
                                 loading={pipe.tasks == undefined}
                                 items={(pipe.tasks || []).sort((a, b) => (a?.step || 0) - (b?.step || 0)) as any}
                                 itemAdapter={(item: Pipetask) => {
@@ -352,9 +386,12 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                                     }
                                 }}
                             />
-                            <TertiaryButtonView text="Create" onPress={() => {
-                                router.navigate(`/home/${pipe.name}/new`)
-                            }} />
+                            <Center>
+                                <Link href={`/home/${pipe.name}/new`}>
+                                    <TertiaryButtonView text="Create" />
+                                </Link>
+                            </Center>
+
                         </Expand>
                     </CardView>
                 )

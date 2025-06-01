@@ -2,10 +2,10 @@ import { AppContext, ContextData } from "@/components/Context";
 import { gql } from "@apollo/client";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { ButtonView, Colors, CompositeTextInputView, DarkColors, Icon, PressableView, SimpleDatalistView, SimpleToolbar, Storage, SwitchView, Theme, ThemeContext, VPage, isDesktop, isWeb } from "react-native-boxes";
-import { Pipelane } from '../../../gen/model'
-import { KeyboardAvoidingScrollView, CardView, HBox } from "react-native-boxes/src/Box";
-import { useRouter } from "expo-router";
+import { ButtonView, Caption, Colors, CompositeTextInputView, DarkColors, Icon, PressableView, SimpleDatalistView, SimpleToolbar, Storage, SwitchView, TextView, Theme, ThemeContext, VPage, isDesktop, isWeb } from "react-native-boxes";
+import { Pipelane, Pipetask } from '../../../gen/model'
+import { KeyboardAvoidingScrollView, CardView, HBox, VBox } from "react-native-boxes/src/Box";
+import { Link, useRouter } from "expo-router";
 import { StatusBar } from "react-native";
 
 export default function HomeLayout() {
@@ -104,6 +104,57 @@ export default function HomeLayout() {
                     style={{
                         padding: theme.dimens.space.sm
                     }}
+                    onRender={(pipe: Pipelane, idx: number) => (
+                        <Link
+                            href={`/home/${pipe.name}`}
+                            style={{ marginRight: 12, flex: 1, width: '100%' }}
+                        >
+                            <HBox
+                                key={pipe.name}
+                                style={{
+                                    alignItems: 'center',
+                                    paddingVertical: 8,
+                                    paddingHorizontal: 12,
+                                    flex: 1,
+                                    width: '100%'
+                                }}
+                            >
+                                <VBox style={{ flex: 1 }}>
+                                    <TextView style={{
+                                        color: theme.colors.accent,
+                                        fontWeight: 'bold', fontSize: theme.dimens.font.lg
+                                    }}>
+                                        {pipe.name}
+                                    </TextView>
+                                    <TextView style={{
+                                        fontSize: theme.dimens.font.md
+                                    }}>
+                                        Schedule: {pipe.schedule}
+                                    </TextView>
+                                    <Caption>
+                                        Next run on {pipe.nextRun}
+                                    </Caption>
+                                </VBox>
+                                <PressableView
+                                    onPress={(e) => {
+                                        e.stopPropagation()
+                                    }}>
+                                    <SwitchView
+                                        value={pipe.active == true}
+                                        onValueChange={(p) => {
+                                            pipe.active = p
+                                            api.upsertPipelane({
+                                                active: p,
+                                                name: pipe.name
+                                            }).then(resp => {
+                                                Object.assign(pipe, resp.data.createPipelane)
+                                                forceUpdate()
+                                            })
+                                        }} />
+                                </PressableView>
+                            </HBox>
+                        </Link>
+                    )}
                     items={pipes?.filter(p => p.name?.indexOf(search) > -1)}
                     //@ts-ignore
                     itemAdapter={(pipe: Pipelane, idx: number) => {
