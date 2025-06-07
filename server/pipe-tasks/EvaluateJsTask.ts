@@ -2,6 +2,7 @@ import axios from "axios";
 import fs from 'fs'
 import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask, PipeTaskDescription } from "pipelane";
 import { createHash } from "crypto";
+import moment from 'moment'
 
 export type EvaluateJsTaskInput = InputWithPreviousInputs & {
     last: OutputWithStatus[],
@@ -76,6 +77,12 @@ export const EvalJSUtils = {
     },
     decodeBase64(base64: string): string {
         return Buffer.from(base64, "base64").toString("utf8");
+    },
+    getMoment() {
+        return moment
+    },
+    formatDate(date: Date, format: string) {
+        return moment(date).format(format);
     },
     encodeBase64(normalString: string): string {
         return Buffer.from(normalString).toString("base64");
