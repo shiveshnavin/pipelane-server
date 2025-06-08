@@ -313,10 +313,7 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                         }}>
                             <SimpleDatalistView
                                 onRender={(item: Pipetask, idx: number) => (
-                                    <Link
-                                        href={`/home/${item.pipelaneName}/${item.name}`}
-                                        style={{ marginRight: 12, flex: 1, width: '100%' }}
-                                    >
+
                                         <HBox
                                             key={item.name}
                                             style={{
@@ -326,6 +323,10 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                                                 flex: 1,
                                                 width: '100%'
                                             }}
+                                        >
+                                        <Link
+                                            href={`/home/${item.pipelaneName}/${item.name}`}
+                                            style={{ marginRight: 12, flex: 1, width: '100%' }}
                                         >
                                             <VBox style={{ flex: 1 }}>
                                                 <TextView style={{
@@ -342,9 +343,34 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                                                     {item.taskVariantName} ({item.taskTypeName})
                                                 </TextView>
                                             </VBox>
-                                            <Icon name="arrow-right" color={theme.colors.text} size={20} />
+                                        </Link>
+                                        <Icon
+                                            onPress={() => {
+                                                const index = pipe.tasks?.indexOf(item);
+                                                if (index !== undefined && index >= 0) {
+                                                    const updatedTasks = [...pipe.tasks!];
+                                                    if (index > 0) {
+                                                        updatedTasks.splice(index, 1); // Remove the item
+                                                        updatedTasks.splice(index - 1, 0, item); // Insert it one position to the left
+                                                    } else {
+                                                        // Move the item to the bottom
+                                                        updatedTasks.splice(index, 1); // Remove the item
+                                                        updatedTasks.push(item); // Add it to the end
+                                                    }
+                                                    // Update the steps to match their new positions
+                                                    updatedTasks.forEach((task, idx) => {
+                                                        task!.step = idx;
+                                                    });
+                                                    setPipe({
+                                                        ...pipe,
+                                                        tasks: updatedTasks
+                                                    });
+                                                }
+                                            }}
+                                            color={theme.colors.text}
+                                            name="arrow-up" />
                                         </HBox>
-                                    </Link>
+
                                 )}
                                 loading={pipe.tasks == undefined}
                                 items={(pipe.tasks || []).sort((a, b) => (a?.step || 0) - (b?.step || 0)) as any}
