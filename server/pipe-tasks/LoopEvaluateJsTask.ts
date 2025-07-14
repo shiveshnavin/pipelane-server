@@ -53,7 +53,8 @@ export class LoopEvaluateJsTask extends EvaluateJsTask {
         } catch (e) {
             return [{
                 status: false,
-                error: e.message
+                error: e.message,
+                stack: JSON.stringify(e.stack || '').substring(0, 100)
             }]
         }
     }
