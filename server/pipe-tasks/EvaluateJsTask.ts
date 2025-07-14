@@ -153,7 +153,8 @@ export class EvaluateJsTask extends PipeTask<EvaluateJsTaskInput, any> {
         } catch (e) {
             return [{
                 status: false,
-                error: e.message
+                error: e.message,
+                stack: JSON.stringify(e.stack || '').substring(0, 100)
             }]
         }
     }
