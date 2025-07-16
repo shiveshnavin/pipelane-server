@@ -1,5 +1,5 @@
 import { MultiDbORM } from "multi-db-orm"
-import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask, TaskVariantConfig } from "pipelane"
+import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask, TaskVariantConfig, VariablePipeTask } from "pipelane"
 import { Pipelane, Pipetask, PipetaskExecution, Status } from "../../gen/model"
 
 export function generateTaskTypeResolvers(variantConfig: TaskVariantConfig) {
@@ -39,7 +39,7 @@ export function generateTaskTypeResolvers(variantConfig: TaskVariantConfig) {
 
 export function getTasksExecFromPipelane(cached: PipeLane) {
     let executedTasks = (cached.executedTasks as PipeTask<InputWithPreviousInputs, OutputWithStatus>[])
-    return executedTasks.map(p => {
+    let executed = executedTasks.map(p => {
         let pltExec = {} as PipetaskExecution
         pltExec.name = p.uniqueStepName || p.taskVariantName || p.taskTypeName
         pltExec.pipelaneExId = cached.instanceId
@@ -50,7 +50,28 @@ export function getTasksExecFromPipelane(cached: PipeLane) {
         pltExec.id = `${cached.instanceId}::${p.uniqueStepName}`
         pltExec.output = JSON.stringify(p.outputs || [])
         return pltExec
-    })
+    });
+    let executing = [];
+    //@ts-ignore
+    let plExecutions = cached.currentExecutionTasks
+    if (plExecutions) {
+        executing = plExecutions.map(ex => {
+            let p = ex.task as PipeTask<any, any>
+            let pltExec = {} as PipetaskExecution;
+            pltExec.name = p.uniqueStepName || p.taskVariantName || p.taskTypeName
+            pltExec.pipelaneExId = cached.instanceId
+            pltExec.pipelaneName = cached.name
+            pltExec.status = Status.InProgress
+            pltExec.startTime = `${p.startTime}`
+            pltExec.endTime = undefined
+            pltExec.id = `${cached.instanceId}::${p.uniqueStepName}`
+            return pltExec
+        })
+    }
+    return [
+        ...executed,
+        ...executing
+    ]
 }
 
 
