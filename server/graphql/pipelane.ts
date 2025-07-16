@@ -6,6 +6,7 @@ import { TableName } from "../db"
 import _ from 'lodash'
 import { CronScheduler } from "../cron"
 import { GraphQLError } from "graphql"
+import { getTasksExecFromPipelane } from "./utils"
 
 function generateString() {
     const hours = new Date().getHours().toString().padStart(2, '0');
@@ -98,8 +99,15 @@ export function generatePipelaneResolvers(
                     pipelaneName: parent.pipelaneName
                 })
             },
-            tasks: async (parent) => {
+            tasks: async (parent: PipelaneExecution) => {
                 if (parent.tasks) return parent.tasks
+                let cached = cronScheduler.executionsCache.find(ex => ex.instanceId === parent.id)
+                if (cached) {
+                    //@ts-ignore
+                    let tasks = getTasksExecFromPipelane(cached)
+                    if (tasks && tasks.length > 0)
+                        return tasks
+                }
                 let tasks = await db.get(TableName.PS_PIPELANE_TASK_EXEC,
                     {
                         pipelaneExId: parent.id
@@ -237,7 +245,7 @@ export function generatePipelaneResolvers(
                         field: 'startTime',
                         order: 'desc'
                     }]
-                })
+                }) as Promise<PipelaneExecution[]>
             }
 
         },
@@ -381,7 +389,9 @@ export function generatePipelaneResolvers(
             },
             async executePipelane(parent, request: { name: string, input: string }) {
                 let existing = await PipelaneResolvers.Query.Pipelane(parent, request)
-                let execution = await cronScheduler.triggerPipelane(existing, request.input || existing.input)
+                let execution = await cronScheduler.triggerPipelane(existing, Object.assign(
+                    JSON.parse(existing.input), JSON.parse(request.input)
+                ))
                 if (!execution) {
                     throw new GraphQLError("Error triggering pipelane, perhaps it is disabled?")
                 }

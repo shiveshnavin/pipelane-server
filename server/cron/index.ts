@@ -8,6 +8,7 @@ import AsyncLock from 'async-lock';
 import { EvaluateJsTask } from "../pipe-tasks/EvaluateJsTask";
 import axios from "axios";
 import { existsSync, rmdirSync, unlinkSync } from "fs";
+import { mapStatus } from "../graphql/utils";
 
 // only uncomment for code completions during dev
 // const pipelaneResolver = generatePipelaneResolvers(undefined, undefined)
@@ -17,13 +18,16 @@ export class CronScheduler {
     cronJobs: { name: string, job: Cron }[] = []
     schedules: PipelaneSchedule[] = []
     currentExecutions: PipeLane[] = []
+    executionsCache: PipeLane[] = []
+    maxCacheSize = 200
     pipelaneResolver // = pipelaneResolver
     variantConfig: TaskVariantConfig
     pipelaneLogLevel: 0 | 1 | 2 | 3 | 4 | 5
 
-    constructor(variantConfig: TaskVariantConfig, pipelaneLogLevel?: 0 | 1 | 2 | 3 | 4 | 5) {
+    constructor(variantConfig: TaskVariantConfig, pipelaneLogLevel?: 0 | 1 | 2 | 3 | 4 | 5, maxCacheSize = 200) {
         this.variantConfig = variantConfig
         this.pipelaneLogLevel = pipelaneLogLevel != undefined ? pipelaneLogLevel : 2
+        this.maxCacheSize = maxCacheSize
     }
 
     async getPipelaneDefinition(pipeName): Promise<PipelaneSchedule | undefined> {
@@ -272,6 +276,10 @@ export class CronScheduler {
                 }
             })
             this.currentExecutions.push(pipeWorksInstance)
+            this.executionsCache.push(pipeWorksInstance)
+            if (this.executionsCache.length > this.maxCacheSize) {
+                this.executionsCache.shift()
+            }
 
             return plx
         }
@@ -309,7 +317,7 @@ export class CronScheduler {
                 } else if (event == 'TASK_FINISHED' || event == 'SKIPPED') {
                     let taskName = task.uniqueStepName || task.variantType
                     let taskId = `${plx.id}::${taskName}`
-                    let status = this.mapStatus(event, output)
+                    let status = mapStatus(event, output)
                     const jsonStr = JSON.stringify(output)
                     await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                         //@ts-ignore
@@ -330,7 +338,7 @@ export class CronScheduler {
                             data: {
                                 id: taskId,
                                 endTime: `${Date.now()}`,
-                                status: this.mapStatus(event, output),
+                                status: mapStatus(event, output),
                                 output: base64op
                             }
                         }).catch(async (e) => {
@@ -340,7 +348,7 @@ export class CronScheduler {
                                 data: {
                                     id: taskId,
                                     endTime: `${Date.now()}`,
-                                    status: this.mapStatus(event, output),
+                                    status: mapStatus(event, output),
                                     output: 'Unsupported Output'
                                 }
                             }).catch(e => {
@@ -364,20 +372,6 @@ export class CronScheduler {
         pipelaneInstance.setListener(pipelaneListener)
     }
 
-    public mapStatus(event, output: ({ status: Status } & any)[]): Status {
-        if (event == 'SKIPPED')
-            return Status.Skipped
-        let isAtleaseOneFail = (output as any[] || []).find(o => !o.status)
-        let isAtleaseOneSuccess = (output as any[] || []).find(o => o.status)
-        let status = Status.Success
-        if (isAtleaseOneFail) {
-            status = Status.PartialSuccess
-        }
-        if (!isAtleaseOneSuccess) {
-            status = Status.Failed
-        }
-        return status
-    }
 
     validateCronString(cronString: string) {
         return NodeCron.validate(cronString)
@@ -401,7 +395,7 @@ export class CronScheduler {
             return
         }
         let runningPipe: PipeLane = this.currentExecutions.find(ex => `${ex.name}`.startsWith(schedule.name))
-        return runningPipe == undefined && !runningPipe.isRunning
+        return runningPipe == undefined || !runningPipe.isRunning
     }
 }
 

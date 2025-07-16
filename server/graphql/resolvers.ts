@@ -1,6 +1,6 @@
 import { MultiDbORM } from "multi-db-orm"
 import { TaskVariantConfig } from "pipelane"
-import { generateTaskTypeResolvers } from "./tasktypes"
+import { generateTaskTypeResolvers } from "./utils"
 import { generatePipelaneResolvers } from "./pipelane"
 import _ from 'lodash'
 import { CronScheduler } from "../cron"
