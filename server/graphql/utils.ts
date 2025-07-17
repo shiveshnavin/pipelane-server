@@ -55,7 +55,11 @@ export function getTasksExecFromPipelane(cached: PipeLane) {
     //@ts-ignore
     let plExecutions = cached.currentExecutionTasks
     if (plExecutions) {
-        executing = plExecutions.map(ex => {
+        executing = plExecutions
+            .filter(ex => {
+                return !executedTasks.find(p => p.uniqueStepName === ex.task.uniqueStepName)
+            })
+            .map(ex => {
             let p = ex.task as PipeTask<any, any>
             let pltExec = {} as PipetaskExecution;
             pltExec.name = p.uniqueStepName || p.taskVariantName || p.taskTypeName
