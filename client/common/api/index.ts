@@ -56,7 +56,7 @@ export class Api {
         isParallel: false
     }
     clearCache() {
-        this.graph.clearStore()
+        // this.graph.clearStore()
     }
     upsertPipelaneTask(task: CreatePipetaskPayload, oldTaskName: string) {
         this.clearCache()
