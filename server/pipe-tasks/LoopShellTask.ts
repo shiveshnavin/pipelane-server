@@ -1,6 +1,6 @@
 import axios from "axios";
 import PipeLane, { PipeTask, PipeTaskDescription } from "pipelane";
-import { exec } from 'child_process'
+import { exec, spawn } from 'child_process'
 import { RateLimiter } from "limiter";
 
 export type ShellTaskAdditionalInput = {
@@ -80,6 +80,7 @@ export class LoopShellTask extends PipeTask<any, any> {
             interval: additionalInputs?.interval ?? "second",
         });
 
+
         const runOne = (rawCmd: string) =>
             new Promise<any>(resolve => {
                 if (!this.isExecutableAllowed(rawCmd, this.allowedCommands)) {
@@ -89,14 +90,48 @@ export class LoopShellTask extends PipeTask<any, any> {
                 const wrapped = `source ~/.bash_profile >/dev/null 2>&1 || true; ${rawCmd}`;
                 pipeWorksInstance.onLog?.(`Executing: ${rawCmd}`);
 
-                exec(wrapped, (error, stdout, stderr) => {
-                    if (error) {
-                        resolve({ status: false, cmd: rawCmd, message: `Error: ${error.message}`, stderr });
-                    } else {
-                        resolve({ status: true, cmd: rawCmd, output: stdout, stderr });
-                    }
+                // Use spawn instead of exec so we can stream logs
+                const child = spawn("bash", ["-c", wrapped], { stdio: ["ignore", "pipe", "pipe"] });
+
+                let stdoutBuf = "";
+                let stderrBuf = "";
+
+                // Stream outputs to console live
+                child.stdout.on("data", chunk => {
+                    const str = chunk.toString();
+                    process.stdout.write(str);
+                    stdoutBuf += str;
                 });
+
+                child.stderr.on("data", chunk => {
+                    const str = chunk.toString();
+                    process.stderr.write(str);
+                    stderrBuf += str;
+                });
+
+                child.on("close", code => {
+                    const trim = (txt: string) =>
+                        txt.length > 200 ? txt.slice(0, 100) + "\n...snip...\n" + txt.slice(-100) : txt;
+
+                    if (code !== 0) {
+                        resolve({
+                            status: false,
+                            cmd: rawCmd,
+                            message: `Exited with code ${code}`,
+                            stdout: trim(stdoutBuf),
+                            stderr: trim(stderrBuf)
+                        });
+                    } else {
+              resolve({
+                  status: true,
+                  cmd: rawCmd,
+                  output: trim(stdoutBuf),
+                  stderr: trim(stderrBuf)
+              });
+          }
+      });
             });
+
 
         const outputs: any[] = [];
 
