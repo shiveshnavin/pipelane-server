@@ -21,6 +21,7 @@
     "axios": "^1.6.8",
     "croner": "^8.0.2",
     "express": "^4.19.2",
+    "fast-xml-parser": "^5.2.5",
     "graphql": "^16.8.1",
     "json2csv": "^6.0.0-alpha.2",
     "jsonpath": "^1.1.1",

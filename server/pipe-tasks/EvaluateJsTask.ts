@@ -3,6 +3,15 @@ import fs from 'fs'
 import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask, PipeTaskDescription } from "pipelane";
 import { createHash } from "crypto";
 import moment from 'moment'
+import { XMLParser } from "fast-xml-parser";
+
+
+const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: "@_",
+    trimValues: true
+});
+
 
 export type EvaluateJsTaskInput = InputWithPreviousInputs & {
     last: OutputWithStatus[],
@@ -13,6 +22,12 @@ export type EvaluateJsTaskInput = InputWithPreviousInputs & {
 
 export const EvalJSUtils = {
     fs: fs,
+    getXmlParser() {
+        return parser
+    },
+    xml2json(xmlText: string) {
+        return parser.parse(xmlText);
+    },
     mkdir(path: string) {
         if (!fs.existsSync(path)) {
             fs.mkdirSync(path, { recursive: true })

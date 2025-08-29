@@ -2,12 +2,13 @@ import axios from "axios";
 import PipeLane, { PipeTask, PipeTaskDescription } from "pipelane";
 import { exec, spawn } from 'child_process'
 import { RateLimiter } from "limiter";
+import { ShellTask } from "./ShellTask";
 
 export type ShellTaskAdditionalInput = {
     cmd: string
 }
 
-export class LoopShellTask extends PipeTask<any, any> {
+export class LoopShellTask extends ShellTask {
 
     static TASK_VARIANT_NAME: string = "loop-shell"
     static TASK_TYPE_NAME: string = "shell"
@@ -15,7 +16,7 @@ export class LoopShellTask extends PipeTask<any, any> {
     allowedCommands = []
 
     constructor(variantName?: string, allowedCommands?: string[]) {
-        super(LoopShellTask.TASK_TYPE_NAME, variantName || LoopShellTask.TASK_VARIANT_NAME)
+        super(variantName || LoopShellTask.TASK_VARIANT_NAME, allowedCommands)
         this.allowedCommands = allowedCommands || []
     }
 
@@ -56,6 +57,7 @@ export class LoopShellTask extends PipeTask<any, any> {
     }
 
 
+    //@ts-ignore
     async execute(
         pipeWorksInstance: PipeLane,
         input: { last: any[]; additionalInputs: { cmd?: string; sequential?: boolean; rate?: number; interval?: any } }
