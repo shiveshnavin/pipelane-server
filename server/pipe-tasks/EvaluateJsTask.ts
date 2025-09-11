@@ -3,6 +3,7 @@ import fs from 'fs'
 import PipeLane, { InputWithPreviousInputs, OutputWithStatus, PipeTask, PipeTaskDescription } from "pipelane";
 import { createHash } from "crypto";
 import moment from 'moment'
+//@ts-ignore
 import { XMLParser } from "fast-xml-parser";
 
 
