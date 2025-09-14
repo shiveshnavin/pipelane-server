@@ -21,6 +21,7 @@ export class LoopApiTask extends PipeTask<any, any> {
             summary: "Call APIs in parallel with rate limiting",
             inputs: {
                 additionalInputs: {
+                    retry: 0,
                     sequential: "boolean, if true, other rate fields will be ignored",
                     rate: "Number, x requests / Y interval",
                     interval: "day | hour | min | sec"
@@ -46,24 +47,30 @@ export class LoopApiTask extends PipeTask<any, any> {
         const handleRequest = async (options) => {
             if (!inputs.additionalInputs.sequential)
                 await limiter.removeTokens(1);
-            try {
-                let response = await axios(options);
-                return {
-                    status: response.status < 300,
-                    statusCode: response.status,
-                    headers: response.headers,
-                    data: response?.data
-                };
-            } catch (e) {
-                pipeWorksInstance.onLog(e.message);
-                return {
-                    status: false,
-                    message: e.message,
-                    statusCode: e.response?.status,
-                    headers: e?.response.headers,
-                    data: e.response?.data
-                };
-            }
+
+            let retryRemaining = inputs.additionalInputs?.retry || 0;
+            let err = []
+            do {
+                try {
+                    let response = await axios(options);
+                    return {
+                        status: response.status < 300,
+                        statusCode: response.status,
+                        headers: response.headers,
+                        data: response?.data
+                    };
+                } catch (e) {
+                    pipeWorksInstance.onLog(e.message)
+                    err = [{
+                        status: false,
+                        message: e.message,
+                        statusCode: e.response?.status,
+                        headers: e?.response?.headers,
+                        data: e.response?.data
+                    }]
+                }
+            } while (--retryRemaining > 0);
+            return err;
         };
 
         // Create a queue to manage parallel requests
