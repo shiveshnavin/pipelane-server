@@ -61,8 +61,8 @@ export class TopicTask extends PipeTask<any, any> {
                     limit: 'number of topics to load (read), defaults to 1. If 1, read topic from pl.inputs.topic else from pl.inputs.topics',
                     queue: 'queue name, defaults to pipelane name (read, write)',
                     id: 'topic id (read), optional',
-                    state: 'topic state (write)',
-                    order: 'asc (default)(read), desc'
+                    state: 'topic state  (read)(write)',
+                    order: 'asc (default)(read), desc, ordered by createdTimestamp'
                 }
             }
         };
