@@ -110,11 +110,10 @@ export class TopicTask extends PipeTask<any, any> {
 
         if (variant === TopicTask.VARIANT_WRITE) {
             let now = Date.now();
-            // Helper to normalize topic
             function normalizeTopic(t: any): Topic {
                 return {
                     ...t,
-                    id: t.id || `${t.queue}-${Date.now()}`,
+                    id: t.id || `${t.queue}-${now + Math.floor(Math.random() * 10000)}`,
                     priority: t.priority || input.additionalInputs?.priority || 100,
                     queue: t.queue || queue,
                     state: t.state || input.additionalInputs?.state || 'scheduled',
