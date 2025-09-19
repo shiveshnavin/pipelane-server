@@ -84,9 +84,7 @@ export class TopicTask extends PipeTask<any, any> {
                 let filter: any = {
                     queue
                 };
-                if (input.additionalInputs?.state) {
-                    filter.state = input.additionalInputs?.state
-                };
+                filter.state = input.additionalInputs?.state ?? 'scheduled'
                 topics = await this.db.get(this.tableName,
                     filter,
                     {
