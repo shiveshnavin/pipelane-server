@@ -137,6 +137,10 @@ export class TopicTask extends PipeTask<any, any> {
             for (let t of topicsToWrite) {
                 let dbFilter = { id: t.id };
                 let existing = t.id ? (await this.db.getOne(this.tableName, dbFilter)) : undefined;
+                Object.assign({
+                    ...t,
+                    ...input.additionalInputs
+                })
                 if (existing) {
                     await this.db.update(this.tableName, dbFilter, t);
                 } else {
