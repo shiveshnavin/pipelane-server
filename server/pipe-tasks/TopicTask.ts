@@ -7,8 +7,7 @@ export type Topic = {
     state: "completed" | "failed" | "in_progress" | "scheduled" | "pending_approval",
     updatedTimestamp: number,
     createdTimestamp: number,
-    queue: string,
-    payload: string
+    queue: string
 }
 
 export class TopicTask extends PipeTask<any, any> {
@@ -57,15 +56,13 @@ export class TopicTask extends PipeTask<any, any> {
         return {
             summary: 'Handles reading and writing topics to the DB.',
             inputs: {
-                last: [{
-
-                }],
+                last: [{ status: true }],
                 additionalInputs: {
                     limit: 'number of topics to load (read), defaults to 1. If 1, read topic from pl.inputs.topic else from pl.inputs.topics',
                     queue: 'queue name, defaults to pipelane name (read, write)',
                     id: 'topic id (read), optional',
-                    status: 'topic status (write)',
-                    payload: 'topic payload (write)'
+                    state: 'topic state (write)',
+                    order: 'asc (default)(read), desc'
                 }
             }
         };
@@ -100,18 +97,10 @@ export class TopicTask extends PipeTask<any, any> {
                             },
                             {
                                 field: 'createdTimestamp',
-                                order: 'asc'
+                                order: input.additionalInputs?.order ?? 'asc'
                             }]
                     });
             }
-
-            topics = topics.map(t => {
-                let payloadObj = t.payload;
-                try {
-                    payloadObj = JSON.parse(t.payload);
-                } catch { }
-                return { ...t, payload: payloadObj };
-            });
             pipeWorksInstance.inputs.topic = topics[0];
             pipeWorksInstance.inputs.topics = topics;
             if (!input.last || input.last?.length <= 0) {
@@ -124,9 +113,9 @@ export class TopicTask extends PipeTask<any, any> {
             // Helper to normalize topic
             function normalizeTopic(t: any): Topic {
                 return {
-                    id: t.id,
+                    ...t,
+                    id: t.id || `${t.queue}-${Date.now()}`,
                     priority: t.priority || input.additionalInputs?.priority || 100,
-                    payload: typeof t.payload === 'object' ? JSON.stringify(t.payload) : t.payload,
                     queue: t.queue || queue,
                     state: t.state || input.additionalInputs?.state || 'scheduled',
                     updatedTimestamp: now,
@@ -140,7 +129,10 @@ export class TopicTask extends PipeTask<any, any> {
                 for (let t of pipeWorksInstance.inputs.topics) {
                     topicsToWrite.push(normalizeTopic(t));
                 }
-            } else {
+            } else if (input.additionalInputs
+                && input.additionalInputs.state
+                && input.additionalInputs.queue
+            ) {
                 topicsToWrite.push(normalizeTopic(input.additionalInputs || {}));
             }
 
