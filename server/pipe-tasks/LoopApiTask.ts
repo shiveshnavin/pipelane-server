@@ -49,7 +49,7 @@ export class LoopApiTask extends PipeTask<any, any> {
                 await limiter.removeTokens(1);
 
             let retryRemaining = inputs.additionalInputs?.retry || 0;
-            let err = []
+            let err = undefined
             do {
                 try {
                     let response = await axios(options);
@@ -61,13 +61,13 @@ export class LoopApiTask extends PipeTask<any, any> {
                     };
                 } catch (e) {
                     pipeWorksInstance.onLog(e.message)
-                    err = [{
+                    err = {
                         status: false,
                         message: e.message,
                         statusCode: e.response?.status,
                         headers: e?.response?.headers,
                         data: e.response?.data
-                    }]
+                    }
                 }
             } while (--retryRemaining > 0);
             return err;
