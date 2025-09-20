@@ -60,6 +60,9 @@ export class LoopApiTask extends PipeTask<any, any> {
                         data: response?.data
                     };
                 } catch (e) {
+                    if (retryRemaining > 0) {
+                        this.onLog(`Retrying... (${retryRemaining} attempts left)`);
+                    }
                     pipeWorksInstance.onLog(e.message)
                     err = {
                         status: false,
@@ -69,7 +72,7 @@ export class LoopApiTask extends PipeTask<any, any> {
                         data: e.response?.data
                     }
                 }
-            } while (--retryRemaining > 0);
+            } while (--retryRemaining >= 0);
             return err;
         };
 
