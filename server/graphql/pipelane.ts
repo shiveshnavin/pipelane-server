@@ -402,7 +402,7 @@ export function generatePipelaneResolvers(
             },
 
             async stopPipelane(parent, request: { id: string }) {
-                let cached = cronScheduler.executionsCache.find(ex => ex.instanceId === parent.id)
+                let cached = cronScheduler.executionsCache.find(ex => ex.instanceId === request.id)
                 if (cached) {
                     cached.stop();
                     let plx: PipelaneExecution = await db.getOne(TableName.PS_PIPELANE_EXEC, { id: request.id })
