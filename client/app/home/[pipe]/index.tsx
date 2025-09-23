@@ -9,6 +9,7 @@ import { Maybe, Pipelane, PipelaneExecution, Pipetask } from "../../../../gen/mo
 import { getGraphErrorMessage } from "@/common/api";
 import { PipeExecutionsView } from "@/app/executions";
 import { Editor } from "@monaco-editor/react";
+import DraggableTasksList from "../../../components/DraggableTasksList";
 
 export default function PipelanePage() {
     const theme = useContext(ThemeContext)
@@ -311,7 +312,12 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                             if (pipe.tasks == undefined || pipe.tasks.length == 0)
                                 getTasks()
                         }}>
-                            <SimpleDatalistView
+
+                            <DraggableTasksList
+                                onReorder={(newTasks) => {
+                                    setPipe({ ...pipe, tasks: newTasks });
+                                }}
+
                                 onRender={(item: Pipetask, idx: number) => (
 
                                         <HBox
@@ -373,7 +379,7 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
 
                                 )}
                                 loading={pipe.tasks == undefined}
-                                items={(pipe.tasks || []).sort((a, b) => (a?.step || 0) - (b?.step || 0)) as any}
+                                tasks={(pipe.tasks || []).sort((a, b) => (a?.step || 0) - (b?.step || 0)) as any}
                                 itemAdapter={(item: Pipetask) => {
                                     return {
                                         flexRatio: [0, 9, 1],
