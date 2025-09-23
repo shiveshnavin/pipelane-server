@@ -39,6 +39,7 @@ export default function QueryPage() {
 
     useEffect(() => {
         if (autoRefresh) {
+            animation.reset();
             animation.start();
         } else {
             animation.stop();
