@@ -2,7 +2,7 @@ import { getGraphErrorMessage } from "@/common/api";
 import { AppContext } from "@/components/Context";
 import { Link, useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useCallback, useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
 import { Animated, Easing } from "react-native";
 import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon } from "react-native-boxes";
@@ -23,9 +23,8 @@ export default function QueryPage() {
     const [taskDetails, setTaskDetails] = useState<PipetaskExecution | undefined>(undefined)
 
     const spinValue = React.useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-        const animation = Animated.loop(
+    const animation = React.useRef(
+        Animated.loop(
             Animated.timing(
                 spinValue,
                 {
@@ -35,41 +34,56 @@ export default function QueryPage() {
                     useNativeDriver: true
                 }
             )
-        );
+        )
+    ).current;
+
+    useEffect(() => {
         if (autoRefresh) {
             animation.start();
         } else {
-            spinValue.stopAnimation();
-            spinValue.setValue(0);
+            animation.stop();
         }
         return () => {
-            spinValue.stopAnimation();
+            animation.stop();
         }
-    }, [autoRefresh, spinValue])
+    }, [autoRefresh, animation])
 
     const spin = spinValue.interpolate({
         inputRange: [0, 1],
         outputRange: ['0deg', '360deg']
     })
 
-
-    function refresh(stop?: Boolean) {
+    console.log("autoRefresh", autoRefresh, "spin", spin)
+    const refresh = useCallback((stop?: boolean) => {
+        if (!executionId) return;
         api.pipelaneExecution(executionId as string).then(data => {
-            setExecution(data.data.PipelaneExecution)
-            if (autoRefresh) {
-                if (data.data.PipelaneExecution.status == 'IN_PROGRESS') {
-                    setTimeout(refresh, 500)
-                } else if (!stop) {
-                    setTimeout(() => {
-                        refresh(true);
-                        setAutoRefresh(false)
-                    }, 5000)
-                }
+            setExecution(data.data.PipelaneExecution);
+            if (stop) {
+                setAutoRefresh(false);
             }
         }).catch(e => {
-            setErr(getGraphErrorMessage(e))
-        })
-    }
+            setErr(getGraphErrorMessage(e));
+        });
+    }, [api, executionId]);
+
+    useEffect(() => {
+        refresh();
+    }, [refresh]);
+
+    useEffect(() => {
+        if (!autoRefresh) {
+            return;
+        }
+        if (execution?.status === 'IN_PROGRESS') {
+            const id = setTimeout(refresh, 500);
+            return () => clearTimeout(id);
+        }
+        if (execution?.status !== 'IN_PROGRESS' as any) {
+            const id = setTimeout(() => refresh(true), 5000);
+            return () => clearTimeout(id);
+        }
+    }, [autoRefresh, execution, refresh]);
+
     useEffect(() => {
         refresh()
     }, [executionId]);
@@ -108,9 +122,6 @@ export default function QueryPage() {
                         icon: <Animated.View style={{ transform: [{ rotate: spin }] }}><Icon name="refresh" /></Animated.View>,
                         title: autoRefresh ? 'Pause Auto-Refresh' : 'Start Auto-Refresh',
                         onClick: () => {
-                            if (!autoRefresh) {
-                                refresh()
-                            }
                             setAutoRefresh(a => !a)
                         }
                     }
