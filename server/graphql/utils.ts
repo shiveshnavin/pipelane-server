@@ -44,10 +44,14 @@ export function getTasksExecFromPipelane(cached: PipeLane) {
         pltExec.name = p.uniqueStepName || p.taskVariantName || p.taskTypeName
         pltExec.pipelaneExId = cached.instanceId
         pltExec.pipelaneName = cached.name
-        pltExec.status = mapStatus('TASK_FINISHED', p.outputs as OutputWithStatus[])
+        pltExec.status = (p.statusMessage as Status)
+        if (pltExec.status != Status.Skipped) {
+            pltExec.status = mapStatus('TASK_FINISHED', p.outputs as OutputWithStatus[])
+        }
         pltExec.startTime = `${p.startTime}`
         pltExec.endTime = `${p.endTime}`
-        pltExec.id = `${cached.instanceId}::${p.uniqueStepName}`
+        let taskId = `${cached.instanceId}::${p.taskVariantName}::${pltExec.name}`
+        pltExec.id = taskId
         pltExec.output = JSON.stringify(p.outputs || [])
         return pltExec
     });
@@ -73,8 +77,12 @@ export function getTasksExecFromPipelane(cached: PipeLane) {
         })
     }
     return [
-        ...executed,
-        ...executing
+        ...executed.sort((a, b) => {
+            return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        }),
+        ...executing.sort((a, b) => {
+            return new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        })
     ]
 }
 

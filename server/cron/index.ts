@@ -126,7 +126,6 @@ export class CronScheduler {
             pipeWorksInstance.logLevel = this.pipelaneLogLevel
             let pipelaneInstName = `${pl.name}-${Date.now()}`
             let pipelaneFolderPath = `pipelane/${pipelaneInstName}`
-            pipeWorksInstance.enableCheckpoints(pipelaneInstName, pipelaneFolderPath)
             let invalidTasksFromSchedule = pl.tasks?.filter(pt => this.variantConfig[pt.taskTypeName] == undefined).map(t => t.taskTypeName)
             if (invalidTasksFromSchedule && invalidTasksFromSchedule.length > 0) {
                 console.warn(`No tasks of types ${invalidTasksFromSchedule.join(",")} found in variantconfig. Skipping triggering ${pl.name}`)
@@ -189,7 +188,7 @@ export class CronScheduler {
                     pipeWorksInstance.pipe(pltConfig)
                 }
             }
-            let input = {}
+            let input: any = {}
             try {
                 input = JSON.parse(pl.input)
                 try {
@@ -267,6 +266,11 @@ export class CronScheduler {
             })
 
             this.listenToPipe(pipeWorksInstance, plx)
+
+            pipeWorksInstance.instanceId = pipelaneInstName;
+            if (input.resumable)
+                pipeWorksInstance.enableCheckpoints(pipelaneInstName, pipelaneFolderPath)
+
             pipeWorksInstance.start(input).then(onResult).catch((e) => {
                 console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
                 onResult([{ status: false }])
@@ -299,7 +303,7 @@ export class CronScheduler {
 
                 if (event == 'NEW_TASK') {
                     let taskName = task.uniqueStepName || task.variantType || task.type
-                    let taskId = `${plx.id}::${taskName}`
+                    let taskId = `${plx.id}::${task.variantType}::${taskName}`
                     await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
                         //@ts-ignore
                         data: {
@@ -316,7 +320,7 @@ export class CronScheduler {
                     })
                 } else if (event == 'TASK_FINISHED' || event == 'SKIPPED') {
                     let taskName = task.uniqueStepName || task.variantType
-                    let taskId = `${plx.id}::${taskName}`
+                    let taskId = `${plx.id}::${task.variantType}::${taskName}`
                     let status = mapStatus(event, output)
                     const jsonStr = JSON.stringify(output)
                     await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
