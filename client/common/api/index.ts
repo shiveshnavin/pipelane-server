@@ -274,6 +274,35 @@ export class Api {
         })
     }
 
+
+    stopPipelaneExecution(id: string) {
+        return this.graph.mutate({
+            mutation: gql`
+                mutation Execution($id: ID!) {
+                    stopPipelane(id: $id) {
+                        id
+                        name
+                        output
+                        startTime
+                        status
+                        endTime
+                        tasks {
+                            id
+                            name
+                            output
+                            startTime
+                            status
+                            endTime
+                        }
+                    }
+                }
+            `,
+            variables: {
+                id
+            }
+        })
+    }
+
     pipelaneExecutions(pipelaneName: string) {
         return this.graph.query({
             query: gql`

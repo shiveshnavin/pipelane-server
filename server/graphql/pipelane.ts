@@ -400,6 +400,19 @@ export function generatePipelaneResolvers(
                 }
                 return execution
             },
+
+            async stopPipelane(parent, request: { id: string }) {
+                let cached = cronScheduler.executionsCache.find(ex => ex.instanceId === parent.id)
+                if (cached) {
+                    cached.stop();
+                    let plx: PipelaneExecution = await db.getOne(TableName.PS_PIPELANE_EXEC, { id: request.id })
+                    plx.status = Status.Skipped;
+                    await db.update(TableName.PS_PIPELANE_EXEC, { id: request.id }, plx);
+                    return plx;
+                } else {
+                    throw new GraphQLError("Pipelane execution not found. Perhaps its already terminated.")
+                }
+            },
         }
     }
     return PipelaneResolvers

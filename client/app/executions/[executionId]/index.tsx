@@ -4,7 +4,7 @@ import { Link, useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage } from "react-native-boxes";
+import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon } from "react-native-boxes";
 import { PipelaneExecution, PipetaskExecution } from "../../../../gen/model";
 import { prettyJson } from "../../../common/utils/ReactUtils";
 
@@ -16,17 +16,22 @@ export default function QueryPage() {
     const { executionId } = useLocalSearchParams()
     const [execution, setExecution] = useState<PipelaneExecution | undefined>(undefined)
     const [err, setErr] = useState(undefined)
+    const [loading, setLoading] = useState(false)
+    const [autoRefresh, setAutoRefresh] = useState(true)
     const api = context.context.api
     const [taskDetails, setTaskDetails] = useState<PipetaskExecution | undefined>(undefined)
     function refresh(stop?: Boolean) {
         api.pipelaneExecution(executionId as string).then(data => {
             setExecution(data.data.PipelaneExecution)
-            if (data.data.PipelaneExecution.status == 'IN_PROGRESS') {
-                setTimeout(refresh, 500)
-            } else if (!stop) {
-                setTimeout(() => {
-                    refresh(true)
-                }, 5000)
+            if (autoRefresh) {
+                if (data.data.PipelaneExecution.status == 'IN_PROGRESS') {
+                    setTimeout(refresh, 500)
+                } else if (!stop) {
+                    setTimeout(() => {
+                        refresh(true);
+                        setAutoRefresh(false)
+                    }, 5000)
+                }
             }
         }).catch(e => {
             setErr(getGraphErrorMessage(e))
@@ -41,15 +46,51 @@ export default function QueryPage() {
     return (
         <VPage>
             <TransparentCenterToolbar
-                options={[{
-                    id: 'refresh',
-                    icon: 'refresh',
-                    title: 'Refresh',
-                    onClick: () => {
-                        setExecution(undefined)
-                        setTimeout(refresh, 1000)
+                options={[
+                    ...(
+                        (execution?.status == "IN_PROGRESS") ? [{
+                            id: 'stop',
+                            icon: loading ?
+                                <Spinner size="small" color={theme.colors.critical} />
+                                :
+                                <Icon name="stop" color={theme.colors.critical} />
+                            ,
+                            title: 'Stop',
+                            onClick: () => {
+                                if (loading)
+                                    return;
+                                setLoading(true)
+                                api.stopPipelaneExecution(executionId as string).then(() => {
+                                    setLoading(false)
+                                    refresh()
+                                }).catch(e => {
+                                    setLoading(false)
+                                    setErr(getGraphErrorMessage(e))
+                                })
+                            }
+                        }] : []
+                    ),
+                    {
+                        id: 'auto-refresh',
+                        icon: autoRefresh ? 'pause' : 'play',
+                        title: autoRefresh ? 'Pause Auto-Refresh' : 'Start Auto-Refresh',
+                        onClick: () => {
+                            if (!autoRefresh) {
+                                refresh()
+                            }
+                            setAutoRefresh(a => !a)
+                        }
+                    },
+                    {
+                        id: 'refresh',
+                        icon: <Icon name="refresh" />,
+                        title: 'Refresh',
+                        onClick: () => {
+                            setExecution(undefined)
+                            setTimeout(refresh, 1000)
+                        }
                     }
-                }]}
+                ]}
                 title={execution?.id || ''} homeIcon="arrow-left"
                 forgroundColor={theme.colors.text}
                 onHomePress={() => {
@@ -78,7 +119,12 @@ export default function QueryPage() {
                                     justifyContent: 'space-between'
                                 }}>
                                     <AlertMessage
-                                        type={execution.status == 'SUCCESS' ? 'success' : execution.status == 'FAILED' ? 'critical' : 'info'} style={{ width: 10 }} text={execution.status as string} />
+                                        type={
+                                            execution.status == 'SUCCESS' ? 'success' :
+                                                execution.status == 'FAILED' ? 'critical' :
+                                                    execution.status == 'SKIPPED' ? 'warning' : 'info'}
+                                        style={{ width: 10 }}
+                                        text={execution.status as string} />
                                 </HBox>
                                 <HBox style={{
                                     justifyContent: 'space-between'
