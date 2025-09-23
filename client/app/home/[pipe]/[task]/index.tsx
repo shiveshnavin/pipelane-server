@@ -4,7 +4,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog, Box, Center, TitleText, LoadingButton } from "react-native-boxes";
+import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, DropDownView, ButtonView, Caption, ConfirmationDialog, Box, Center, TitleText, LoadingButton, PressableView } from "react-native-boxes";
 import { AlertMessage, Spinner } from "react-native-boxes";
 import { Maybe, Pipetask, PipetaskExecution, TaskType, TaskTypeDescription } from "../../../../../gen/model";
 import { getGraphErrorMessage, removeFieldRecursively } from "@/common/api";
@@ -202,6 +202,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
     const theme = useContext(ThemeContext)
 
     const [editingField, setEditingField] = useState<string | undefined>(undefined)
+    const [editorType, setEditorType] = useState<"vscode" | "text">("vscode")
     const appContext = useContext(AppContext)
     const api = appContext.context.api
     const taskVariants = (taskTypes?.find(t => t.type == task.taskTypeName)?.variants || [])?.map(tt => ({
@@ -229,6 +230,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                 title={`${task.pipelaneName}   ➤   ${task.name}`} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
                     router.navigate(`/home/${task.pipelaneName}`)
                 }} />
+
             {
                 taskDesc?.summary && (
                     <TextView style={{
@@ -317,11 +319,28 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                     selectedId={task.taskVariantName || 'auto'}
                     //@ts-ignore
                     options={taskVariants} />
-                <Caption style={{
+                <HBox style={{
+                    justifyContent: 'space-between'
+                }}>
+                    <Caption style={{
                     marginTop: theme.dimens.space.md,
                     marginLeft: theme.dimens.space.sm
                 }}>Additional Inputs</Caption>
-                <Center style={{
+                    <PressableView
+                        onPress={() => {
+                            setEditorType(editorType == 'vscode' ? 'text' : 'vscode')
+                        }}>
+                        <Caption style={{
+                            color: theme.colors.accent,
+                            marginTop: theme.dimens.space.md,
+                            marginLeft: theme.dimens.space.sm
+                        }}>Switch to {editorType == 'vscode' ? 'text' : 'vscode'}</Caption>
+                    </PressableView>
+                </HBox>
+
+                {
+                    editorType == 'vscode' && (
+                        <Center style={{
                     borderWidth: 0.1,
                     borderColor: theme.colors.caption,
                     borderRadius: 10,
@@ -353,6 +372,39 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                     />
                 </Center>
 
+                    )}
+
+                {
+                    editorType == 'text' && (
+
+                        <VBox>
+                            <CompositeTextInputView
+                                placeholder="Inputs"
+                                textInputProps={{
+                                    numberOfLines: 10,
+                                    multiline: true,
+                                    style: {
+                                        color: theme.colors.text,
+                                        textAlignVertical: 'top',
+                                        verticalAlign: 'top',
+                                        alignContent: 'flex-start',
+                                    }
+                                }}
+                                onChangeText={(t: Maybe<string> | undefined) => {
+                                    setTask((task) => {
+                                        task.input = t
+                                        return task
+                                    })
+                                    forceUpdate()
+                                }}
+                                value={task.input as string}
+                                initialText={task.input as string} />
+
+                        </VBox>
+                    )
+                }
+
+
                 {
                     isObject(task.input) && (
 
@@ -377,7 +429,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                                 }
                             />
                             {
-                                editingField && (
+                                (editingField && editorType == 'vscode') && (
                                     <Center style={{
                                         borderWidth: 0.1,
                                         borderColor: theme.colors.caption,
@@ -411,7 +463,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                                                     tabSize: 2,
                                                     formatOnPaste: true,
                                                     formatOnType: true,
-                                                    lineNumbers: "off",
+                                                    lineNumbers: "on",
                                                     wordWrap: "on",
                                                     minimap: { enabled: false }
                                                 }}
@@ -420,6 +472,43 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                                     </Center>
                                 )
                             }
+
+                            {
+                                (editingField && editorType == 'text') && (
+                                    <VBox>
+                                        <CompositeTextInputView
+                                            placeholder="Inputs"
+                                            textInputProps={{
+                                                numberOfLines: 10,
+                                                multiline: true,
+                                                style: {
+                                                    color: theme.colors.text,
+                                                    textAlignVertical: 'top',
+                                                    verticalAlign: 'top',
+                                                    alignContent: 'flex-start',
+                                                }
+                                            }}
+                                            onChangeText={(t: Maybe<string> | undefined) => {
+                                                try {
+                                                    setTask((task) => {
+                                                        let inputObj = JSON.parse(task.input!)
+                                                        inputObj[editingField] = t
+                                                        task.input = JSON.stringify(inputObj, null, 2)
+                                                        console.log(task.input)
+                                                        return task
+                                                    })
+                                                    seterr(undefined)
+                                                } catch (e) {
+                                                    seterr('Please enter a valid input')
+                                                }
+                                                forceUpdate()
+                                            }}
+                                            value={JSON.parse(task.input!)[editingField]}
+                                            initialText={task.input as string} />
+                                    </VBox>
+                                )
+                            }
+
                         </Expand>
 
                     )
