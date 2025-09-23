@@ -308,7 +308,9 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                 pipe.updatedTimestamp != undefined && (
                     <CardView>
 
-                        <Expand title="Tasks" onExpand={() => {
+                        <Expand title="Tasks"
+                            leftPadding={0}
+                            onExpand={() => {
                             if (pipe.tasks == undefined || pipe.tasks.length == 0)
                                 getTasks()
                         }}>
@@ -350,73 +352,12 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                                                 </TextView>
                                             </VBox>
                                         </Link>
-                                        <Icon
-                                            onPress={() => {
-                                                const index = pipe.tasks?.indexOf(item);
-                                                if (index !== undefined && index >= 0) {
-                                                    const updatedTasks = [...pipe.tasks!];
-                                                    if (index > 0) {
-                                                        updatedTasks.splice(index, 1); // Remove the item
-                                                        updatedTasks.splice(index - 1, 0, item); // Insert it one position to the left
-                                                    } else {
-                                                        // Move the item to the bottom
-                                                        updatedTasks.splice(index, 1); // Remove the item
-                                                        updatedTasks.push(item); // Add it to the end
-                                                    }
-                                                    // Update the steps to match their new positions
-                                                    updatedTasks.forEach((task, idx) => {
-                                                        task!.step = idx;
-                                                    });
-                                                    setPipe({
-                                                        ...pipe,
-                                                        tasks: updatedTasks
-                                                    });
-                                                }
-                                            }}
-                                            color={theme.colors.text}
-                                            name="arrow-up" />
+
                                         </HBox>
 
                                 )}
                                 loading={pipe.tasks == undefined}
                                 tasks={(pipe.tasks || []).sort((a, b) => (a?.step || 0) - (b?.step || 0)) as any}
-                                itemAdapter={(item: Pipetask) => {
-                                    return {
-                                        flexRatio: [0, 9, 1],
-                                        action: (
-                                            <Icon
-                                                onPress={() => {
-                                                    const index = pipe.tasks?.indexOf(item);
-                                                    if (index !== undefined && index >= 0) {
-                                                        const updatedTasks = [...pipe.tasks!];
-                                                        if (index > 0) {
-                                                            updatedTasks.splice(index, 1); // Remove the item
-                                                            updatedTasks.splice(index - 1, 0, item); // Insert it one position to the left
-                                                        } else {
-                                                            // Move the item to the bottom
-                                                            updatedTasks.splice(index, 1); // Remove the item
-                                                            updatedTasks.push(item); // Add it to the end
-                                                        }
-                                                        // Update the steps to match their new positions
-                                                        updatedTasks.forEach((task, idx) => {
-                                                            task!.step = idx;
-                                                        });
-                                                        setPipe({
-                                                            ...pipe,
-                                                            tasks: updatedTasks
-                                                        });
-                                                    }
-                                                }}
-                                                color={theme.colors.text}
-                                                name="arrow-up" />
-                                        ),
-                                        title: item.name + (item.active ? '' : ' (Disabled)'),
-                                        body: `Type: ${item.taskVariantName} (${item.taskTypeName})`,
-                                        onPress: () => {
-                                            router.navigate(`/home/${item.pipelaneName}/${item.name}`)
-                                        }
-                                    }
-                                }}
                             />
                             <Center>
                                 <Link href={`/home/${pipe.name}/new`}>

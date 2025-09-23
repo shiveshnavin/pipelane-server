@@ -4,9 +4,9 @@
 // preserves an icon action so you can keep the icon-based move for devices
 // where drag doesn't work well.
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import { Pipetask } from "../../gen/model";
-import { Spinner } from "react-native-boxes";
+import { Icon, Spinner, ThemeContext, VBox } from "react-native-boxes";
 
 type Props = {
     tasks: Pipetask[];
@@ -27,7 +27,7 @@ type Props = {
 export default function DraggableTasksList({ tasks, onReorder, onRender, showIconFallback = true, loading = false }: Props) {
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
     const dragOverIndexRef = useRef<number | null>(null);
-
+    const theme = useContext(ThemeContext)
     function moveItem(from: number, to: number) {
         if (from < 0 || to < 0 || from === to) return;
         const updated = [...tasks];
@@ -107,44 +107,50 @@ export default function DraggableTasksList({ tasks, onReorder, onRender, showIco
                 );
 
                 return (
-                    <div
-                        key={task.name}
-                        draggable
-                        data-index={idx}
-                        onDragStart={(e) => handleDragStart(e, idx)}
-                        onDragOver={(e) => handleDragOver(e, idx)}
-                        onDrop={(e) => handleDrop(e, idx)}
-                        onDragEnd={handleDragEnd}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: 8,
-                            border: '1px solid rgba(0,0,0,0.06)',
-                            borderRadius: 6,
-                            marginBottom: 6,
-                            background: draggingIndex === idx ? 'rgba(0,0,0,0.04)' : 'white',
-                            cursor: 'grab'
-                        }}
-                    >
-                        {/* render user's custom item UI or fallback */}
-                        <div style={{ flex: 1 }}>{content}</div>
+                    <VBox>
+                        <div
+                            key={task.name}
+                            draggable
+                            data-index={idx}
+                            onDragStart={(e) => handleDragStart(e, idx)}
+                            onDragOver={(e) => handleDragOver(e, idx)}
+                            onDrop={(e) => handleDrop(e, idx)}
+                            onDragEnd={handleDragEnd}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                background: draggingIndex === idx ? theme.colors.background : theme.colors.transparent,
+                                cursor: 'grab'
+                            }}
+                        >
+                            <div style={{ flex: 1 }}>{content}</div>
 
-                        {/* Icon fallback control: keeps the button-based reordering you had earlier */}
-                        {showIconFallback && (
-                            <div style={{ marginLeft: 12 }}>
-                                <button
-                                    aria-label="Move up"
-                                    title="Move up"
-                                    onClick={(ev) => {
-                                        ev.stopPropagation();
-                                        moveUpByIcon(idx);
-                                    }}
-                                >
-                                    ⬆
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                            {showIconFallback && (
+                                <div style={{ marginLeft: 12 }}>
+                                    <button
+                                        aria-label="Move up"
+                                        title="Move up"
+                                        onClick={(ev) => { ev.stopPropagation(); moveUpByIcon(idx); }}
+                                        style={{
+                                            marginRight: theme.dimens.space.md,
+                                            border: `1px solid ${theme.colors.accent}`,
+                                            borderRadius: 6,
+                                            background: theme.colors.transparent,
+                                            padding: "4px 8px",
+                                            cursor: "pointer",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            boxShadow: `0 1px 3px ${theme.colors.caption}`,
+                                        }}
+                                    >
+                                        <Icon name="arrow-up" color={theme.colors.accent} />
+                                    </button>
+
+                                </div>
+                            )}
+                        </div>
+                    </VBox>
                 );
             })}
         </div>
