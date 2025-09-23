@@ -37,18 +37,6 @@ export default function QueryPage() {
         )
     ).current;
 
-    useEffect(() => {
-        if (autoRefresh) {
-            animation.reset();
-            animation.start();
-        } else {
-            animation.stop();
-        }
-        return () => {
-            animation.stop();
-        }
-    }, [autoRefresh, animation])
-
     const spin = spinValue.interpolate({
         inputRange: [0, 1],
         outputRange: ['0deg', '360deg']
@@ -62,32 +50,46 @@ export default function QueryPage() {
             if (stop) {
                 setAutoRefresh(false);
             }
+            else {
+                if (autoRefresh) {
+                    animation.reset();
+                    animation.start();
+                } else {
+                    animation.stop();
+                }
+            }
         }).catch(e => {
             setErr(getGraphErrorMessage(e));
         });
     }, [api, executionId]);
 
-    useEffect(() => {
-        refresh();
-    }, [refresh]);
 
     useEffect(() => {
         if (!autoRefresh) {
             return;
         }
-        if (execution?.status === 'IN_PROGRESS') {
+        if (!execution || execution?.status === 'IN_PROGRESS') {
             const id = setTimeout(refresh, 500);
             return () => clearTimeout(id);
         }
-        if (execution?.status !== 'IN_PROGRESS' as any) {
+        else if (execution?.status !== 'IN_PROGRESS' as any) {
             const id = setTimeout(() => refresh(true), 5000);
             return () => clearTimeout(id);
         }
-    }, [autoRefresh, execution, refresh]);
+    }, [autoRefresh, execution, refresh, executionId]);
 
-    useEffect(() => {
-        refresh()
-    }, [executionId]);
+    useEffect(() => { 
+        if (autoRefresh) {
+            animation.reset();
+            animation.start();
+        } else {
+            animation.stop();
+        }
+        return () => {
+            animation.stop();
+        }
+    }, [autoRefresh, animation])
+
 
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
 
@@ -123,6 +125,7 @@ export default function QueryPage() {
                         icon: <Animated.View style={{ transform: [{ rotate: spin }] }}><Icon name="refresh" /></Animated.View>,
                         title: autoRefresh ? 'Pause Auto-Refresh' : 'Start Auto-Refresh',
                         onClick: () => {
+                            refresh()
                             setAutoRefresh(a => !a)
                         }
                     }
