@@ -4,6 +4,7 @@ import { Link, useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
+import { Animated, Easing } from "react-native";
 import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon } from "react-native-boxes";
 import { PipelaneExecution, PipetaskExecution } from "../../../../gen/model";
 import { prettyJson } from "../../../common/utils/ReactUtils";
@@ -20,6 +21,38 @@ export default function QueryPage() {
     const [autoRefresh, setAutoRefresh] = useState(true)
     const api = context.context.api
     const [taskDetails, setTaskDetails] = useState<PipetaskExecution | undefined>(undefined)
+
+    const spinValue = React.useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const animation = Animated.loop(
+            Animated.timing(
+                spinValue,
+                {
+                    toValue: 1,
+                    duration: 2000,
+                    easing: Easing.linear,
+                    useNativeDriver: true
+                }
+            )
+        );
+        if (autoRefresh) {
+            animation.start();
+        } else {
+            spinValue.stopAnimation();
+            spinValue.setValue(0);
+        }
+        return () => {
+            spinValue.stopAnimation();
+        }
+    }, [autoRefresh, spinValue])
+
+    const spin = spinValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg']
+    })
+
+
     function refresh(stop?: Boolean) {
         api.pipelaneExecution(executionId as string).then(data => {
             setExecution(data.data.PipelaneExecution)
@@ -71,23 +104,14 @@ export default function QueryPage() {
                         }] : []
                     ),
                     {
-                        id: 'auto-refresh',
-                        icon: autoRefresh ? 'pause' : 'play',
+                        id: 'refresh',
+                        icon: <Animated.View style={{ transform: [{ rotate: spin }] }}><Icon name="refresh" /></Animated.View>,
                         title: autoRefresh ? 'Pause Auto-Refresh' : 'Start Auto-Refresh',
                         onClick: () => {
                             if (!autoRefresh) {
                                 refresh()
                             }
                             setAutoRefresh(a => !a)
-                        }
-                    },
-                    {
-                        id: 'refresh',
-                        icon: <Icon name="refresh" />,
-                        title: 'Refresh',
-                        onClick: () => {
-                            setExecution(undefined)
-                            setTimeout(refresh, 1000)
                         }
                     }
                 ]}
