@@ -15,8 +15,7 @@ export class LoopEvaluateJsTask extends EvaluateJsTask {
             summary: "Process last output using JS. Must return in format [{status:true}]",
             inputs: {
                 additionalInputs: {
-                    js: `
-// available variables: js, pl, input, prev, axios, Utils = EvalJSUtils
+                    js: `// available variables: js, pl, input, prev, axios, Utils = EvalJSUtils
 async function run(){
 console.log(pl.inputs);
 //must return an array in output
