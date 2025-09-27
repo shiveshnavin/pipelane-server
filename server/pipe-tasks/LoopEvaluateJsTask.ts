@@ -7,7 +7,7 @@ export class LoopEvaluateJsTask extends EvaluateJsTask {
     static TASK_VARIANT_NAME: string = "loop-eval-js"
 
     constructor(variantName?: string) {
-        super(LoopEvaluateJsTask.TASK_VARIANT_NAME)
+        super(variantName || LoopEvaluateJsTask.TASK_VARIANT_NAME)
     }
 
     describe(): PipeTaskDescription | undefined {
