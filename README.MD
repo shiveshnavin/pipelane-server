@@ -85,6 +85,8 @@ https://console.firebase.google.com/u/0/project/---PROJECT-ID---/firestore/datab
 
 https://console.firebase.google.com/u/0/project/---PROJECT-ID---/firestore/databases/-default-/indexes?create_composite=Clpwcm9qZWN0cy9zZW1pYml0bWVkaWEvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL3BzX3BpcGVsYW5lX3Rhc2tfZXhlYy9pbmRleGVzL18QARoQCgxwaXBlbGFuZUV4SWQQARoNCglzdGFydFRpbWUQARoMCghfX25hbWVfXxAB
 
+https://console.firebase.google.com/v1/r/project/---PROJECT-ID---/firestore/indexes?create_composite=ClVwcm9qZWN0cy9zZW1pYml0LWJvdHMvZGF0YWJhc2VzLyhkZWZhdWx0KS9jb2xsZWN0aW9uR3JvdXBzL3BzX3BpcGVsYW5lX2V4ZWMvaW5kZXhlcy9fEAEaCAoEbmFtZRABGg0KCXN0YXJ0VGltZRABGgwKCF9fbmFtZV9fEAE
+
 
 ### SQL
 
