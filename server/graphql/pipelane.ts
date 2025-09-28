@@ -407,10 +407,13 @@ export function generatePipelaneResolvers(
             },
             async executePipelane(parent, request: { name: string, input: string }) {
                 let existing = await PipelaneResolvers.Query.Pipelane(parent, request)
+                if (!existing) {
+                    throw new GraphQLError(`${request.name} does not exist.`)
+                }
                 let execution = await cronScheduler.triggerPipelane(existing,
                     JSON.stringify(Object.assign(
                         JSON.parse(existing.input),
-                        JSON.parse(request.input)
+                        JSON.parse(request.input || '{}')
                 ))
                 )
                 if (!execution) {
@@ -527,32 +530,42 @@ class PipelaneExecCleaner {
                 }
 
                 // Fetch the oldest `toDelete` executions from DB (asc by startTime)
-                const oldest = await this.db.get(TableName.PS_PIPELANE_EXEC, { name: pipelaneName }, {
-                    sort: [{ field: 'startTime', order: 'asc' }],
-                    limit: toDelete
-                });
+                // If your DB supports projection, only fetch `id` to reduce payload.
+                const oldest = await this.db.get(
+                    TableName.PS_PIPELANE_EXEC,
+                    { name: pipelaneName },
+                    {
+                        sort: [{ field: 'startTime', order: 'asc' }],
+                        limit: toDelete,
+                        // fields: ['id'] // <-- uncomment if supported by your DB adapter
+                    }
+                );
 
                 if (!oldest || oldest.length === 0) {
-                    // weird case: db says none; resync counter from DB
-                    const actual = (await this.db.get(TableName.PS_PIPELANE_EXEC, { name: pipelaneName })).length;
-                    counter.count = actual;
-                    await this.persistMeta(pipelaneName, actual);
+                    // weird case: db says none; resync counter from DB only once in a while if you must
+                    // (left as-is to avoid an expensive full scan every trim)
+                    await this.persistMeta(pipelaneName, counter.count);
                     return;
                 }
-
+                console.log(`[cron] Trimming ${pipelaneName}: deleting ${oldest.length} oldest executions.`)
                 // Delete oldest and their task-execs, waiting for completion
                 await Promise.all(oldest.map(async (e: any) => {
                     await this.db.delete(TableName.PS_PIPELANE_TASK_EXEC, { pipelaneExId: e.id });
                     await this.db.delete(TableName.PS_PIPELANE_EXEC, { id: e.id });
                 }));
 
-                // Recompute actual remaining from DB (single source of truth)
-                const remaining = (await this.db.get(TableName.PS_PIPELANE_EXEC, { name: pipelaneName })).length;
-                counter.count = remaining;
+                // *** FAST PATH: avoid full table scan. ***
+                // We know how many we just deleted, so adjust the in-memory counter directly.
+                const deleted = oldest.length; // actual number deleted
+                counter.count = Math.max(0, (counter.count || 0) - deleted);
                 counter.dirtySincePersist = 0;
 
-                // Persist the new count
-                await this.persistMeta(pipelaneName, remaining);
+                // Persist the new count (single source of truth for other processes)
+                await this.persistMeta(pipelaneName, counter.count);
+
+                // Optional: if you need stronger accuracy across multi-process writers,
+                // schedule a rare background reconciliation using COUNT(*) (not implemented here)
+                // e.g., every N trims or via a cron/maintenance job.
             } finally {
                 counter.lock = false;
             }

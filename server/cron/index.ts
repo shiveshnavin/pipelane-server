@@ -30,15 +30,15 @@ export class CronScheduler {
         this.maxCacheSize = maxCacheSize
     }
 
-    async getPipelaneDefinition(pipeName): Promise<PipelaneSchedule | undefined> {
-        let pipelane = await this.pipelaneResolver.Query.Pipelane({}, {
+    async getPipelaneDefinition(pipeName: string, existing?: PipelaneSchedule): Promise<PipelaneSchedule | undefined> {
+        let pipelane = existing || (await this.pipelaneResolver.Query.Pipelane({}, {
             name: pipeName
-        })
+        }))
         if (!pipelane)
             return undefined
-        pipelane.tasks = await this.pipelaneResolver.Query.pipelaneTasks({}, {
+        pipelane.tasks = existing.tasks || (await this.pipelaneResolver.Query.pipelaneTasks({}, {
             pipelaneName: pipeName
-        }) || []
+        })) || []
         return pipelane as PipelaneSchedule
     }
 
@@ -112,7 +112,7 @@ export class CronScheduler {
             console.warn(`Executor is stopped, skip triggering ${pl.name}`)
             return
         }
-        let pipelaneBluePrint = await this.getPipelaneDefinition(pl.name)
+        let pipelaneBluePrint = await this.getPipelaneDefinition(pl.name, pl)
         if (!pipelaneBluePrint) {
             console.warn(`No definition found for ${pl.name}`)
             return
