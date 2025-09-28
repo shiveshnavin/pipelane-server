@@ -211,7 +211,7 @@ export class CronScheduler {
                 if (output == undefined || output[0].status == false) {
                     if (retryCountLeft-- > 0) {
                         if (this.pipelaneLogLevel > 0)
-                            console.warn(`Pipe:${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}`)
+                            console.warn(`[pipelane-server] ${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}`)
                         //@ts-ignore
                         pipeWorksInstance.currentTaskIdx = 0
                         //@ts-ignore
@@ -220,13 +220,13 @@ export class CronScheduler {
                         return
                     } else {
                         if (this.pipelaneLogLevel > 0)
-                            console.log(`Pipe:${pl.name} failed`)
+                            console.log(`[pipelane-server] ${pl.name} failed`)
                         status = Status.Failed
                     }
 
                 } else {
                     if (this.pipelaneLogLevel > 0)
-                        console.log(`Pipe:${pl.name} success`)
+                        console.log(`[pipelane-server] ${pl.name} success`)
                     status = Status.Success
                 }
                 this.pipelaneResolver.Mutation.createPipelaneExecution({}, {

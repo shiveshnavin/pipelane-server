@@ -547,7 +547,7 @@ class PipelaneExecCleaner {
                     await this.persistMeta(pipelaneName, counter.count);
                     return;
                 }
-                console.log(`[cron] Trimming ${pipelaneName}: deleting ${oldest.length} oldest executions.`)
+                console.log(`[pipelane-server] Trimming ${pipelaneName}: deleting ${oldest.length} oldest executions.`)
                 // Delete oldest and their task-execs, waiting for completion
                 await Promise.all(oldest.map(async (e: any) => {
                     await this.db.delete(TableName.PS_PIPELANE_TASK_EXEC, { pipelaneExId: e.id });
