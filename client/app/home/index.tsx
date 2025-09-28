@@ -148,7 +148,7 @@ export default function HomeLayout() {
                 <CardView>
                     <HBox>
                         <ButtonView
-                            underlayColor={getHealth ? theme.colors.successBackground : theme.colors.accent}
+                            underlayColor={theme.colors.successBackground}
                             onPress={() => {
                                 setGetHealth(t => !t);
                             }}
@@ -187,7 +187,18 @@ export default function HomeLayout() {
                         return <RenderPipe pipe={pipe} getHealth={getHealth} forceUpdate={forceUpdate} />
                     }}
 
-                    items={pipes?.filter(p => p.name?.toLocaleLowerCase()?.indexOf(search.toLocaleLowerCase()) > -1)}
+                    items={pipes?.filter((p) => {
+                        /// p.name?.toLocaleLowerCase()?.indexOf(search.toLocaleLowerCase()) > -1)
+                        return p.name.toLowerCase().includes(search.toLowerCase()) ||
+                            p.name?.replace(/[^a-zA-Z0-9 ]/g, ' ').toLowerCase().includes(search.toLowerCase()) ||
+                            p.schedule?.toLowerCase().includes(search.toLowerCase())
+
+                    }).sort((a, b) => {
+                        if (a.active && !b.active) return -1;
+                        if (!a.active && b.active) return 1;
+                        return a.name.localeCompare(b.name);
+                    })
+                    }
                     //@ts-ignore
                     itemAdapter={(pipe: Pipelane, idx: number) => {
 
