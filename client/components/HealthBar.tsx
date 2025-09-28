@@ -19,7 +19,7 @@ export interface HealthBarProps {
      */
     items: ItemWithStatus[];
     /** Called when a segment is pressed */
-    onPressItem?: (index: number, item: ItemWithStatus) => void;
+    onPressItem?: (index: number, status: ItemWithStatus) => void;
     /** Style for the outer container (row wrapper) */
     style?: ViewStyle;
     /** Size (width & height) of each box in dp; defaults to 16 */
@@ -39,6 +39,13 @@ const toEnum = (v: ItemWithStatus): Status => {
 };
 
 // Helper to tone down a color by mixing with background
+/**
+ * 
+ * @param hex 
+ * @param bg 
+ * @param factor factor: number = 0.5, this  * is a number between 0 and 1. 0 means no change, 1 means full mix with background.
+ * @returns 
+ */
 function toneDown(hex: string, bg: string, factor: number = 0.5): string {
     const h2d = (h: string) => parseInt(h, 16);
     const d2h = (d: number) => d.toString(16).padStart(2, '0');
@@ -74,14 +81,14 @@ const HealthBar: React.FC<HealthBarProps> = memo(
         // Color map with toned-down effect
         const colors = useMemo(
             () => ({
-                [Status.Success]: toneDown(theme.colors?.success ?? '#22c55e', background, 0.6),
-                [Status.PartialSuccess]: toneDown(theme.colors?.success ?? '#22c55e', background, 0.6),
-                [Status.InProgress]: toneDown(theme.colors?.warning ?? '#f59e0b', background, 0.6),
-                [Status.Paused]: toneDown(theme.colors?.warning ?? '#f59e0b', background, 0.6),
-                [Status.Failed]: toneDown(theme.colors?.critical ?? '#ef4444', background, 0.6),
-                [Status.Skipped]: toneDown(theme.colors?.forground ?? '#1f2937', background, 0.6),
+                [Status.Success]: toneDown(theme.colors?.success ?? '#22c55e', background, 1),
+                [Status.PartialSuccess]: toneDown(theme.colors?.success ?? '#22c55e', background, 1),
+                [Status.InProgress]: toneDown(theme.colors?.warning ?? '#f59e0b', background, 1),
+                [Status.Paused]: toneDown(theme.colors?.warning ?? '#f59e0b', background, 1),
+                [Status.Failed]: toneDown(theme.colors?.critical ?? '#ef4444', background, 1),
+                [Status.Skipped]: toneDown(theme.colors?.forground ?? '#1f2937', background, 1),
                 bg: background,
-                border: toneDown(theme.colors?.forground ?? '#1f2937', background, 0.6),
+                border: toneDown(theme.colors?.forground ?? '#1f2937', background, 1),
             }),
             [theme],
         );
@@ -117,14 +124,28 @@ const HealthBar: React.FC<HealthBarProps> = memo(
                     const opacity = status === Status.Skipped ? dimOpacity : 1;
 
                     const handlePress = (e: GestureResponderEvent) => {
-                        e.stopPropagation();
+                        e.stopPropagation?.();
+                        e.preventDefault?.();
+                        (e.nativeEvent as any)?.stopImmediatePropagation?.();
+
                         if (onPressItem) onPressItem(idx, items?.[idx]);
                     };
 
                     return (
                         <Pressable
                             key={idx}
+                            // Ensure this view becomes the responder so parent doesn't
+                            // steal/tunnel the touch (important when wrapped in <Link>)
+                            onStartShouldSetResponder={() => true}
+                            onMoveShouldSetResponder={() => false}
+                            onResponderTerminationRequest={() => false}
                             onPress={onPressItem ? handlePress : undefined}
+                            // For RN Web: also intercept click at DOM level
+                            // @ts-expect-error RNW passes through onClick
+                            onClick={(ev: any) => {
+                                ev.stopPropagation?.();
+                                ev.preventDefault?.();
+                            }}
                             accessibilityRole="button"
                             accessibilityLabel={`Health segment ${idx + 1} of ${maxSize}`}
                             accessibilityState={{
