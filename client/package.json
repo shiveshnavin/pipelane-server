@@ -7,7 +7,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build": "expo export --platform web"
+    "copy:models": "mkdir ./gen || cp ../gen/model.ts ./gen/model.ts",
+    "build": "npm run copy:models && expo export --platform web",
+    "build:win32": "echo 'manually copy ../gen/model.ts ./gen/model.ts' && expo export --platform web"
   },
   "dependencies": {
     "@apollo/client": "^3.9.10",

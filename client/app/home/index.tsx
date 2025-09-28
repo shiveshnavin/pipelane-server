@@ -3,10 +3,11 @@ import { gql } from "@apollo/client";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
 import { ButtonView, Caption, Colors, CompositeTextInputView, DarkColors, Icon, PressableView, SimpleDatalistView, SimpleToolbar, Storage, SwitchView, TextView, Theme, ThemeContext, VPage, isDesktop, isWeb } from "react-native-boxes";
-import { Pipelane, Pipetask } from '../../../gen/model'
+import { Pipelane, PipelaneExecution, Pipetask } from '../../../gen/model'
 import { KeyboardAvoidingScrollView, CardView, HBox, VBox } from "react-native-boxes/src/Box";
 import { Link, useRouter } from "expo-router";
 import { StatusBar } from "react-native";
+import HealthBar from "../../components/HealthBar";
 
 export default function HomeLayout() {
     const theme = useContext(ThemeContext)
@@ -16,12 +17,21 @@ export default function HomeLayout() {
     const graph = appContext.context.api.graph
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState("")
+    const [getHealth, setGetHealth] = useState(false)
     const [pipes, setUsers] = useState<Pipelane[]>([])
     const router = useRouter()
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     console.log('re-render')
     //@ts-ignores
-    function getPipes(text?) {
+    function getPipes() {
+        setLoading(true)
+        let executionsQuery = `
+        executions {
+            id
+            startTime
+            status
+            endTime
+        }`;
         let query = `
         query GetPipes {
             pipelanes {
@@ -29,19 +39,21 @@ export default function HomeLayout() {
               schedule
               active
               nextRun
+              ${getHealth ? executionsQuery : ''}
             }
           }
      `
         graph.query({
             query: gql(query),
         }).then((result: any) => {
-            setLoading(false)
             setUsers(result.data.pipelanes)
-        });
+        }).finally(() => {
+            setLoading(false)
+        })
     }
     useEffect(() => {
-        getPipes(undefined)
-    }, [])
+        getPipes()
+    }, [getHealth])
     return (
         <VPage>
             <SimpleToolbar
@@ -85,6 +97,16 @@ export default function HomeLayout() {
             }}>
                 <CardView>
                     <HBox>
+                        <ButtonView
+                            underlayColor={getHealth ? theme.colors.successBackground : theme.colors.accent}
+                            onPress={() => {
+                                setGetHealth(t => !t);
+                            }}
+                            style={{
+                                backgroundColor: getHealth ? theme.colors.success : theme.colors.transparent,
+                                flex: isDesktop() ? 1 : 2
+                            }}
+                            icon="signal" />
                         <CompositeTextInputView
                             onChangeText={setSearch}
                             initialText={search}
@@ -93,9 +115,12 @@ export default function HomeLayout() {
                             style={{
                                 flex: 8
                             }} />
-                        <ButtonView onPress={() => {
+                        <ButtonView
+                            onPress={() => {
                             router.navigate(`/home/new`)
-                        }} style={{ flex: isDesktop() ? 1 : 2 }} icon="plus" />
+                            }}
+                            style={{ flex: isDesktop() ? 1 : 2 }}
+                            icon="plus" />
 
                     </HBox>
                 </CardView>
@@ -107,14 +132,29 @@ export default function HomeLayout() {
                     onRender={(pipe: Pipelane, idx: number) => (
                         <Link
                             href={`/home/${pipe.name}`}
-                            style={{ marginRight: 12, flex: 1, width: '100%' }}
+                            style={{
+                                flex: 1,
+                                width: '100%',
+                                marginLeft: theme.dimens.space.sm,
+                                marginRight: theme.dimens.space.md,
+                                paddingRight: theme.dimens.space.md,
+                                marginBottom: theme.dimens.space.md,
+                                marginTop: 0,
+                            }}
                         >
+                            <VBox style={{
+                                borderRadius: theme.dimens.space.md,
+                                backgroundColor: theme.colors.forground,
+                                paddingVertical: 8,
+                                paddingHorizontal: 12,
+                                flex: 1,
+                                width: '100%'
+                            }}>
+
                             <HBox
                                 key={pipe.name}
                                 style={{
                                     alignItems: 'center',
-                                    paddingVertical: 8,
-                                    paddingHorizontal: 12,
                                     flex: 1,
                                     width: '100%'
                                 }}
@@ -133,7 +173,8 @@ export default function HomeLayout() {
                                     </TextView>
                                     <Caption>
                                         Next run on {pipe.nextRun}
-                                    </Caption>
+                                        </Caption> 
+
                                 </VBox>
                                 <PressableView
                                     onPress={(e) => {
@@ -153,9 +194,25 @@ export default function HomeLayout() {
                                         }} />
                                 </PressableView>
                             </HBox>
+                                {
+                                    (getHealth && pipe.executions && pipe.executions?.length > 0) && (
+
+                                        <HealthBar
+                                            style={{
+                                                paddingLeft: theme.dimens.space.md
+                                            }}
+                                            maxSize={pipe.executions?.length}
+                                            items={pipe.executions as any}
+                                            onPressItem={(index, item) => {
+                                                router.navigate(`executions/${(item as PipelaneExecution).id}`)
+                                            }}
+                                        />
+                                    )
+                                }
+                            </VBox>
                         </Link>
                     )}
-                    items={pipes?.filter(p => p.name?.indexOf(search) > -1)}
+                    items={pipes?.filter(p => p.name?.toLocaleLowerCase()?.indexOf(search.toLocaleLowerCase()) > -1)}
                     //@ts-ignore
                     itemAdapter={(pipe: Pipelane, idx: number) => {
 
