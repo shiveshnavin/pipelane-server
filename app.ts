@@ -10,7 +10,17 @@ import { createMcpServer } from "./server/mcp";
 
 const app = express()
 const port = process.env.PORT || 4001
-const db = new SQLiteDB('database.sqlite')
+
+function initDb() {
+    try {
+        return new SQLiteDB('database.sqlite')
+    } catch (e) {
+        console.error("SQLite DB Initialization failed, did you install `npm i sqlite3`?")
+        throw e;
+    }
+}
+
+const db = initDb()
 app.use(createMcpServer(VariantConfig, db))
 creatPipelaneServer(VariantConfig, db, 2).then(pipelane => {
     app.use('/pipelane', pipelane)
