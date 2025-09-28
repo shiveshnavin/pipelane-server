@@ -26,7 +26,12 @@ export function generatePipelaneResolvers(
         throw new Error('db supplied to pipelane must not be null')
     }
 
-    async function trimExecution(pipeEx: PipelaneExecution) {
+    /**
+     * Deprecated
+     * @param pipeEx 
+     * @returns 
+     */
+    async function trimExecutionOld(pipeEx: PipelaneExecution) {
         let pipe = await PipelaneResolvers.Query.Pipelane(undefined, {
             name: pipeEx.name
         })
@@ -91,6 +96,13 @@ export function generatePipelaneResolvers(
             }
         }
     }
+    let cleaner: PipelaneExecCleaner = undefined;
+    async function trimExecution(pipeEx: PipelaneExecution, pipe?: Pipelane) {
+        if (!cleaner)
+            cleaner = new PipelaneExecCleaner(db, PipelaneResolvers);
+        await cleaner.handleExecution(pipeEx, pipe);
+    }
+
     const PipelaneResolvers = {
         PipelaneExecution: {
             definition: (parent) => {
@@ -342,13 +354,19 @@ export function generatePipelaneResolvers(
                 return 'SUCCESS'
             },
 
+            /**
+             * Called every time regardless via GraphQL (executePipelane) or Cron
+             * @param parent 
+             * @param request 
+             * @returns 
+             */
             async createPipelaneExecution(parent, request: { data: PipelaneExecution }) {
                 let existing = request.data.id && await db.getOne(TableName.PS_PIPELANE_EXEC, {
                     id: request.data.id
                 })
                 let tx = request.data
                 if (tx.status != Status.InProgress) {
-                    trimExecution(existing || tx)
+                    trimExecution(existing || tx, tx.definition)
                 }
                 if (!existing) {
                     delete tx.definition
@@ -416,4 +434,136 @@ export function generatePipelaneResolvers(
         }
     }
     return PipelaneResolvers
+}
+
+type Counter = {
+    count: number;
+    dirtySincePersist: number; // increments since last persist
+    lock?: boolean; // naive in-memory lock for trimming
+}
+
+class PipelaneExecCleaner {
+    private counters: Map<string, Counter> = new Map();
+    private defaultRetention = 100; // fallback retention
+    private defaultOverflow = 5; // allow this many extra before trimming
+    private minBatchDelete = 2; // don't delete if only 1 needs removal
+    private persistEvery = 50; // persist metadata after this many increments
+
+    constructor(private db: any, private PipelaneResolvers: any) { }
+
+    // Initialize or load counter from DB. Called lazily.
+    private async initCounterIfMissing(pipelaneName: string) {
+        const pkey = `excount_${pipelaneName}`;
+        if (this.counters.has(pipelaneName)) return this.counters.get(pipelaneName)!;
+
+        const existing: any = await this.db.getOne(TableName.PS_PIPELANE_META, { pkey });
+        let base = 0;
+        if (existing && typeof existing.pval === 'string') {
+            const n = Number(existing.pval);
+            base = Number.isFinite(n) ? n : 0;
+        } else {
+            // create meta record if missing so other processes can see it
+            await this.db.insert(TableName.PS_PIPELANE_META, { pkey, pval: '0' });
+            base = 0;
+        }
+
+        const counter: Counter = { count: base, dirtySincePersist: 0 };
+        this.counters.set(pipelaneName, counter);
+        return counter;
+    }
+
+    // main entry — call on each new execution
+    public async handleExecution(pipeEx: PipelaneExecution, pipe?: Pipelane) {
+        try {
+            pipe = pipe || (await this.PipelaneResolvers.Query.Pipelane(undefined, { name: pipeEx.name }))
+            if (!pipe) return;
+
+            const pipelaneName = pipe.name;
+            const counter = await this.initCounterIfMissing(pipelaneName);
+
+            // Determine retention and overflow
+            const retention = (pipe.executionsRetentionCount == undefined)
+                ? this.defaultRetention
+                : Number(pipe.executionsRetentionCount);
+            const overflow = this.defaultOverflow;
+
+            // increment in-memory counter
+            counter.count = (counter.count || 0) + 1;
+            counter.dirtySincePersist++;
+
+            // Persist meta occasionally to avoid losing the counter on restarts
+            if (counter.dirtySincePersist >= this.persistEvery) {
+                await this.persistMeta(pipelaneName, counter.count);
+                counter.dirtySincePersist = 0;
+            }
+
+            // If retention == 0 -> unbounded (no deletes)
+            if (retention === 0) return;
+
+            // Only trigger trimming when we exceed retention + overflow
+            if (counter.count <= retention + overflow) {
+                return; // OK for now
+            }
+
+            // Acquire simple in-memory lock for this pipelane to avoid concurrent trimmers
+            if (counter.lock) return; // another trimmer is already running
+            counter.lock = true;
+            try {
+                // Re-check counter since another trimmer could have changed it
+                if (counter.count <= retention + overflow) return;
+
+                // Desired remaining: max(retention, floor(count/2)) to "trim by half"
+                const desiredRemaining = Math.max(retention, Math.floor(counter.count / 2));
+                let toDelete = counter.count - desiredRemaining;
+
+                // Don't perform DB deletion for just 1 entry — wait for more accumulation
+                if (toDelete <= this.minBatchDelete) {
+                    // leave it to accumulate further; optionally persist meta
+                    if (counter.dirtySincePersist > 0) {
+                        await this.persistMeta(pipelaneName, counter.count);
+                        counter.dirtySincePersist = 0;
+                    }
+                    return;
+                }
+
+                // Fetch the oldest `toDelete` executions from DB (asc by startTime)
+                const oldest = await this.db.get(TableName.PS_PIPELANE_EXEC, { name: pipelaneName }, {
+                    sort: [{ field: 'startTime', order: 'asc' }],
+                    limit: toDelete
+                });
+
+                if (!oldest || oldest.length === 0) {
+                    // weird case: db says none; resync counter from DB
+                    const actual = (await this.db.get(TableName.PS_PIPELANE_EXEC, { name: pipelaneName })).length;
+                    counter.count = actual;
+                    await this.persistMeta(pipelaneName, actual);
+                    return;
+                }
+
+                // Delete oldest and their task-execs, waiting for completion
+                await Promise.all(oldest.map(async (e: any) => {
+                    await this.db.delete(TableName.PS_PIPELANE_TASK_EXEC, { pipelaneExId: e.id });
+                    await this.db.delete(TableName.PS_PIPELANE_EXEC, { id: e.id });
+                }));
+
+                // Recompute actual remaining from DB (single source of truth)
+                const remaining = (await this.db.get(TableName.PS_PIPELANE_EXEC, { name: pipelaneName })).length;
+                counter.count = remaining;
+                counter.dirtySincePersist = 0;
+
+                // Persist the new count
+                await this.persistMeta(pipelaneName, remaining);
+            } finally {
+                counter.lock = false;
+            }
+
+        } catch (err) {
+            console.error('handleExecution error for', pipeEx?.name, err);
+        }
+    }
+
+    private async persistMeta(pipelaneName: string, count: number) {
+        const pkey = `excount_${pipelaneName}`;
+        await this.db.update(TableName.PS_PIPELANE_META, { pkey }, { pval: `${count}` });
+    }
 }
