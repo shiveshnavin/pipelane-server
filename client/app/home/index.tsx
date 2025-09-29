@@ -147,20 +147,26 @@ export default function HomeLayout() {
             }}>
                 <CardView>
                     <HBox>
-                        <ButtonView
-                            underlayColor={theme.colors.successBackground}
-                            onPress={() => {
-                                setGetHealth(t => !t);
-                            }}
+                        <PressableView
                             style={{
+                                borderRadius: theme.dimens.space.md,
                                 backgroundColor: getHealth ? theme.colors.success : theme.colors.transparent,
                                 flex: isDesktop() ? 1 : 2
                             }}
-                            icon={
-                                <Icon name={'signal'} color={getHealth ? theme.colors.invert.text : theme.colors.text} />
-                            }
+                            onPress={() => {
+                                setGetHealth(t => !t);
+                            }}
+                        ><Center style={{
+                                flex: isDesktop() ? 1 : 2
+                            }}>
+                                <Icon
+                                    onPress={() => {
+                                        setGetHealth(t => !t);
+                                    }}
+                                    name={'signal'} color={getHealth ? theme.colors.invert.text : theme.colors.text} />
+                            </Center>
+                        </PressableView>
 
-                        />
                         <CompositeTextInputView
                             onChangeText={setSearch}
                             initialText={search}
