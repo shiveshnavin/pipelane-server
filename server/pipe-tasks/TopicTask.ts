@@ -1,5 +1,5 @@
 import { FireStoreDB, MultiDbORM, SQLiteDB } from "multi-db-orm";
-import PipeLane, { PipeTask, PipeTaskDescription } from "pipelane";
+import PipeLane, { InputWithPreviousInputs, PipeTask, PipeTaskDescription, OutputWithStatus } from "pipelane";
 
 export type Topic = {
     id: string,
@@ -10,7 +10,7 @@ export type Topic = {
     queue: string
 }
 
-export class TopicTask extends PipeTask<any, any> {
+export class TopicTask extends PipeTask<InputWithPreviousInputs, OutputWithStatus> {
     kill(): boolean {
         return false
     }
