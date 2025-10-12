@@ -258,7 +258,7 @@ function RenderPipe(props: { pipe: Pipelane, getHealth: boolean, forceUpdate: ()
             //@ts-ignore
             return new Date(parseInt(b.startTime as string)).getTime() - new Date(parseInt(a.startTime as string)).getTime()
         })
-        ?.slice(-executionsToConsiderForHealthCount)
+        ?.slice(0, executionsToConsiderForHealthCount)
 
     const health = calculateHealthPercentage(executionsToConsiderForHealth as PipelaneExecution[]).success;
     const healthColor = calculateHealthColor(health, theme);
