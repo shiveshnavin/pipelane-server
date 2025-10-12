@@ -157,8 +157,8 @@ export default function HomeLayout() {
                                 setGetHealth(t => !t);
                             }}
                         ><Center style={{
-                                flex: isDesktop() ? 1 : 2
-                            }}>
+                            flex: isDesktop() ? 1 : 2
+                        }}>
                                 <Icon
                                     onPress={() => {
                                         setGetHealth(t => !t);
@@ -177,7 +177,7 @@ export default function HomeLayout() {
                             }} />
                         <ButtonView
                             onPress={() => {
-                            router.navigate(`/home/new`)
+                                router.navigate(`/home/new`)
                             }}
                             style={{ flex: isDesktop() ? 1 : 2 }}
                             icon="plus" />
@@ -250,39 +250,49 @@ function RenderPipe(props: { pipe: Pipelane, getHealth: boolean, forceUpdate: ()
     const { api } = useContext(AppContext).context
     const router = useRouter()
     const [expand, setExpand] = useState(false)
-    const health = calculateHealthPercentage(pipe.executions as PipelaneExecution[]).success;
+
+    const executionsToConsiderForHealthCount = pipe.executionsRetentionCount || 10
+    const executionsToConsiderForHealth = pipe.executions
+        ?.filter(e => !!e?.startTime)
+        .sort((a, b) => {
+            //@ts-ignore
+            return new Date(parseInt(b.startTime as string)).getTime() - new Date(parseInt(a.startTime as string)).getTime()
+        })
+        ?.slice(-executionsToConsiderForHealthCount)
+
+    const health = calculateHealthPercentage(executionsToConsiderForHealth as PipelaneExecution[]).success;
     const healthColor = calculateHealthColor(health, theme);
     const healthDisplay = health >= 0 ? health.toFixed(0) : '-';
     return (
         <Link
-                            href={`/home/${pipe.name}`}
-                            style={{
-                                flex: 1,
-                                width: '100%',
-                                marginLeft: theme.dimens.space.sm,
-                                marginRight: theme.dimens.space.md,
-                                paddingRight: theme.dimens.space.md,
-                                marginBottom: theme.dimens.space.md,
-                                marginTop: 0,
-                            }}
-                        >
-                            <VBox style={{
-                                borderRadius: theme.dimens.space.md,
-                                backgroundColor: theme.colors.forground,
-                                paddingVertical: 8,
-                                paddingHorizontal: 12,
-                                flex: 1,
-                                width: '100%'
-                            }}>
+            href={`/home/${pipe.name}`}
+            style={{
+                flex: 1,
+                width: '100%',
+                marginLeft: theme.dimens.space.sm,
+                marginRight: theme.dimens.space.md,
+                paddingRight: theme.dimens.space.md,
+                marginBottom: theme.dimens.space.md,
+                marginTop: 0,
+            }}
+        >
+            <VBox style={{
+                borderRadius: theme.dimens.space.md,
+                backgroundColor: theme.colors.forground,
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                flex: 1,
+                width: '100%'
+            }}>
 
-                            <HBox
-                                key={pipe.name}
-                                style={{
-                                    alignItems: 'center',
-                                    flex: 1,
-                                    width: '100%'
-                                }}
-                            >
+                <HBox
+                    key={pipe.name}
+                    style={{
+                        alignItems: 'center',
+                        flex: 1,
+                        width: '100%'
+                    }}
+                >
                     {
                         getHealth && (
                             <PressableView
@@ -320,57 +330,57 @@ function RenderPipe(props: { pipe: Pipelane, getHealth: boolean, forceUpdate: ()
 
                         )
                     }
-                                <VBox style={{ flex: 1 }}>
-                                    <TextView style={{
-                                        color: theme.colors.accent,
-                                        fontWeight: 'bold', fontSize: theme.dimens.font.lg
-                                    }}>
-                                        {pipe.name}
-                                    </TextView>
-                                    <TextView style={{
-                                        fontSize: theme.dimens.font.md
-                                    }}>
-                                        Schedule: {pipe.schedule}
-                                    </TextView>
-                                    <Caption>
-                                        Next run on {pipe.nextRun}
-                                        </Caption> 
+                    <VBox style={{ flex: 1 }}>
+                        <TextView style={{
+                            color: theme.colors.accent,
+                            fontWeight: 'bold', fontSize: theme.dimens.font.lg
+                        }}>
+                            {pipe.name}
+                        </TextView>
+                        <TextView style={{
+                            fontSize: theme.dimens.font.md
+                        }}>
+                            Schedule: {pipe.schedule}
+                        </TextView>
+                        <Caption>
+                            Next run on {pipe.nextRun}
+                        </Caption>
 
-                                </VBox>
-                                <PressableView
-                                    onPress={(e) => {
-                                        e.stopPropagation()
-                                    }}>
-                                    <SwitchView
-                                        value={pipe.active == true}
-                                        onValueChange={(p) => {
-                                            pipe.active = p
-                                            api.upsertPipelane({
-                                                active: p,
-                                                name: pipe.name
-                                            }).then(resp => {
-                                                Object.assign(pipe, resp.data.createPipelane)
-                                                forceUpdate()
-                                            })
-                                        }} />
-                                </PressableView>
-                            </HBox>
-                                {
-                    (expand && getHealth && pipe.executions && pipe.executions?.length > 0) && (
+                    </VBox>
+                    <PressableView
+                        onPress={(e) => {
+                            e.stopPropagation()
+                        }}>
+                        <SwitchView
+                            value={pipe.active == true}
+                            onValueChange={(p) => {
+                                pipe.active = p
+                                api.upsertPipelane({
+                                    active: p,
+                                    name: pipe.name
+                                }).then(resp => {
+                                    Object.assign(pipe, resp.data.createPipelane)
+                                    forceUpdate()
+                                })
+                            }} />
+                    </PressableView>
+                </HBox>
+                {
+                    (expand && getHealth && executionsToConsiderForHealth && executionsToConsiderForHealth.length > 0) && (
 
-                                        <HealthBar
-                                            style={{
-                                                paddingLeft: theme.dimens.space.md
-                                            }}
-                                            maxSize={pipe.executions?.length}
-                                            items={pipe.executions as any}
-                                            onPressItem={(index, item) => {
-                                                router.navigate(`executions/${(item as PipelaneExecution).id}`)
-                                            }}
-                                        />
-                                    )
-                                }
-                            </VBox>
+                        <HealthBar
+                            style={{
+                                paddingLeft: theme.dimens.space.md
+                            }}
+                            maxSize={executionsToConsiderForHealth?.length}
+                            items={executionsToConsiderForHealth as any}
+                            onPressItem={(index, item) => {
+                                router.navigate(`executions/${(item as PipelaneExecution).id}`)
+                            }}
+                        />
+                    )
+                }
+            </VBox>
         </Link>
     )
 
