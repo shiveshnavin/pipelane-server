@@ -62,13 +62,27 @@ export class TopicTask extends PipeTask<InputWithPreviousInputs, OutputWithStatu
                     queue: 'queue name, defaults to pipelane name (read, write)',
                     id: 'topic id (read), optional',
                     state: 'topic state  (read)(write)',
-                    order: 'asc (default)(read), desc, ordered by createdTimestamp'
+                    order: 'asc (default)(read), desc, ordered by createdTimestamp',
+                    notifyOnExhausted: '(read) comma separated list of users to notify when queue is exhausted',
                 }
             }
         };
     }
 
-    async execute(pipeWorksInstance: PipeLane, input: { last?: any[], additionalInputs?: any }): Promise<any[]> {
+
+    async notifyUser(user: string, message: string) {
+        this.onLog(`Notifying user ${user}: ${message}`);
+    }
+
+    async execute(pipeWorksInstance: PipeLane, input: {
+        last?: any[],
+        additionalInputs?:
+        Topic
+        &
+        {
+            notifyOnExhausted?: string, limit?: number, order?: 'asc' | 'desc',
+        }
+    }): Promise<any[]> {
         if (!this.initialized) await this.initDb();
         const variant = this.getTaskVariantName();
         let queue = input.additionalInputs?.queue || pipeWorksInstance.name;
@@ -98,6 +112,12 @@ export class TopicTask extends PipeTask<InputWithPreviousInputs, OutputWithStatu
                                 order: input.additionalInputs?.order ?? 'asc'
                             }]
                     });
+            }
+            if (topics.length === 0 && input.additionalInputs?.notifyOnExhausted) {
+                let users = input.additionalInputs.notifyOnExhausted.split(',').map(u => u.trim()).filter(u => u.length > 0);
+                for (let user of users) {
+                    await this.notifyUser(user, `[${pipeWorksInstance.name}] Queue ${queue} is exhausted.`);
+                }
             }
             pipeWorksInstance.inputs.topic = topics[0];
             pipeWorksInstance.inputs.topics = topics;
@@ -177,7 +197,7 @@ async function test() {
             queue: "testQueue"
         }
     };
-    const writeResult = await writeTask.execute(pl, writeInput);
+    const writeResult = await writeTask.execute(pl, writeInput as any);
     console.log("Write Result:", writeResult);
 
     // Read test (single)
@@ -193,12 +213,12 @@ async function test() {
             limit: 1
         }
     };
-    const readResultSingle = await readTask.execute(pl, readInputSingle);
+    const readResultSingle = await readTask.execute(pl, readInputSingle as any);
     console.log("Read Result (single):", readResultSingle);
     console.log("Read Result (pl.inputs):", pl.inputs.topic);
 
     const readResultSingleNoLast = await readTask.execute(pl, {
-        additionalInputs: readInputSingle.additionalInputs
+        additionalInputs: readInputSingle.additionalInputs as any
     });
     console.log("Read Result no last (single):", readResultSingleNoLast);
     console.log("Read Result no last (pl.inputs):", pl.inputs.topic);
@@ -215,7 +235,7 @@ async function test() {
             queue: "testQueue"
         }
     ];
-    const writeMultiResult = await writeTask.execute(pl, { additionalInputs: {} });
+    const writeMultiResult = await writeTask.execute(pl, { additionalInputs: {} as any });
     console.log("Write Multiple Result:", writeMultiResult);
 
     // Read test (multiple)
@@ -229,7 +249,7 @@ async function test() {
             limit: 5
         }
     };
-    const readResultMulti = await readTask.execute(pl, readInputMulti);
+    const readResultMulti = await readTask.execute(pl, readInputMulti as any);
     console.log("Read Result (multiple):", readResultMulti);
     console.log("Read Result (pl.inputs.topics):", pl.inputs.topics);
 }
