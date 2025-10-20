@@ -7,7 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "copy:models": "mkdir ./gen || cp ../gen/model.ts ./gen/model.ts",
+    "copy:models": "mkdir -p ./gen || cp ../gen/model.ts ./gen/model.ts",
     "build": "npm run copy:models && expo export --platform web",
     "build:win32": "echo 'manually copy ../gen/model.ts ./gen/model.ts' && expo export --platform web"
   },

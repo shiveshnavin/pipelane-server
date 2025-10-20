@@ -137,7 +137,7 @@ export default function PipeTaskPage() {
                         }
 
                         try {
-                            JSON.parse(task.input as string)
+                            safeJsonParse(task.input as string)
                             seterr(undefined)
                         } catch (e) {
                             seterr('Input must be a valid JSON string')
@@ -177,7 +177,13 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
 
     useEffect(() => {
         let taskDesc: TaskTypeDescription | undefined = undefined
-        let taskInput = JSON.stringify(JSON.parse(inputPipetask.input as string), null, 2)
+        let taskInput: string
+        try {
+            taskInput = JSON.stringify(JSON.parse(inputPipetask.input as string), null, 2)
+        } catch (e) {
+            taskInput = "{}"
+            seterr('Input must be a valid JSON string. Current input: ' + inputPipetask.input)
+        }
         const matchingTaskType = taskTypes.find(t => t.type == task.taskTypeName)
         if (matchingTaskType && matchingTaskType?.description) {
             taskDesc = removeFieldRecursively(matchingTaskType?.description, "__typename")
@@ -323,9 +329,9 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                     justifyContent: 'space-between'
                 }}>
                     <Caption style={{
-                    marginTop: theme.dimens.space.md,
-                    marginLeft: theme.dimens.space.sm
-                }}>Additional Inputs</Caption>
+                        marginTop: theme.dimens.space.md,
+                        marginLeft: theme.dimens.space.sm
+                    }}>Additional Inputs</Caption>
                     <PressableView
                         onPress={() => {
                             setEditorType(editorType == 'vscode' ? 'text' : 'vscode')
@@ -341,36 +347,36 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                 {
                     editorType == 'vscode' && (
                         <Center style={{
-                    borderWidth: 0.1,
-                    borderColor: theme.colors.caption,
-                    borderRadius: 10,
-                    padding: 3,
-                    margin: theme.dimens.space.sm
-                }}>
-                    <Editor
-                        onChange={(t: Maybe<string> | undefined) => {
+                            borderWidth: 0.1,
+                            borderColor: theme.colors.caption,
+                            borderRadius: 10,
+                            padding: 3,
+                            margin: theme.dimens.space.sm
+                        }}>
+                            <Editor
+                                onChange={(t: Maybe<string> | undefined) => {
 
-                            setTask((task) => {
-                                task.input = t
-                                return task
-                            })
-                            forceUpdate()
-                        }}
-                        height="30vh"
-                        value={task.input as string}
-                        defaultLanguage="json"
-                        // defaultValue={task.input as string}
-                        theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
-                        options={{
-                            tabSize: 2,
-                            formatOnPaste: true,
-                            formatOnType: true,
-                            lineNumbers: "off",
-                            wordWrap: "on",
-                            minimap: { enabled: false }
-                        }}
-                    />
-                </Center>
+                                    setTask((task) => {
+                                        task.input = t
+                                        return task
+                                    })
+                                    forceUpdate()
+                                }}
+                                height="30vh"
+                                value={task.input as string}
+                                defaultLanguage="json"
+                                // defaultValue={task.input as string}
+                                theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
+                                options={{
+                                    tabSize: 2,
+                                    formatOnPaste: true,
+                                    formatOnType: true,
+                                    lineNumbers: "off",
+                                    wordWrap: "on",
+                                    minimap: { enabled: false }
+                                }}
+                            />
+                        </Center>
 
                     )}
 
@@ -419,7 +425,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                                     forceUpdate()
                                 }}
                                 options={
-                                    Object.keys(JSON.parse(task.input!) || {}).map(key => {
+                                    Object.keys(safeJsonParse(task.input!) || {}).map(key => {
                                         return {
                                             id: key,
                                             value: key,
@@ -443,7 +449,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
 
                                                     try {
                                                         setTask((task) => {
-                                                            let inputObj = JSON.parse(task.input!)
+                                                            let inputObj = safeJsonParse(task.input!)
                                                             inputObj[editingField] = t
                                                             task.input = JSON.stringify(inputObj, null, 2)
                                                             console.log(task.input)
@@ -457,7 +463,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                                                 }}
                                                 height="30vh"
                                                 defaultLanguage="javascript"
-                                                value={JSON.parse(task.input!)[editingField]}
+                                                value={safeJsonParse(task.input!)[editingField]}
                                                 theme={theme.colors.text == '#444444' ? "light" : "vs-dark"}
                                                 options={{
                                                     tabSize: 2,
@@ -491,7 +497,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                                             onChangeText={(t: Maybe<string> | undefined) => {
                                                 try {
                                                     setTask((task) => {
-                                                        let inputObj = JSON.parse(task.input!)
+                                                        let inputObj = safeJsonParse(task.input!)
                                                         inputObj[editingField] = t
                                                         task.input = JSON.stringify(inputObj, null, 2)
                                                         console.log(task.input)
@@ -503,7 +509,7 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
                                                 }
                                                 forceUpdate()
                                             }}
-                                            value={JSON.parse(task.input!)[editingField]}
+                                            value={safeJsonParse(task.input!)[editingField]}
                                             initialText={task.input as string} />
                                     </VBox>
                                 )
@@ -573,3 +579,12 @@ function PipetaskView({ loading, pipetask: inputPipetask, taskTypes, save, seter
 
 }
 
+
+
+function safeJsonParse(str: string): any {
+    try {
+        return JSON.parse(str)
+    } catch (e) {
+        return `{}`
+    }
+}
