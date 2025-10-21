@@ -70,7 +70,7 @@ export class TopicTask extends PipeTask<InputWithPreviousInputs, OutputWithStatu
     }
 
 
-    async notifyUser(user: string, message: string) {
+    async notifyUser(user: string, message: string, task: TopicTask = this, pl: PipeLane = this.pipeWorkInstance): Promise<void> {
         this.onLog(`Notifying user ${user}: ${message}`);
     }
 
@@ -114,9 +114,11 @@ export class TopicTask extends PipeTask<InputWithPreviousInputs, OutputWithStatu
                     });
             }
             if (topics.length === 0 && input.additionalInputs?.notifyOnExhausted) {
-                let users = input.additionalInputs.notifyOnExhausted.split(',').map(u => u.trim()).filter(u => u.length > 0);
+                let users = [''];
+                if (typeof input.additionalInputs.notifyOnExhausted === 'string')
+                    users = input.additionalInputs.notifyOnExhausted.split(',').map(u => u.trim()).filter(u => u.length > 0);
                 for (let user of users) {
-                    await this.notifyUser(user, `[${pipeWorksInstance.name}] Queue ${queue} is exhausted.`);
+                    await this.notifyUser(user, `[${pipeWorksInstance.name}]\n\nQueue ${queue} is exhausted ⚠️.`, this, pipeWorksInstance);
                 }
             }
             pipeWorksInstance.inputs.topic = topics[0];
