@@ -1,5 +1,5 @@
 <p align="center">
-# Pipelane server
+<h1>Pipelane server</h2><br>
 
 <img src="https://github.com/shiveshnavin/pipelane-server/blob/master/poster.jpg?raw=true" alt="Poster" width="512px">
 
