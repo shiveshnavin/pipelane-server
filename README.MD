@@ -1,12 +1,14 @@
 <p align="center">
-<h1>Pipelane server</h2><br>
+<h1 align="center">Pipelane server</h2><br>
 
+<p align="center">
 <img src="https://github.com/shiveshnavin/pipelane-server/blob/master/poster.jpg?raw=true" alt="Poster" width="512px">
-
-
-This is the UI server for Pipelane, a system for defining and executing automated pipelines. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side application for a user interface to interact with the Pipelane backend.
 </p>
 
+<p align="center">
+This is the UI server for Pipelane, a system for defining and executing automated pipelines. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side application for a user interface to interact with the Pipelane backend.
+</p>
+</p>
 ## Features
 
 - **GraphQL API:** Interact with Pipelanes, Pipetasks, and executions through a well-defined GraphQL schema.
