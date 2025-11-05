@@ -22,14 +22,14 @@ This is the UI, manager and scheduler for my <a href="https://github.com/shivesh
 
 ## Demo
 
-Here's a custom pipelane built using the pipelane-server that executes the LinkedIn post generator using AI.
+Here's a custom pipelane built using the pipelane-server that executes the LinkedIn post generator using AI.<br>
 <img src="https://github.com/shiveshnavin/pipelane-server/blob/master/docs/pipelane-server.png?raw=true" alt="Poster" width="512px"/>
 
 
-Here's a another custom pipelane for checking Stock market losses every 5 mins and notifying me over Call, WhatsApp, Telegram and FCM.
+Here's a another custom pipelane for checking Stock market losses every 5 mins and notifying me over Call, WhatsApp, Telegram and FCM.<br>
 <img src="https://github.com/shiveshnavin/pipelane-server/blob/master/docs/stocks.png?raw=true" alt="Poster" width="512px"/>
 
-Quick peek at the List Page.
+Quick peek at the List Page.<br>
 <img src="https://github.com/shiveshnavin/pipelane-server/blob/master/docs/stocks-list.png?raw=true" alt="Poster" width="512px"/>
 
 
