@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-This is the UI, manager and scheduler for my <a href="https://github.com/shiveshnavin/pipelane">Pipelane Library</a>, a system for defining and executing automated pipelines. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side react native application for a user interface to interact with the Pipelane backend.
+Users can create custom pipelines, such as running cron scheduled jobs or creating an Automated Image Post generation pipe. The MCP server is built into the platform to enable connection with AI agents. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side application for a user interface to interact with the <a href="https://github.com/shiveshnavin/pipelane">Pipelane Engine</a> (Another library I created). 
 </p>
 </p>
 
