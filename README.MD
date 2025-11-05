@@ -6,9 +6,10 @@
 </p>
 
 <p align="center">
-This is the UI server for Pipelane, a system for defining and executing automated pipelines. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side application for a user interface to interact with the Pipelane backend.
+This is the UI, manager and scheduler for my <a href="https://github.com/shiveshnavin/pipelane">Pipelane Library</a>, a system for defining and executing automated pipelines. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side react native application for a user interface to interact with the Pipelane backend.
 </p>
 </p>
+
 ## Features
 
 - **GraphQL API:** Interact with Pipelanes, Pipetasks, and executions through a well-defined GraphQL schema.
@@ -18,6 +19,20 @@ This is the UI server for Pipelane, a system for defining and executing automate
 - **Execution Management:** Track pipeline and task executions, view logs, and monitor status.
 - **Client Application:** Designed to work with a separate client application for a user interface.
 - **Express.js Integration:** Easily integrate the Pipelane UI server into your existing Express.js applications.
+
+## Demo
+
+Here's a custom pipelane built using the pipelane-server that executes the LinkedIn post generator using AI.
+<img src="https://github.com/shiveshnavin/pipelane-server/blob/master/docs/pipelane-server.png?raw=true" alt="Poster" width="512px">
+
+
+Here's a another custom pipelane for checking Stock market losses every 5 mins and notifying me over Call, WhatsApp, Telegram and FCM.
+<img src="https://github.com/shiveshnavin/pipelane-server/blob/master/docs/stocks.png?raw=true" alt="Poster" width="512px">
+
+Quick peek at the List Page
+<img src="https://github.com/shiveshnavin/pipelane-server/blob/master/docs/stocks-list.png?raw=true" alt="Poster" width="512px">
+
+
 
 ## Installation
 
