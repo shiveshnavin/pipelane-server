@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-Users can create custom pipelines, such as running cron scheduled jobs or creating an Automated Image Post generation pipe. The MCP server is built into the platform to enable connection with AI agents. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side application for a user interface to interact with the <a href="https://github.com/shiveshnavin/pipelane">Pipelane Engine</a> (Another library I published). 
+Users can create custom pipelines, such as running cron scheduled jobs or creating an Automated Image Post generation pipe. The MCP server is built into the platform to enable connection with AI agents. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side application for a user interface to interact with the <a href="https://github.com/shiveshnavin/pipelane">Pipelane Engine</a>. 
 </p>
 </p>
 
