@@ -50,7 +50,7 @@ creatPipelaneServer(
 })
 ```
 
-## MCP Server
+## AI MCP Server
 
 The pipelane tasks are also callable thorugh MCP.
 
