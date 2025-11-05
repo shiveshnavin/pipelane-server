@@ -1,6 +1,6 @@
 # Pipelane server
 
-![Poster](https://github.com/shiveshnavin/pipelane-server/blob/master/poster.jpg?raw=true)
+<img src="https://github.com/shiveshnavin/pipelane-server/blob/master/poster.jpg?raw=true" alt="Poster" width="512px">
 
 
 This is the UI server for Pipelane, a system for defining and executing automated pipelines. It provides a GraphQL API for managing pipelines and tasks, and serves the client-side application for a user interface to interact with the Pipelane backend.
