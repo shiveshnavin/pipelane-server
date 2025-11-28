@@ -1,6 +1,6 @@
 //@ts-ignore
 import PipeLane, { VariablePipeTask, TaskVariantConfig } from "pipelane";
-import { PipelaneExecution, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
+import { PipelaneExecution, PipelaneExecutionPayload, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
 import { Cron } from "croner";
 import * as NodeCron from 'node-cron'
 import { generatePipelaneResolvers } from "../graphql/pipelane";
@@ -251,34 +251,46 @@ export class CronScheduler {
                         console.error('Error saving pipelane', event, e.message)
                     })
                 })
-                //@ts-ignore
-                this.currentExecutions = this.currentExecutions.filter(cei => cei.name != pipeWorksInstance.name)
+                this.currentExecutions = (this.currentExecutions as PipeLane[]).filter(cei => cei.instanceId != pipeWorksInstance.instanceId)
             }).bind(this)
 
+            let runningInstances = this.currentExecutions.filter(cei => cei.instanceId == pipeWorksInstance.instanceId)
             let plx: PipelaneExecution = await this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
                 data: {
                     name: pl.name,
                     definition: pl,
                     startTime: `${Date.now()}`,
-                    status: Status.InProgress,
+                    status: Status.Paused,
                     id: pipelaneInstName,
-                }
+                    output: JSON.stringify({
+                        queue: runningInstances.length + 1
+                    })
+                } as PipelaneExecutionPayload
             })
 
             this.listenToPipe(pipeWorksInstance, plx)
 
             pipeWorksInstance.instanceId = pipelaneInstName;
+
             if (input.resumable)
                 pipeWorksInstance.enableCheckpoints(pipelaneInstName, pipelaneFolderPath)
 
-            pipeWorksInstance.start(input).then(onResult).catch((e) => {
-                console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
-                onResult([{ status: false }])
-            }).finally(() => {
-                if (existsSync(pipelaneFolderPath)) {
-                    rmdirSync(pipelaneFolderPath, { recursive: true });
-                }
-            })
+            const run = () => {
+                console.log(`[pipelane-server] Queuing pipelane ${pl.name} with instance id ${pipeWorksInstance.instanceId}. Current queue  = ${runningInstances.length + 1}`)
+                this.acquirePipelineSlot(pl.name).then((release) => {
+
+                    pipeWorksInstance.start(input).then(onResult).catch((e) => {
+                        console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
+                        onResult([{ status: false }])
+                    }).finally(() => {
+                        release()
+                        if (existsSync(pipelaneFolderPath)) {
+                            rmdirSync(pipelaneFolderPath, { recursive: true });
+                        }
+                    })
+                })
+            }
+            run()
             this.currentExecutions.push(pipeWorksInstance)
             this.executionsCache.push(pipeWorksInstance)
             if (this.executionsCache.length > this.maxCacheSize) {
@@ -290,6 +302,32 @@ export class CronScheduler {
 
         return undefined
     }
+
+
+
+    pipelineLocks: Map<string, Promise<void>> = new Map()
+    private async acquirePipelineSlot(pipelineName: string): Promise<() => void> {
+        while (this.pipelineLocks.has(pipelineName)) {
+            await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 100));
+            await this.pipelineLocks.get(pipelineName)
+        }
+        let resolver: (() => void) | undefined
+        let released = false
+        const lockPromise = new Promise<void>((resolve) => {
+            resolver = resolve
+        })
+        this.pipelineLocks.set(pipelineName, lockPromise)
+        return () => {
+            if (released)
+                return
+            released = true
+            if (this.pipelineLocks.get(pipelineName) === lockPromise) {
+                this.pipelineLocks.delete(pipelineName)
+            }
+            resolver && resolver()
+        }
+    }
+
 
     private lock: AsyncLock = new AsyncLock()
     public listenToPipe(
