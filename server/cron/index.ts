@@ -254,7 +254,7 @@ export class CronScheduler {
                 this.currentExecutions = (this.currentExecutions as PipeLane[]).filter(cei => cei.instanceId != pipeWorksInstance.instanceId)
             }).bind(this)
 
-            let runningInstances = this.currentExecutions.filter(cei => cei.instanceId == pipeWorksInstance.instanceId)
+            let runningInstances = this.currentExecutions.filter(cei => (cei.name == pipeWorksInstance.name))
             let plx: PipelaneExecution = await this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
                 data: {
                     name: pl.name,
