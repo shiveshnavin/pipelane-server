@@ -41,8 +41,8 @@ export const EvalJSUtils = {
     randomElement<T>(arr: T[]): T {
         return arr[Math.floor(Math.random() * arr.length)];
     },
-    generateUID(input: string): string {
-        return createHash("sha256").update(input).digest("hex").substring(0, 10);
+    generateUID(input: string, length = 10): string {
+        return createHash("sha256").update(input).digest("hex").substring(0, length);
     },
     extractEnclosedObjString(inputString) {
         const regex = /\{[^\}]*\}/g;
