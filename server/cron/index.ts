@@ -278,7 +278,14 @@ export class CronScheduler {
             const run = () => {
                 console.log(`[pipelane-server] Queuing pipelane ${pl.name} with instance id ${pipeWorksInstance.instanceId}. Current queue  = ${runningInstances.length + 1}`)
                 this.acquirePipelineSlot(pl.name).then((release) => {
-
+                    this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                        data: {
+                            endTime: `${Date.now()}`,
+                            status: Status.InProgress,
+                            id: plx.id,
+                            output: plx.output
+                        }
+                    })
                     pipeWorksInstance.start(input).then(onResult).catch((e) => {
                         console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
                         onResult([{ status: false }])
