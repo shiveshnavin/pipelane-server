@@ -206,7 +206,7 @@ export class CronScheduler {
                 console.warn(`Invalid JSON input ${pl.input} for ${pl.name}. Using {} as input`)
             }
             let retryCountLeft = pl.retryCount
-            let onResult = (function (output) {
+            let onResult = (function (output, release) {
                 let status = Status.InProgress
                 if (output == undefined || output[0].status == false) {
                     if (retryCountLeft-- > 0) {
@@ -252,6 +252,7 @@ export class CronScheduler {
                     })
                 })
                 this.currentExecutions = (this.currentExecutions as PipeLane[]).filter(cei => cei.instanceId != pipeWorksInstance.instanceId)
+                release()
             }).bind(this)
 
             let runningInstances = this.currentExecutions.filter(cei => (cei.name == pipeWorksInstance.name))
@@ -286,11 +287,12 @@ export class CronScheduler {
                             output: plx.output
                         }
                     })
-                    pipeWorksInstance.start(input).then(onResult).catch((e) => {
+                    pipeWorksInstance.start(input).then((op) => {
+                        onResult(op, release)
+                    }).catch((e) => {
                         console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
-                        onResult([{ status: false }])
+                        onResult([{ status: false }], release)
                     }).finally(() => {
-                        release()
                         if (existsSync(pipelaneFolderPath)) {
                             rmdirSync(pipelaneFolderPath, { recursive: true });
                         }
