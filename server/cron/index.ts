@@ -216,7 +216,9 @@ export class CronScheduler {
                         pipeWorksInstance.currentTaskIdx = 0
                         //@ts-ignore
                         pipeWorksInstance.executedTasks = []
-                        pipeWorksInstance.start(input).then(onResult)
+                        pipeWorksInstance.start(input).then((op => {
+                            onResult(op, release)
+                        }))
                         return
                     } else {
                         if (this.pipelaneLogLevel > 0)
@@ -252,7 +254,7 @@ export class CronScheduler {
                     })
                 })
                 this.currentExecutions = (this.currentExecutions as PipeLane[]).filter(cei => cei.instanceId != pipeWorksInstance.instanceId)
-                release()
+                release && release()
             }).bind(this)
 
             let runningInstances = this.currentExecutions.filter(cei => (cei.name == pipeWorksInstance.name))
