@@ -44,6 +44,14 @@ export const EvalJSUtils = {
     generateUID(input: string, length = 10): string {
         return createHash("sha256").update(input).digest("hex").substring(0, length);
     },
+    generateHashCode(input: string, maxValue = 1000000000): number {
+        const safeInput = input ?? ''
+        const safeMax = Math.max(1, Math.floor(Number(maxValue) || 0))
+        const hashHex = createHash('sha256').update(safeInput).digest('hex')
+        const hashInt = BigInt('0x' + hashHex)
+        const bounded = Number(hashInt % BigInt(safeMax))
+        return bounded
+    },
     extractEnclosedObjString(inputString) {
         const regex = /\{[^\}]*\}/g;
         const results = inputString.match(regex);
