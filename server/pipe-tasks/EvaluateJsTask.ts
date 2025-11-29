@@ -215,3 +215,16 @@ function test() {
 }
 
 // test()
+
+function testGenerateHashCode() {
+    const input = 'hash-demo'
+    const maxValue = 5
+    const hash = EvalJSUtils.generateHashCode(input, maxValue)
+    console.log('generateHashCode', { input, maxValue, hash })
+    console.assert(Number.isInteger(hash), 'Hash should be integer')
+    console.assert(hash >= 0 && hash < maxValue, 'Hash should be within range')
+    const hashRepeat = EvalJSUtils.generateHashCode(input, maxValue)
+    console.assert(hash === hashRepeat, 'Hash should be deterministic')
+}
+
+// testGenerateHashCode()
