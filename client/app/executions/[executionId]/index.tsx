@@ -5,7 +5,7 @@ import { useRouter } from "expo-router/build/hooks";
 import React, { useCallback, useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
 import { Animated, Easing } from "react-native";
-import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon, Option } from "react-native-boxes";
+import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon, Option, Expand } from "react-native-boxes";
 import { PipelaneExecution, PipetaskExecution } from "../../../../gen/model";
 import { prettyJson } from "../../../common/utils/ReactUtils";
 
@@ -197,24 +197,26 @@ export default function QueryPage() {
                                 }
                                 {
                                     execution.input && (
-                                        <VBox>
-                                            <CompositeTextInputView
-                                                editable={false}
-                                                placeholder="Input"
-                                                textInputProps={{
-                                                    numberOfLines: 10,
-                                                    multiline: true,
-                                                    style: {
-                                                        color: theme.colors.text,
-                                                        textAlignVertical: 'top',
-                                                        verticalAlign: 'top',
-                                                        alignContent: 'flex-start',
-                                                    }
-                                                }}
-                                                value={prettyJson(execution?.input!) || ''}
-                                                initialText={prettyJson(execution?.input!) || ''} />
+                                        <Expand title="Input">
+                                            <VBox>
+                                                <CompositeTextInputView
+                                                    editable={false}
+                                                    placeholder="Input"
+                                                    textInputProps={{
+                                                        numberOfLines: 10,
+                                                        multiline: true,
+                                                        style: {
+                                                            color: theme.colors.text,
+                                                            textAlignVertical: 'top',
+                                                            verticalAlign: 'top',
+                                                            alignContent: 'flex-start',
+                                                        }
+                                                    }}
+                                                    value={prettyJson(execution?.input!) || ''}
+                                                    initialText={prettyJson(execution?.input!) || ''} />
 
-                                        </VBox>
+                                            </VBox>
+                                        </Expand>
                                     )
                                 }
 
