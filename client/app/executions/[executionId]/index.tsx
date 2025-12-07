@@ -195,6 +195,28 @@ export default function QueryPage() {
                                         <TextView>{new Date(parseInt(execution.endTime as string)).toLocaleString()}</TextView>
                                     </HBox>
                                 }
+                                {
+                                    execution.input && (
+                                        <VBox>
+                                            <CompositeTextInputView
+                                                editable={false}
+                                                placeholder="Input"
+                                                textInputProps={{
+                                                    numberOfLines: 10,
+                                                    multiline: true,
+                                                    style: {
+                                                        color: theme.colors.text,
+                                                        textAlignVertical: 'top',
+                                                        verticalAlign: 'top',
+                                                        alignContent: 'flex-start',
+                                                    }
+                                                }}
+                                                value={prettyJson(execution?.input!) || ''}
+                                                initialText={prettyJson(execution?.input!) || ''} />
+
+                                        </VBox>
+                                    )
+                                }
 
                             </VBox>
                         </CardView>
