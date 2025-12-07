@@ -5,7 +5,7 @@ import { useRouter } from "expo-router/build/hooks";
 import React, { useCallback, useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
 import { Animated, Easing } from "react-native";
-import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon } from "react-native-boxes";
+import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon, Option } from "react-native-boxes";
 import { PipelaneExecution, PipetaskExecution } from "../../../../gen/model";
 import { prettyJson } from "../../../common/utils/ReactUtils";
 
@@ -78,7 +78,7 @@ export default function QueryPage() {
         }
     }, [autoRefresh, execution, refresh, executionId]);
 
-    useEffect(() => { 
+    useEffect(() => {
         if (autoRefresh) {
             animation.reset();
             animation.start();
@@ -118,7 +118,23 @@ export default function QueryPage() {
                                     setErr(getGraphErrorMessage(e))
                                 })
                             }
-                        }] : []
+                        }] : [{
+
+                            id: 'retry',
+                            icon: loading ? <Spinner size="small" color={theme.colors.critical} /> : 'rocket',
+                            title: 'Rerun',
+                            onClick: () => {
+                                if (loading)
+                                    return;
+                                setLoading(true);
+                                api.executePipelane(execution?.name as string, (execution?.input || '{}') as string).then((result) => {
+                                    let executionId = result.data.executePipelane.id
+                                    router.navigate('/executions/' + executionId)
+                                }).catch(e => setErr(getGraphErrorMessage(e))).finally(() => {
+                                    setLoading(false)
+                                })
+                            }
+                        }] as Option[]
                     ),
                     {
                         id: 'refresh',

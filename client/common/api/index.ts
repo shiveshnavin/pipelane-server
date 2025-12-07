@@ -254,6 +254,7 @@ export class Api {
                         id
                         name
                         output
+                        input
                         startTime
                         status
                         endTime
