@@ -53,6 +53,7 @@ export function initialzeDb(db?: MultiDbORM, mysqlConfig?: MySQLDBConfig) {
         id: 'smallstring',
         endTime: 'smallstring',
         output: 'stringlarge',
+        input: 'stringlarge',
         status: Status.Success,
         startTime: 'smallstring',
     }

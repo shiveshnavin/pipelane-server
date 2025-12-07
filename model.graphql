@@ -85,6 +85,7 @@ type PipelaneExecution {
   status: Status
   endTime: String
   output: String
+  input: String
 }
 
 type PipetaskExecution {
@@ -106,6 +107,7 @@ input PipelaneExecutionPayload {
   status: Status
   endTime: String
   output: String
+  input: String
 }
 
 input PipetaskExecutionPayload {

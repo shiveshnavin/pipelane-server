@@ -414,7 +414,7 @@ export function generatePipelaneResolvers(
                     JSON.stringify(Object.assign(
                         JSON.parse(existing.input),
                         JSON.parse(request.input || '{}')
-                ))
+                    ))
                 )
                 if (!execution) {
                     throw new GraphQLError("Error triggering pipelane, perhaps it is disabled?")
@@ -427,6 +427,7 @@ export function generatePipelaneResolvers(
                 if (cached) {
                     cached.stop();
                     let plx: PipelaneExecution = await db.getOne(TableName.PS_PIPELANE_EXEC, { id: request.id })
+                    cronScheduler.pipelineLocks.delete(plx.name)
                     plx.status = Status.Skipped;
                     await db.update(TableName.PS_PIPELANE_EXEC, { id: request.id }, plx);
                     return plx;

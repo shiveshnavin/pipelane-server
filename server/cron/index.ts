@@ -267,7 +267,8 @@ export class CronScheduler {
                     id: pipelaneInstName,
                     output: JSON.stringify({
                         queue: runningInstances.length + 1
-                    })
+                    }),
+                    input: JSON.stringify(input)
                 } as PipelaneExecutionPayload
             })
 
