@@ -96,7 +96,7 @@ export default function QueryPage() {
     return (
         <VPage>
             <TransparentCenterToolbar
-                options={[
+                options={execution ? [
                     ...(
                         (execution?.status == "IN_PROGRESS") ? [{
                             id: 'stop',
@@ -145,7 +145,7 @@ export default function QueryPage() {
                             setAutoRefresh(a => !a)
                         }
                     }
-                ]}
+                ] : []}
                 title={execution?.id || ''} homeIcon="arrow-left"
                 forgroundColor={theme.colors.text}
                 onHomePress={() => {

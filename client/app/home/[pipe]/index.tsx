@@ -311,9 +311,9 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                         <Expand title="Tasks"
                             leftPadding={0}
                             onExpand={() => {
-                            if (pipe.tasks == undefined || pipe.tasks.length == 0)
-                                getTasks()
-                        }}>
+                                if (pipe.tasks == undefined || pipe.tasks.length == 0)
+                                    getTasks()
+                            }}>
 
                             <DraggableTasksList
                                 onReorder={(newTasks) => {
@@ -322,16 +322,16 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
 
                                 onRender={(item: Pipetask, idx: number) => (
 
-                                        <HBox
-                                            key={item.name}
-                                            style={{
-                                                alignItems: 'center',
-                                                paddingVertical: 8,
-                                                paddingHorizontal: 12,
-                                                flex: 1,
-                                                width: '100%'
-                                            }}
-                                        >
+                                    <HBox
+                                        key={item.name}
+                                        style={{
+                                            alignItems: 'center',
+                                            paddingVertical: 8,
+                                            paddingHorizontal: 12,
+                                            flex: 1,
+                                            width: '100%'
+                                        }}
+                                    >
                                         <Link
                                             href={`/home/${item.pipelaneName}/${item.name}`}
                                             style={{ marginRight: 12, flex: 1, width: '100%' }}
@@ -353,7 +353,7 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                                             </VBox>
                                         </Link>
 
-                                        </HBox>
+                                    </HBox>
 
                                 )}
                                 loading={pipe.tasks == undefined}
