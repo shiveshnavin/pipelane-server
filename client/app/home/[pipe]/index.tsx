@@ -3,8 +3,8 @@ import { Link, router, useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, ButtonView, TertiaryButtonView, Center } from "react-native-boxes";
-import { AlertMessage, Spinner, ConfirmationDialog } from "react-native-boxes";
+import { TransparentCenterToolbar, Expand, TextView, ThemeContext, VBox, VPage, CardView, CompositeTextInputView, SwitchView, HBox, SimpleDatalistView, Icon, ButtonView, TertiaryButtonView, Center, TitleText } from "react-native-boxes";
+import { AlertMessage, Spinner, ConfirmationDialog, isDesktop } from "react-native-boxes";
 import { Maybe, Pipelane, PipelaneExecution, Pipetask } from "../../../../gen/model";
 import { getGraphErrorMessage } from "@/common/api";
 import { PipeExecutionsView } from "@/app/executions";
@@ -236,7 +236,8 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                         }
                     },
                 ]}
-                title={pipe.name as string} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
+                title={isDesktop() ? pipe.name as string : ''} homeIcon="arrow-left" forgroundColor={theme.colors.text}
+                onHomePress={() => {
                     router.navigate(`/home`)
                 }} />
             <ConfirmationDialog
@@ -257,6 +258,11 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                 }}
                 visible={showDeleteConfirm}
             />
+            {!isDesktop() && (
+                <CardView style={{
+                    backgroundColor: theme.colors.transparent,
+                }}><Center><TitleText>{pipe.name}</TitleText></Center></CardView>
+            )}
             <CardView>
                 <HBox style={{
                     padding: theme.dimens.space.md,
