@@ -186,7 +186,6 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                         icon: 'download',
                         title: 'Export',
                         onClick: async () => {
-                            setLoading(true);
                             const exportedName = pipe.name + '-' + Date.now()
                             const exportData = {
                                 ...pipe,
@@ -226,7 +225,6 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                                 document.body.removeChild(link);
                                 URL.revokeObjectURL(url);
                             }
-                            setLoading(false);
                         }
                     }] : []),
                     {
