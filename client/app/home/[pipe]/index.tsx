@@ -62,7 +62,8 @@ export default function PipelanePage() {
             {
                 pipe && <PipelaneView
                     setLoading={setLoading}
-                    seterr={seterr} pipe={pipe} save={(pipe: Pipelane) => {
+                    seterr={seterr} pipe={pipe}
+                    save={(pipe: Pipelane) => {
                         if (pipe.name == 'new') {
                             seterr('Please change the pipe name')
                             return
@@ -180,6 +181,39 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                             })
                         }
                     },
+                    ...(pipe?.tasks && pipe?.tasks?.length && pipe?.tasks?.length > 0 ? [{
+                        id: 'export',
+                        icon: 'download',
+                        title: 'Export',
+                        onClick: () => {
+                            setLoading(true);
+                            const exportedName = pipe.name + '-' + Date.now()
+                            const exportData = {
+                                ...pipe,
+                                executions: pipe.tasks?.map(t => {
+                                    if (t)
+                                        t.pipelaneName = exportedName
+                                    return t
+                                }) || [],
+                                name: exportedName,
+                                tasks: pipe.tasks?.map(t => {
+                                    if (t)
+                                        t.pipelaneName = exportedName
+                                    return t
+                                }) || []
+                            } as Pipelane;
+                            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `exported-${exportData.name || 'pipelane'}.json`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(url);
+                            setLoading(false);
+                        }
+                    }] : []),
                     {
                         id: 'delete',
                         icon: 'trash',
@@ -187,7 +221,8 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                         onClick: () => {
                             setShowDeleteConfirm(true)
                         }
-                    }]}
+                    },
+                ]}
                 title={pipe.name as string} homeIcon="arrow-left" forgroundColor={theme.colors.text} onHomePress={() => {
                     router.navigate(`/home`)
                 }} />

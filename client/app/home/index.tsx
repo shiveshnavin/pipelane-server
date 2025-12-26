@@ -2,12 +2,13 @@ import { AppContext, ContextData } from "@/components/Context";
 import { gql } from "@apollo/client";
 import React, { useEffect, useReducer, useState } from "react";
 import { useContext } from "react";
-import { ButtonView, Caption, Colors, CompositeTextInputView, DarkColors, Icon, PressableView, SimpleDatalistView, SimpleToolbar, Storage, SwitchView, TextView, Theme, ThemeContext, Title, VPage, isDesktop, isWeb } from "react-native-boxes";
+import { AlertMessage, ButtonView, Caption, Colors, CompositeTextInputView, DarkColors, Icon, PressableView, SimpleDatalistView, SimpleToolbar, Storage, SwitchView, TextView, Theme, ThemeContext, Title, VPage, isDesktop, isWeb } from "react-native-boxes";
 import { Pipelane, PipelaneExecution, Pipetask } from '../../../gen/model'
 import { KeyboardAvoidingScrollView, CardView, HBox, VBox, Center } from "react-native-boxes/src/Box";
 import { Link, useRouter } from "expo-router";
 import { GestureResponderEvent, StatusBar } from "react-native";
 import HealthBar from "../../components/HealthBar";
+import { getGraphErrorMessage } from "@/common/api";
 
 
 function calculateHealthColor(percentage: number, theme: Theme) {
@@ -69,6 +70,7 @@ export default function HomeLayout() {
     const [search, setSearch] = useState("")
     const [getHealth, setGetHealth] = useState(false)
     const [pipes, setUsers] = useState<Pipelane[]>([])
+    const [err, seterr] = useState<string | undefined>(undefined);
     const router = useRouter()
     const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
     console.log('re-render')
@@ -135,12 +137,73 @@ export default function HomeLayout() {
 
                             }
                         }
+                    },
+                    {
+                        id: 'import',
+                        icon: (<Icon name="upload" color={theme.colors.text} />),
+                        onClick: () => {
+                            const input = document.createElement('input');
+                            input.type = 'file';
+                            input.accept = 'application/json';
+                            input.onchange = (event) => {
+                                //@ts-ignore
+                                const file = event.target?.files?.[0];
+                                if (!file) return;
+
+                                const reader = new FileReader();
+                                reader.onload = (e) => {
+                                    try {
+                                        const pipe: Pipelane = JSON.parse(e.target?.result as string);
+                                        if (pipe.name == 'new') {
+                                            seterr('Please change the pipe name');
+                                            return;
+                                        }
+                                        try {
+                                            JSON.parse(pipe.input as string);
+                                            seterr(undefined);
+                                        } catch (e) {
+                                            seterr('Input must be a valid JSON string');
+                                            return;
+                                        }
+                                        setLoading(true);
+                                        seterr(undefined);
+                                        delete pipe.nextRun;
+                                        delete pipe.executions;
+                                        delete pipe.updatedTimestamp;
+                                        delete pipe.__typename;
+                                        pipe.retryCount = parseInt(`${pipe.retryCount || 0}`);
+                                        pipe.executionsRetentionCount = parseInt(`${pipe.executionsRetentionCount || 5}`);
+                                        api.upsertPipelane({ ...pipe }, pipe.name).then(result => {
+                                            getPipes()
+                                            router.navigate(`/home/${result.data.createPipelane.name}`);
+                                        }).catch((error) => {
+                                            seterr(getGraphErrorMessage(error));
+                                        }).finally(() => {
+                                            setLoading(false);
+                                        });
+                                    } catch (err) {
+                                        seterr('Invalid JSON file');
+                                    }
+                                };
+                                reader.readAsText(file);
+                            };
+                            input.click();
+                        }
                     }
                 ]}
                 textStyle={{
                     color: theme.colors.text
                 }}
                 backgroundColor={theme.colors.transparent} homeIcon="" title="Pipelanes" />
+
+            {
+                err && <AlertMessage
+                    type="critical"
+                    text={err}
+                    onDismiss={() => {
+                        seterr(undefined)
+                    }} />
+            }
 
             <KeyboardAvoidingScrollView style={{
                 width: '100%'
