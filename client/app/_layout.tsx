@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Theme, ThemeContext, Colors, TextView, Spinner, DarkColors, Storage } from "react-native-boxes";
+import { Theme, ThemeContext, Colors as DefaultColors, TextView, Spinner, DarkColors as DefaultDarkColors, Storage } from "react-native-boxes";
 import { loadAsync } from "expo-font";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppContext, ContextData } from "../components/Context";
@@ -19,6 +19,16 @@ function Main() {
   if (__DEV__) {
     basePath = ''
   }
+
+  const DarkColors = {
+    ...DefaultDarkColors
+
+  }
+  const Colors = {
+    ...DefaultColors,
+    background: '#ffffff',
+    forground: '#f8fafc',
+  };
 
   context.appname = 'client'
   context.theme = new Theme('client', context?.themeName == "dark" ? DarkColors : Colors)

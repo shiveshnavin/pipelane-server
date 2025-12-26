@@ -208,7 +208,9 @@ export default function HomeLayout() {
             <KeyboardAvoidingScrollView style={{
                 width: '100%'
             }}>
-                <CardView>
+                <CardView style={{
+                    backgroundColor: theme.colors.transparent,
+                }}>
                     <HBox>
                         <PressableView
                             style={{
