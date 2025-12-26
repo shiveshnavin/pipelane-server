@@ -185,7 +185,7 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                         id: 'export',
                         icon: 'download',
                         title: 'Export',
-                        onClick: () => {
+                        onClick: async () => {
                             setLoading(true);
                             const exportedName = pipe.name + '-' + Date.now()
                             const exportData = {
@@ -203,14 +203,29 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                                 }) || []
                             } as Pipelane;
                             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-                            const url = URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.download = `exported-${exportData.name || 'pipelane'}.json`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            URL.revokeObjectURL(url);
+                            if ((window as any).showSaveFilePicker) {
+                                const fileHandle = await (window as any).showSaveFilePicker({
+                                    suggestedName: `exported-${exportData.name || 'pipelane'}.json`,
+                                    types: [
+                                        {
+                                            description: 'JSON Files',
+                                            accept: { 'application/json': ['.json'] }
+                                        }
+                                    ]
+                                });
+                                const writable = await fileHandle.createWritable();
+                                await writable.write(blob);
+                                await writable.close();
+                            } else {
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `exported-${exportData.name || 'pipelane'}.json`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(url);
+                            }
                             setLoading(false);
                         }
                     }] : []),
