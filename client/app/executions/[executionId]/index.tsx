@@ -2,7 +2,42 @@ import { getGraphErrorMessage } from "@/common/api";
 import { AppContext } from "@/components/Context";
 import { Link, useLocalSearchParams } from "expo-router";
 import { useRouter } from "expo-router/build/hooks";
-import React, { useCallback, useEffect, useReducer, useState } from "react";
+import React, { useCallback, useEffect, useReducer, useState, useMemo } from "react";
+function MemoizedTaskDetailsSheet({ taskDetails, setTaskDetails, theme }: {
+    taskDetails: any,
+    setTaskDetails: (v: any) => void,
+    theme: any
+}) {
+    return useMemo(() => (
+        <BottomSheet
+            title={taskDetails?.name}
+            visible={taskDetails != undefined}
+            onDismiss={() => {
+                setTaskDetails(undefined)
+            }}
+        >
+            <VBox>
+                <CompositeTextInputView
+                    editable={false}
+                    placeholder="Outputs"
+                    textInputProps={{
+                        numberOfLines: 10,
+                        multiline: true,
+                        style: {
+                            color: theme.colors.text,
+                            textAlignVertical: 'top',
+                            verticalAlign: 'top',
+                            alignContent: 'flex-start',
+                        }
+                    }}
+                    value={prettyJson(taskDetails?.output!) || ''}
+                    initialText={prettyJson(taskDetails?.output!) || ''} />
+
+            </VBox>
+
+        </BottomSheet>
+    ), [taskDetails?.name, taskDetails?.output, theme.colors.text])
+}
 import { useContext } from "react";
 import { Animated, Easing } from "react-native";
 import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon, Option, Expand } from "react-native-boxes";
@@ -42,7 +77,6 @@ export default function QueryPage() {
         outputRange: ['0deg', '360deg']
     })
 
-    console.log("autoRefresh", autoRefresh, "spin", spin)
     const refresh = useCallback((stop?: boolean) => {
         if (!executionId) return;
         api.pipelaneExecution(executionId as string).then(data => {
@@ -276,33 +310,7 @@ export default function QueryPage() {
                                 initialText={prettyJson(execution.output!) || ''} />
 
                         </CardView>
-                        <BottomSheet
-                            title={taskDetails?.name}
-                            visible={taskDetails != undefined}
-                            onDismiss={() => {
-                                setTaskDetails(undefined)
-                            }}
-                        >
-                            <VBox>
-                                <CompositeTextInputView
-                                    editable={false}
-                                    placeholder="Outputs"
-                                    textInputProps={{
-                                        numberOfLines: 10,
-                                        multiline: true,
-                                        style: {
-                                            color: theme.colors.text,
-                                            textAlignVertical: 'top',
-                                            verticalAlign: 'top',
-                                            alignContent: 'flex-start',
-                                        }
-                                    }}
-                                    value={prettyJson(taskDetails?.output!) || ''}
-                                    initialText={prettyJson(taskDetails?.output!) || ''} />
-
-                            </VBox>
-
-                        </BottomSheet>
+                        <MemoizedTaskDetailsSheet taskDetails={taskDetails} setTaskDetails={setTaskDetails} theme={theme} />
 
                     </VBox>
                 ) : (
