@@ -111,11 +111,15 @@ export function generatePipelaneResolvers(
                     pipelaneName: parent.pipelaneName
                 })
             },
+            output: async (parent: PipelaneExecution) => {
+                if (parent.tasks) return parent.tasks
+                let cached = cronScheduler.executionsCache.find(ex => ex.instanceId === parent.id)
+                return Object.assign({}, parent.output, cached?.outputs || {})
+            },
             tasks: async (parent: PipelaneExecution) => {
                 if (parent.tasks) return parent.tasks
                 let cached = cronScheduler.executionsCache.find(ex => ex.instanceId === parent.id)
                 if (cached) {
-                    //@ts-ignore
                     let tasks = getTasksExecFromPipelane(cached)
                     if (tasks && tasks.length > 0)
                         return tasks
