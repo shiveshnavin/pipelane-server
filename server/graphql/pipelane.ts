@@ -112,9 +112,9 @@ export function generatePipelaneResolvers(
                 })
             },
             output: async (parent: PipelaneExecution) => {
-                if (parent.tasks) return parent.tasks
                 let cached = cronScheduler.executionsCache.find(ex => ex.instanceId === parent.id)
-                return Object.assign({}, parent.output, cached?.outputs || {})
+                let output = Object.assign({}, typeof parent.output === 'string' ? JSON.parse(parent.output) : parent.output, cached?.outputs || {})
+                return JSON.stringify(output)
             },
             tasks: async (parent: PipelaneExecution) => {
                 if (parent.tasks) return parent.tasks
