@@ -20,6 +20,9 @@ ui.all('*',
     res.sendFile(path.join(__dirname, '../client/dist/index.html'))
   })
 
+
+export { FirebaseAdapterMultiDbOrm } from './utils/FirebaseAdapterMultiDbOrm'
+
 export async function creatPipelaneServer(
   variantConfig: TaskVariantConfig,
   persistance?: MultiDbORM | MySQLDBConfig,
