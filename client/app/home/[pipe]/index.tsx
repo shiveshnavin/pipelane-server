@@ -154,33 +154,6 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
         <VBox>
             <TransparentCenterToolbar
                 options={[
-                    {
-                        id: 'clone',
-                        icon: 'copy',
-                        title: 'Clone',
-                        onClick: () => {
-                            setLoading(true)
-                            api.clonePipelane(pipe.name).then((result) => {
-                                router.navigate(`/home/${result.data.clonePipelane.name}`)
-                            }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
-                                setLoading(false)
-                            })
-                        }
-                    },
-                    {
-                        id: 'execute',
-                        icon: 'play',
-                        title: 'Execute',
-                        onClick: () => {
-                            setLoading(true)
-                            api.executePipelane(pipe.name, pipe.input as string).then((result) => {
-                                let executionId = result.data.executePipelane.id
-                                router.navigate('/executions/' + executionId)
-                            }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
-                                setLoading(false)
-                            })
-                        }
-                    },
                     ...(pipe?.tasks && pipe?.tasks?.length && pipe?.tasks?.length > 0 ? [{
                         id: 'export',
                         icon: 'download',
@@ -227,6 +200,33 @@ function PipelaneView({ pipe: inputPipe, save, seterr, setLoading }: { pipe: Pip
                             }
                         }
                     }] : []),
+                    {
+                        id: 'clone',
+                        icon: 'copy',
+                        title: 'Clone',
+                        onClick: () => {
+                            setLoading(true)
+                            api.clonePipelane(pipe.name).then((result) => {
+                                router.navigate(`/home/${result.data.clonePipelane.name}`)
+                            }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
+                                setLoading(false)
+                            })
+                        }
+                    },
+                    {
+                        id: 'execute',
+                        icon: 'play',
+                        title: 'Execute',
+                        onClick: () => {
+                            setLoading(true)
+                            api.executePipelane(pipe.name, pipe.input as string).then((result) => {
+                                let executionId = result.data.executePipelane.id
+                                router.navigate('/executions/' + executionId)
+                            }).catch(e => seterr(getGraphErrorMessage(e))).finally(() => {
+                                setLoading(false)
+                            })
+                        }
+                    },
                     {
                         id: 'delete',
                         icon: 'trash',
