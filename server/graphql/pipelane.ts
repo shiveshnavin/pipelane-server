@@ -483,7 +483,7 @@ class PipelaneExecCleaner {
     // main entry — call on each new execution
     public async handleExecution(pipeEx: PipelaneExecution, pipe?: Pipelane) {
         try {
-            pipe = pipe || (await this.PipelaneResolvers.Query.Pipelane(undefined, { name: pipeEx.name }))
+            pipe = pipe || (await this.PipelaneResolvers.Query.Pipelane(undefined, { name: pipeEx.name || pipe.name }));
             if (!pipe) return;
 
             const pipelaneName = pipe.name;
