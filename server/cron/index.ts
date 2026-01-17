@@ -114,7 +114,10 @@ export class CronScheduler {
         if (!existing) {
             throw new Error(`${name} does not exist.`)
         }
-        return this.triggerPipelane(existing, input, listener)
+        return this.triggerPipelane(existing, JSON.stringify(Object.assign(
+            JSON.parse(existing.input),
+            JSON.parse(input || '{}')
+        )), listener)
     }
 
     async triggerPipelane(pl: PipelaneSchedule, input?: string, listener?: PipeLaneListener): Promise<PipelaneExecution | undefined> {
