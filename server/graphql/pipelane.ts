@@ -410,16 +410,7 @@ export function generatePipelaneResolvers(
                 return existing
             },
             async executePipelane(parent, request: { name: string, input: string }) {
-                let existing = await PipelaneResolvers.Query.Pipelane(parent, request)
-                if (!existing) {
-                    throw new GraphQLError(`${request.name} does not exist.`)
-                }
-                let execution = await cronScheduler.triggerPipelane(existing,
-                    JSON.stringify(Object.assign(
-                        JSON.parse(existing.input),
-                        JSON.parse(request.input || '{}')
-                    ))
-                )
+                let execution = await cronScheduler.triggerPipelaneByName(request.name, request.input)
                 if (!execution) {
                     throw new GraphQLError("Error triggering pipelane, perhaps it is disabled?")
                 }
