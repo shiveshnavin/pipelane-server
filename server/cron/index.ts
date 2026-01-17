@@ -1,5 +1,5 @@
 //@ts-ignore
-import PipeLane, { VariablePipeTask, TaskVariantConfig } from "pipelane";
+import PipeLane, { VariablePipeTask, TaskVariantConfig, PipeTask, OutputWithStatus, InputWithPreviousInputs, PipeLaneListener } from "pipelane";
 import { PipelaneExecution, PipelaneExecutionPayload, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
 import { Cron } from "croner";
 import * as NodeCron from 'node-cron'
@@ -107,7 +107,7 @@ export class CronScheduler {
         }
     }
 
-    async triggerPipelane(pl: PipelaneSchedule, input?: string): Promise<PipelaneExecution | undefined> {
+    async triggerPipelane(pl: PipelaneSchedule, input?: string, listener?: PipeLaneListener): Promise<PipelaneExecution | undefined> {
         if (this.stopped) {
             console.warn(`Executor is stopped, skip triggering ${pl.name}`)
             return
@@ -272,7 +272,7 @@ export class CronScheduler {
                 } as PipelaneExecutionPayload
             })
 
-            this.listenToPipe(pipeWorksInstance, plx)
+            this.listenToPipe(pipeWorksInstance, plx, undefined, listener)
 
             pipeWorksInstance.instanceId = pipelaneInstName;
 
@@ -345,12 +345,13 @@ export class CronScheduler {
     public listenToPipe(
         pipelaneInstance: PipeLane,
         plx: PipelaneExecution,
-        onResult?: (output: ({ status: Status } & any)[]) => void) {
+        onResult?: (output: ({ status: Status } & any)[]) => void,
+        listener?: PipeLaneListener) {
 
 
         const pipelaneListener = (async (pl, event, task, output) => {
             this.lock.acquire(plx.id, (async () => {
-
+                listener && listener(pl, event, task, output)
                 if (event == 'NEW_TASK') {
                     let taskName = task.uniqueStepName || task.variantType || task.type
                     let taskId = `${plx.id}::${task.variantType}::${taskName}`
@@ -467,3 +468,5 @@ export function getSecondsUntilNextCronRun(cronExpression, timestamp = new Date(
     const secondsDelta = (nextRunTime.getTime() - adjustedTimestamp.getTime()) / 1000;
     return secondsDelta;
 }
+
+export type EventType = 'NEW_TASK' | 'TASK_FINISHED' | 'SKIPPED' | 'COMPLETE';
