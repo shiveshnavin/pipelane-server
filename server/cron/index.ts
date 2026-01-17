@@ -108,7 +108,7 @@ export class CronScheduler {
     }
 
     async triggerPipelaneByName(name: string, input?: string, listener?: PipeLaneListener): Promise<PipelaneExecution | undefined> {
-        let existing = this.pipelaneResolver.Query.Pipelane({}, {
+        let existing = await this.pipelaneResolver.Query.Pipelane({}, {
             name: name
         })
         if (!existing) {
