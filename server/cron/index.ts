@@ -23,6 +23,7 @@ export class CronScheduler {
     pipelaneResolver // = pipelaneResolver
     variantConfig: TaskVariantConfig
     pipelaneLogLevel: 0 | 1 | 2 | 3 | 4 | 5
+    listeners: Map<string, PipelaneExecutionListener> = new Map()
 
     constructor(variantConfig: TaskVariantConfig, pipelaneLogLevel?: 0 | 1 | 2 | 3 | 4 | 5, maxCacheSize = 200) {
         this.variantConfig = variantConfig
@@ -107,7 +108,20 @@ export class CronScheduler {
         }
     }
 
-    async triggerPipelaneByName(name: string, input?: string, listener?: PipeLaneListener): Promise<PipelaneExecution | undefined> {
+    createInstanceId(name: string): string {
+        return `${name}-${Date.now()}`
+    }
+
+    async attachListenerToPipelane(name: string, listener: PipelaneExecutionListener) {
+        this.listeners.set(name, listener)
+    }
+
+
+    async triggerPipelaneByName(name: string,
+        input?: string,
+        listener?: PipelaneExecutionListener,
+        instanceId?: string
+    ): Promise<PipelaneExecution | undefined> {
         let existing = await this.pipelaneResolver.Query.Pipelane({}, {
             name: name
         })
@@ -117,10 +131,14 @@ export class CronScheduler {
         return this.triggerPipelane(existing, JSON.stringify(Object.assign(
             JSON.parse(existing.input),
             JSON.parse(input || '{}')
-        )), listener)
+        )), listener, instanceId)
     }
 
-    async triggerPipelane(pl: PipelaneSchedule, input?: string, listener?: PipeLaneListener): Promise<PipelaneExecution | undefined> {
+    async triggerPipelane(
+        pl: PipelaneSchedule,
+        input?: string,
+        listener?: PipelaneExecutionListener,
+        instanceId?: string): Promise<PipelaneExecution | undefined> {
         if (this.stopped) {
             console.warn(`Executor is stopped, skip triggering ${pl.name}`)
             return
@@ -134,18 +152,39 @@ export class CronScheduler {
         if (input) {
             pl.input = input
         }
+
+
         if (pl.active) {
+            const evalPlaceHolder = new EvaluateJsTask()
             let pipeWorksInstance = new PipeLane(this.variantConfig, pl.name)
             pipeWorksInstance.logLevel = this.pipelaneLogLevel
-            let pipelaneInstName = `${pl.name}-${Date.now()}`
-            let pipelaneFolderPath = `pipelane/${pipelaneInstName}`
+
+            let pipelaneInput: any = {}
+            try {
+                pipelaneInput = JSON.parse(pl.input)
+                try {
+                    let stringInput = await evalPlaceHolder.evaluatePlaceholdersInString(
+                        pipeWorksInstance,
+                        JSON.parse(pl.input),
+                        pl.input
+                    )
+                    pipelaneInput = JSON.parse(stringInput)
+                } catch (e) {
+                    console.warn(`error evaluating placeholders in -> ${pl.name}.`)
+                    pipelaneInput = JSON.parse(pl.input)
+                }
+            } catch (e) {
+                console.warn(`Invalid JSON input ${pl.input} for ${pl.name}. Using {} as input`)
+            }
+
+            let pipelaneInstId = instanceId || this.createInstanceId(pl.name)
+            let pipelaneFolderPath = `pipelane/${pipelaneInstId}`
             let invalidTasksFromSchedule = pl.tasks?.filter(pt => this.variantConfig[pt.taskTypeName] == undefined).map(t => t.taskTypeName)
             if (invalidTasksFromSchedule && invalidTasksFromSchedule.length > 0) {
                 console.warn(`No tasks of types ${invalidTasksFromSchedule.join(",")} found in variantconfig. Skipping triggering ${pl.name}`)
                 return
             }
 
-            const evalPlaceHolder = new EvaluateJsTask()
             pipeWorksInstance.setOnCheckCondition(async (pInst, task, input) => {
                 if (input.additionalInputs?.condition === false) {
                     return input.additionalInputs?.condition
@@ -184,15 +223,25 @@ export class CronScheduler {
                     console.warn(`Invalid JSON input ${tkd.input} for ${pl.name} -> ${tkd.taskVariantName}. Using {} as input`)
                 }
 
+                let overriddenTaskVariantName = undefined
+                if (pipelaneInput.overrideTaskConfig && pipelaneInput.overrideTaskConfig[tkd.name]) {
+                    let targetTaskVariantConfig = pipelaneInput.overrideTaskConfig[tkd.name]
+                    if (targetTaskVariantConfig.taskVariantName) {
+                        overriddenTaskVariantName = targetTaskVariantConfig.taskVariantName
+                    }
+                    if (targetTaskVariantConfig.input) {
+                        input = Object.assign(input, targetTaskVariantConfig.input)
+                    }
+                }
+
                 let pltConfig: VariablePipeTask = {
                     uniqueStepName: tkd.name,
                     type: tkd.taskTypeName,
-                    //@ts-ignore
-                    isParallel: tkd.isParallel === true || tkd.isParallel === 'true',
+                    isParallel: Boolean(tkd.isParallel),
                     numberOfShards: input.numberOfShards,
                     itemsPerShard: input.itemsPerShard,
                     cutoffLoadThreshold: input.cutoffLoadThreshold,
-                    variantType: (!tkd.taskVariantName || tkd.taskVariantName == 'auto') ? undefined : tkd.taskVariantName,
+                    variantType: overriddenTaskVariantName ?? ((!tkd.taskVariantName || tkd.taskVariantName == 'auto') ? undefined : tkd.taskVariantName),
                     additionalInputs: input
                 }
                 if (tkd.isParallel === true) {
@@ -200,23 +249,6 @@ export class CronScheduler {
                 } else {
                     pipeWorksInstance.pipe(pltConfig)
                 }
-            }
-            let input: any = {}
-            try {
-                input = JSON.parse(pl.input)
-                try {
-                    let stringInput = await evalPlaceHolder.evaluatePlaceholdersInString(
-                        pipeWorksInstance,
-                        JSON.parse(pl.input),
-                        pl.input
-                    )
-                    input = JSON.parse(stringInput)
-                } catch (e) {
-                    console.warn(`error evaluating placeholders in -> ${pl.name}.`)
-                    input = JSON.parse(pl.input)
-                }
-            } catch (e) {
-                console.warn(`Invalid JSON input ${pl.input} for ${pl.name}. Using {} as input`)
             }
             let retryCountLeft = pl.retryCount
             let onResult = (function (output, release) {
@@ -229,7 +261,7 @@ export class CronScheduler {
                         pipeWorksInstance.currentTaskIdx = 0
                         //@ts-ignore
                         pipeWorksInstance.executedTasks = []
-                        pipeWorksInstance.start(input).then((op => {
+                        pipeWorksInstance.start(pipelaneInput).then((op => {
                             onResult(op, release)
                         }))
                         return
@@ -277,20 +309,20 @@ export class CronScheduler {
                     definition: pl,
                     startTime: `${Date.now()}`,
                     status: Status.Paused,
-                    id: pipelaneInstName,
+                    id: pipelaneInstId,
                     output: JSON.stringify({
                         queue: runningInstances.length + 1
                     }),
-                    input: JSON.stringify(input)
+                    input: JSON.stringify(pipelaneInput)
                 } as PipelaneExecutionPayload
             })
 
             this.listenToPipe(pipeWorksInstance, plx, undefined, listener)
 
-            pipeWorksInstance.instanceId = pipelaneInstName;
+            pipeWorksInstance.instanceId = pipelaneInstId;
 
-            if (input.resumable)
-                pipeWorksInstance.enableCheckpoints(pipelaneInstName, pipelaneFolderPath)
+            if (pipelaneInput.resumable)
+                pipeWorksInstance.enableCheckpoints(pipelaneInstId, pipelaneFolderPath)
 
             const run = () => {
                 console.log(`[pipelane-server] Queuing pipelane ${pl.name} with instance id ${pipeWorksInstance.instanceId}. Current queue  = ${runningInstances.length + 1}`)
@@ -303,7 +335,7 @@ export class CronScheduler {
                             output: plx.output
                         }
                     })
-                    pipeWorksInstance.start(input).then((op) => {
+                    pipeWorksInstance.start(pipelaneInput).then((op) => {
                         onResult(op, release)
                     }).catch((e) => {
                         console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
@@ -359,12 +391,19 @@ export class CronScheduler {
         pipelaneInstance: PipeLane,
         plx: PipelaneExecution,
         onResult?: (output: ({ status: Status } & any)[]) => void,
-        listener?: PipeLaneListener) {
+        listener?: PipelaneExecutionListener) {
 
 
         const pipelaneListener = (async (pl, event, task, output) => {
             this.lock.acquire(plx.id, (async () => {
-                listener && listener(pl, event, task, output)
+                listener && listener(pl, event, task, output, plx);
+                this.listeners.forEach(async (globalListener, name) => {
+                    try {
+                        await globalListener(pl, event, task, output, plx)
+                    } catch (e) {
+                        console.error(`Error in global listener ${name} for pipelane ${pl.name}. ` + e.message)
+                    }
+                })
                 if (event == 'NEW_TASK') {
                     let taskName = task.uniqueStepName || task.variantType || task.type
                     let taskId = `${plx.id}::${task.variantType}::${taskName}`
@@ -483,3 +522,5 @@ export function getSecondsUntilNextCronRun(cronExpression, timestamp = new Date(
 }
 
 export type EventType = 'NEW_TASK' | 'TASK_FINISHED' | 'SKIPPED' | 'COMPLETE';
+
+export type PipelaneExecutionListener = (pipelaneInstance: PipeLane, event: EventType, task: PipeTask<any, any>, output: OutputWithStatus[], plx: PipelaneExecution) => void;
