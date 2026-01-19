@@ -294,7 +294,15 @@ export default function QueryPage() {
                         }}>Output</Subtitle>
                         <CardView>
                             <CompositeTextInputView
-                                editable={false}
+                                onChangeText={(text) => {
+                                    setExecution(e => {
+                                        return {
+                                            ...e!,
+                                            input: text
+                                        }
+                                    })
+                                }}
+                                editable={!(['IN_PROGRESS', 'PAUSED'].includes(execution.status!))}
                                 placeholder="Outputs"
                                 textInputProps={{
                                     numberOfLines: 10,
