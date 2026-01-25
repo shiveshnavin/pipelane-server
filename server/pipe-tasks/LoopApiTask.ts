@@ -76,6 +76,12 @@ export class LoopApiTask extends PipeTask<any, any> {
             return err;
         };
 
+        if((last.filter(l => !!l.url)).length === 0) {
+            return [{
+                status: false,
+                message: 'No valid API requests to process'
+            }];
+        }
         // Create a queue to manage parallel requests
         if (!inputs.additionalInputs.sequential) {
             const promises = last.map(options => handleRequest(options));

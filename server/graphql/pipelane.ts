@@ -474,7 +474,7 @@ class PipelaneExecCleaner {
     // main entry — call on each new execution
     public async handleExecution(pipeEx: PipelaneExecution, pipe?: Pipelane) {
         try {
-            if (!pipeEx?.name || pipe?.name) {
+            if (!pipeEx?.name && !pipe?.name) {
                 return;
             }
             pipe = pipe || (await this.PipelaneResolvers.Query.Pipelane(undefined, { name: pipeEx?.name || pipe?.name }));
@@ -546,7 +546,7 @@ class PipelaneExecCleaner {
                     await this.persistMeta(pipelaneName, counter.count);
                     return;
                 }
-                console.log(`[pipelane-server] Trimming ${pipelaneName}: deleting ${oldest.length} oldest executions.`)
+                console.log(`[pipelane-server] Trimming ${pipelaneName}: deleting ${oldest.length} oldest executions. Total=${counter.count}`)
                 // Delete oldest and their task-execs, waiting for completion
                 await Promise.all(oldest.map(async (e: any) => {
                     await this.db.delete(TableName.PS_PIPELANE_TASK_EXEC, { pipelaneExId: e.id });
@@ -556,7 +556,7 @@ class PipelaneExecCleaner {
                 // *** FAST PATH: avoid full table scan. ***
                 // We know how many we just deleted, so adjust the in-memory counter directly.
                 const deleted = oldest.length; // actual number deleted
-                counter.count = Math.max(0, (counter.count || 0) - deleted);
+                counter.count = toDelete > deleted? 0:  Math.max(0, (counter.count || 0) - deleted);
                 counter.dirtySincePersist = 0;
 
                 // Persist the new count (single source of truth for other processes)
