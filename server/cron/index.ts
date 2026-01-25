@@ -131,7 +131,10 @@ export class CronScheduler {
         return this.triggerPipelane(existing, JSON.stringify(Object.assign(
             JSON.parse(existing.input),
             JSON.parse(input || '{}')
-        )), listener, instanceId)
+        )), listener, instanceId).catch(e => {
+            console.error(`Fatal error triggering pipelane ${name}. ` + e.message)
+            throw e
+        })
     }
 
     async triggerPipelane(
