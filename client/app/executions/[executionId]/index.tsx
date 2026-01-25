@@ -40,7 +40,7 @@ function MemoizedTaskDetailsSheet({ taskDetails, setTaskDetails, theme }: {
 }
 import { useContext } from "react";
 import { Animated, Easing } from "react-native";
-import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon, Option, Expand } from "react-native-boxes";
+import { AlertMessage, StatusIcon, BottomSheet, CardView, Center, CompositeTextInputView, HBox, SimpleDatalistView, Spinner, Subtitle, TextView, ThemeContext, TransparentCenterToolbar, VBox, VPage, Icon, Option, Expand, PressableView } from "react-native-boxes";
 import { PipelaneExecution, PipetaskExecution } from "../../../../gen/model";
 import { prettyJson } from "../../../common/utils/ReactUtils";
 
@@ -80,7 +80,10 @@ export default function QueryPage() {
     const refresh = useCallback((stop?: boolean) => {
         if (!executionId) return;
         api.pipelaneExecution(executionId as string).then(data => {
-            setExecution(data.data.PipelaneExecution);
+            setExecution({
+                ...data.data.PipelaneExecution,
+                input: prettyJson(data.data.PipelaneExecution.input || '{}'),
+            });
             if (stop) {
                 setAutoRefresh(false);
             }
@@ -234,7 +237,16 @@ export default function QueryPage() {
                                         <Expand title="Input">
                                             <VBox>
                                                 <CompositeTextInputView
-                                                    editable={false}
+                                                    onChangeText={(text) => {
+                                                        setExecution(e => {
+                                                            if (!e) return e
+                                                            return {
+                                                                ...e,
+                                                                input: text
+                                                            }
+                                                        })
+                                                    }}
+                                                    editable={!(['IN_PROGRESS', 'PAUSED'].includes(execution.status!))}
                                                     placeholder="Input"
                                                     textInputProps={{
                                                         numberOfLines: 10,
@@ -246,8 +258,8 @@ export default function QueryPage() {
                                                             alignContent: 'flex-start',
                                                         }
                                                     }}
-                                                    value={prettyJson(execution?.input!) || ''}
-                                                    initialText={prettyJson(execution?.input!) || ''} />
+                                                    value={execution?.input! || ''}
+                                                    initialText={execution?.input! || ''} />
 
                                             </VBox>
                                         </Expand>
@@ -294,15 +306,7 @@ export default function QueryPage() {
                         }}>Output</Subtitle>
                         <CardView>
                             <CompositeTextInputView
-                                onChangeText={(text) => {
-                                    setExecution(e => {
-                                        return {
-                                            ...e!,
-                                            input: text
-                                        }
-                                    })
-                                }}
-                                editable={!(['IN_PROGRESS', 'PAUSED'].includes(execution.status!))}
+                                editable={false}
                                 placeholder="Outputs"
                                 textInputProps={{
                                     numberOfLines: 10,
