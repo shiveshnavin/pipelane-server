@@ -49,9 +49,9 @@ export class CronScheduler {
         this.pipelaneResolver = pipelaneResolver
     }
 
-    stopJob(name: String) {
+    stopJob(instanceId: String) {
         try {
-            let existingJob = this.cronJobs.find(cj => name == cj.name)
+            let existingJob = this.cronJobs.find(cj => instanceId == cj.name)
             if (existingJob) {
                 existingJob.job?.stop()
             }
@@ -60,13 +60,13 @@ export class CronScheduler {
                 let execName = ce.name
                 let parts = execName.split("-")
                 let pname = parts.slice(0, parts.length - 1)?.join("-")
-                return name == pname
+                return instanceId == pname || ce.instanceId == instanceId
             })
             if (existingExecs) {
                 existingExecs.stop()
             }
         } catch (e) {
-            console.error(`Tolerable error stopping ${name}. ` + e.message)
+            console.error(`Tolerable error stopping ${instanceId}. ` + e.message)
         }
     }
 
