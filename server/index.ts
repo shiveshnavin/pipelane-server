@@ -26,7 +26,9 @@ export { FirebaseAdapterMultiDbOrm } from './utils/FirebaseAdapterMultiDbOrm'
 export async function creatPipelaneServer(
   variantConfig: TaskVariantConfig,
   persistance?: MultiDbORM | MySQLDBConfig,
-  pipelaneLogLevel: 0 | 1 | 2 | 3 | 4 | 5 = 2
+  pipelaneLogLevel: 0 | 1 | 2 | 3 | 4 | 5 = 2,
+  cronScheduler?: CronScheduler,
+  resolvers?: ReturnType<typeof generateResolvers>
 ) {
 
   let db
@@ -42,11 +44,10 @@ export async function creatPipelaneServer(
     throw new Error('Unable to intialize pipelane server. persistance must be either and instance of MultiDbORM or MySQLDBConfig')
   }
 
-  const cronScheduler = new CronScheduler(variantConfig, pipelaneLogLevel)
-  const resolvers = generateResolvers(db, variantConfig, cronScheduler)
-  const pipelaneResolver = generatePipelaneResolvers(db, variantConfig)
-  pipelaneResolver.Query.pipelanes().then(pls => {
-    cronScheduler.init(pls, pipelaneResolver)
+  cronScheduler = cronScheduler || new CronScheduler(variantConfig, pipelaneLogLevel)
+  resolvers = resolvers || generateResolvers(db, variantConfig, cronScheduler)
+  resolvers.Query.pipelanes().then(pls => {
+    cronScheduler.init(pls, resolvers)
     cronScheduler.startAll()
     console.log('pipelane:Scheduled', pls.length, 'pipes')
   }).catch(err => {

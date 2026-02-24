@@ -19,5 +19,5 @@ export function generateResolvers(
         resolver = _.defaultsDeep(resolver, r)
     })
 
-    return resolver
+    return resolver as { Query: any, Mutation: any }
 }
