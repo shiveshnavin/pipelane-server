@@ -415,15 +415,16 @@ export class CronScheduler {
 
 
         const pipelaneListener = (async (pl, event, task, output) => {
+            this.listeners.forEach((globalListener, name) => {
+                try {
+                    globalListener(pl, event, task, output, plx)
+                } catch (e) {
+                    console.error(`Error in global listener ${name} for pipelane ${pl.name}. ` + e.message)
+                }
+            })
             this.lock.acquire(plx.id, (async () => {
                 listener && listener(pl, event, task, output, plx);
-                this.listeners.forEach(async (globalListener, name) => {
-                    try {
-                        await globalListener(pl, event, task, output, plx)
-                    } catch (e) {
-                        console.error(`Error in global listener ${name} for pipelane ${pl.name}. ` + e.message)
-                    }
-                })
+
                 if (event == 'NEW_TASK') {
                     let taskName = task.uniqueStepName || task.variantType || task.type
                     let taskId = `${plx.id}::${task.variantType}::${taskName}`
