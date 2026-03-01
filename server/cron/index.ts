@@ -120,7 +120,8 @@ export class CronScheduler {
     async triggerPipelaneByName(name: string,
         input?: string,
         listener?: PipelaneExecutionListener,
-        instanceId?: string
+        instanceId?: string,
+        callbacks?: PipelaneExecutionCallbacks
     ): Promise<PipelaneExecution | undefined> {
         let existing = await this.pipelaneResolver.Query.Pipelane({}, {
             name: name
@@ -131,7 +132,7 @@ export class CronScheduler {
         return this.triggerPipelane(existing, JSON.stringify(Object.assign(
             JSON.parse(existing.input),
             JSON.parse(input || '{}')
-        )), listener, instanceId).catch(e => {
+        )), listener, instanceId, callbacks).catch(e => {
             console.error(`Fatal error triggering pipelane ${name}. ` + e.message)
             throw e
         })
@@ -141,7 +142,8 @@ export class CronScheduler {
         pl: PipelaneSchedule,
         input?: string,
         listener?: PipelaneExecutionListener,
-        instanceId?: string): Promise<PipelaneExecution | undefined> {
+        instanceId?: string,
+        callbacks?: PipelaneExecutionCallbacks): Promise<PipelaneExecution | undefined> {
         if (this.stopped) {
             console.warn(`Executor is stopped, skip triggering ${pl.name}`)
             return
@@ -327,8 +329,14 @@ export class CronScheduler {
             if (pipelaneInput.resumable)
                 pipeWorksInstance.enableCheckpoints(pipelaneInstId, pipelaneFolderPath)
 
+
+
             const run = () => {
                 console.log(`[pipelane-server] Queuing pipelane ${pl.name} with instance id ${pipeWorksInstance.instanceId}. Current queue  = ${runningInstances.length + 1}`)
+                if (callbacks?.onPipeInstance) {
+                    callbacks.onPipeInstance(plx, pipeWorksInstance)
+                }
+
                 this.acquirePipelineSlot(pl.name).then((release) => {
                     this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
                         data: {
@@ -338,10 +346,19 @@ export class CronScheduler {
                             output: plx.output
                         }
                     })
+                    if (callbacks?.onStart) {
+                        callbacks.onStart(plx, pipeWorksInstance)
+                    }
                     pipeWorksInstance.start(pipelaneInput).then((op) => {
+                        if (callbacks?.onSuccess) {
+                            callbacks.onSuccess(plx, pipeWorksInstance, op)
+                        }
                         onResult(op, release)
                     }).catch((e) => {
                         console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
+                        if (callbacks?.onFailure) {
+                            callbacks.onFailure(plx, pipeWorksInstance, e)
+                        }
                         onResult([{ status: false }], release)
                     }).finally(() => {
                         if (existsSync(pipelaneFolderPath)) {
@@ -522,6 +539,13 @@ export function getSecondsUntilNextCronRun(cronExpression, timestamp = new Date(
     const nextRunTime = cronJob.nextRun(adjustedTimestamp);
     const secondsDelta = (nextRunTime.getTime() - adjustedTimestamp.getTime()) / 1000;
     return secondsDelta;
+}
+
+export type PipelaneExecutionCallbacks = {
+    onPipeInstance?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane) => void
+    onStart?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane) => void
+    onFailure?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane, error: Error) => void
+    onSuccess?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane, output: any) => void
 }
 
 export type EventType = 'NEW_TASK' | 'TASK_FINISHED' | 'SKIPPED' | 'COMPLETE';
