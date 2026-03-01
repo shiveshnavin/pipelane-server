@@ -350,14 +350,14 @@ export class CronScheduler {
                         callbacks.onStart(plx, pipeWorksInstance)
                     }
                     pipeWorksInstance.start(pipelaneInput).then((op) => {
-                        if (callbacks?.onSuccess) {
-                            callbacks.onSuccess(plx, pipeWorksInstance, op)
+                        if (callbacks?.onFinish) {
+                            callbacks.onFinish(plx, pipeWorksInstance, op)
                         }
                         onResult(op, release)
                     }).catch((e) => {
                         console.error(`${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}. Error = ${e.message}`)
-                        if (callbacks?.onFailure) {
-                            callbacks.onFailure(plx, pipeWorksInstance, e)
+                        if (callbacks?.onError) {
+                            callbacks.onError(plx, pipeWorksInstance, e)
                         }
                         onResult([{ status: false }], release)
                     }).finally(() => {
@@ -544,8 +544,10 @@ export function getSecondsUntilNextCronRun(cronExpression, timestamp = new Date(
 export type PipelaneExecutionCallbacks = {
     onPipeInstance?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane) => void
     onStart?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane) => void
-    onFailure?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane, error: Error) => void
-    onSuccess?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane, output: any) => void
+    // Trigerred when the pipelane finishes, this will never be called ideally
+    onError?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane, error: Error) => void
+    // Trigerred when the pipelane finishes either with success or failure
+    onFinish?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane, output: any) => void
 }
 
 export type EventType = 'NEW_TASK' | 'TASK_FINISHED' | 'SKIPPED' | 'COMPLETE';
