@@ -1,4 +1,4 @@
-const { existsSync, readdirSync, mkdirSync } = require('fs')
+const { existsSync, readdirSync, mkdirSync, copyFileSync } = require('fs')
 const path = require('path')
 
 const generate = require('@graphql-codegen/cli').generate
@@ -24,6 +24,14 @@ async function doSomething(filePath) {
         true
     )
     console.log('Generated', name, 'to', opRel)
+    if (existsSync(outputPath)) {
+        let targetDir = path.join(__dirname, 'client', 'gen')
+        if (!existsSync(targetDir)) {
+            mkdirSync(targetDir)
+        }
+        copyFileSync(outputPath, path.join(targetDir, `${name}.ts`))
+        console.log('Copied', name, 'to client/gen')
+    }
 }
 let files = readdirSync(__dirname)
 if (!existsSync(path.join(__dirname, 'gen'))) {
