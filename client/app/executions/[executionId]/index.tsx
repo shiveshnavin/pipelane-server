@@ -207,17 +207,12 @@ export default function QueryPage() {
                     <VBox>
                         <CardView>
                             <VBox>
-                                <HBox style={{
-                                    justifyContent: 'space-between'
-                                }}>
-                                    <AlertMessage
-                                        type={
-                                            execution.status == 'SUCCESS' ? 'success' :
-                                                execution.status == 'FAILED' ? 'critical' :
-                                                    execution.status == 'SKIPPED' ? 'warning' : 'info'}
-                                        style={{ width: 10 }}
-                                        text={execution.status as string} />
-                                </HBox>
+                                <AlertMessage
+                                    type={
+                                        execution.status == 'SUCCESS' ? 'success' :
+                                            execution.status == 'FAILED' ? 'critical' :
+                                                execution.status == 'SKIPPED' ? 'warning' : 'info'}
+                                    text={execution.status as string} />
                                 <HBox style={{
                                     justifyContent: 'space-between'
                                 }}>

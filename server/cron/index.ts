@@ -494,7 +494,7 @@ export class CronScheduler {
                             })
                         })
                     })
-                } else if (event == 'COMPLETE') {
+                } else if (event == 'COMPLETE' || event == 'KILLED') {
                     if (onResult) {
                         await new Promise((resolve) => {
                             onResult(output)
