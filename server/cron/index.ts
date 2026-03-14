@@ -266,9 +266,19 @@ export class CronScheduler {
                         pipeWorksInstance.currentTaskIdx = 0
                         //@ts-ignore
                         pipeWorksInstance.executedTasks = []
-                        pipeWorksInstance.start(pipelaneInput).then((op => {
-                            onResult(op, release)
-                        }))
+                        if (pipelaneInput.retryDelayMs) {
+                            console.log(`[pipelane-server] Delaying retry of ${pl.name} by ${pipelaneInput.retryDelayMs} ms`)
+                            return setTimeout(() => {
+                                pipeWorksInstance.start(pipelaneInput).then((op => {
+                                    onResult(op, release)
+                                }))
+                            }, pipelaneInput.retryDelayMs)
+
+                        } else {
+                            pipeWorksInstance.start(pipelaneInput).then((op => {
+                                onResult(op, release)
+                            }))
+                        }
                         return
                     } else {
                         if (this.pipelaneLogLevel > 0)
