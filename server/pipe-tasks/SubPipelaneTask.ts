@@ -147,6 +147,7 @@ export class SubPipelaneTask extends PipeTask<SubPipelaneInput, any> {
             // attach parent id
             childInputs.parentPipeInstanceId = parentId
             const childInstanceId = this.cron.createInstanceId(pipeName)
+            pipeWorksInstance.outputs = { ...pipeWorksInstance.outputs, childInstanceId }
             const resultWaiter = new Promise<any>((resolve) => {
                 waiting.set(childInstanceId, { resolve })
             })
