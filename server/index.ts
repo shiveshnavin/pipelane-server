@@ -10,6 +10,7 @@ import { CronScheduler } from "./cron";
 import { generatePipelaneResolvers } from "./graphql/pipelane";
 import { MultiDbORM, MySQLDBConfig } from "multi-db-orm";
 import { createMcpServer } from "./mcp";
+import { SubPipelaneTask } from "./pipe-tasks/SubPipelaneTask";
 
 const app = express()
 //see https://docs.expo.dev/more/expo-cli/#hosting-with-sub-paths
@@ -45,6 +46,7 @@ export async function creatPipelaneServer(
   }
 
   cronScheduler = cronScheduler || new CronScheduler(variantConfig, pipelaneLogLevel)
+
   resolvers = resolvers || generateResolvers(db, variantConfig, cronScheduler)
   resolvers.Query.pipelanes().then(pls => {
     cronScheduler.init(pls, resolvers)

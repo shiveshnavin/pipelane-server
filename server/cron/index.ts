@@ -561,6 +561,6 @@ export type PipelaneExecutionCallbacks = {
     onFinish?: (plx: PipelaneExecution, pipeWorksInstance: PipeLane, output: any) => void
 }
 
-export type EventType = 'NEW_TASK' | 'TASK_FINISHED' | 'SKIPPED' | 'COMPLETE';
+export type EventType = 'NEW_TASK' | 'TASK_FINISHED' | 'SKIPPED' | 'COMPLETE' | 'KILLED';
 
 export type PipelaneExecutionListener = (pipelaneInstance: PipeLane, event: EventType, task: PipeTask<any, any>, output: OutputWithStatus[], plx: PipelaneExecution) => void;
