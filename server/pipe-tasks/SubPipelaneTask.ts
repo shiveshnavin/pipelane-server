@@ -57,10 +57,13 @@ export class SubPipelaneTask extends PipeTask<SubPipelaneInput, any> {
 
                     if (mappedStatus) {
                         let newOutput = output || pipelaneInstance.lastTaskOutput
+                        if (!Array.isArray(newOutput)) {
+                            newOutput = [newOutput]
+                        }
                         if (mappedStatus === Status.Failed || mappedStatus === Status.Skipped) {
                             newOutput = (newOutput || [{}]).map((op: any) => {
                                 return {
-                                    ...op, message: `Child pipelane ${iid} ${mappedStatus.toLowerCase()}. Original Message= ${op.message || ''}`, status: false
+                                    ...(op || {}), message: `Child pipelane ${iid} ${mappedStatus.toLowerCase()}. Original Message= ${op?.message || ''}`, status: false
                                 }
                             })
                         }
