@@ -23,6 +23,9 @@ ui.all('*',
 
 
 export { FirebaseAdapterMultiDbOrm } from './utils/FirebaseAdapterMultiDbOrm'
+export { CronScheduler } from './cron'
+export { SubPipelaneTask } from './pipe-tasks/SubPipelaneTask'
+export { generateResolvers } from './graphql/resolvers'
 
 export async function creatPipelaneServer(
   variantConfig: TaskVariantConfig,
