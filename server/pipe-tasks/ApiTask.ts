@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
+import jsonpath from "jsonpath";
 //@ts-ignore
 import PipeLane, { PipeTask, PipeTaskDescription } from "pipelane";
 
@@ -24,7 +25,8 @@ export class ApiTask extends PipeTask<any, any> {
                     retry: 0,
                     url: "string, the url of the API",
                     method: "string, Http method",
-                    headers: "object, an object of headers"
+                    headers: "object, an object of headers",
+                    jsonPath: "string, optional, if provided, the output of the API call data will be extracted with this json path"
                 }
             }
         }
@@ -32,7 +34,7 @@ export class ApiTask extends PipeTask<any, any> {
 
     async execute(pipeWorksInstance: PipeLane, input: any): Promise<any[]> {
         input = input.additionalInputs
-        let retryRemaining = input.additionalInputs?.retry || 0;
+        let retryRemaining = input.retry || 0;
         if (!input.url) {
             return [{
                 status: false,
@@ -46,11 +48,47 @@ export class ApiTask extends PipeTask<any, any> {
 
                 let response = await axios(options)
                 if (response) {
+                    let data = response?.data
+                    if (input.jsonPath) {
+                        try {
+                            const extracted = jsonpath.value(response, input.jsonPath)
+                            if (extracted !== undefined) {
+                                data = extracted
+
+                                if (Array.isArray(data) && data.every(d => typeof d === 'string')) {
+                                    return data.map(d => ({
+                                        status: response.status < 300,
+                                        data: d
+                                    }))
+                                }
+                                else if (Array.isArray(data) && data.every(d => typeof d === 'object')) {
+                                    return data.map(d => ({
+                                        status: response.status < 300,
+                                        ...d
+                                    }))
+                                }
+                                else if (typeof data === 'object') {
+                                    return [{
+                                        status: response.status < 300,
+                                        ...data
+                                    }]
+                                }
+                                else {
+                                    return [{
+                                        status: response.status < 300,
+                                        data
+                                    }]
+                                }
+                            }
+                        } catch (jsonErr) {
+                            pipeWorksInstance.onLog(`jsonPath extraction failed: ${jsonErr.message}`)
+                        }
+                    }
                     return [{
                         status: response.status < 300,
                         statusCode: response.status,
                         headers: response.headers,
-                        data: response?.data
+                        data
                     }]
                 }
             } catch (e) {

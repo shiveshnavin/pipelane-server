@@ -1,4 +1,5 @@
 import axios from "axios";
+import jsonpath from "jsonpath";
 //@ts-ignore
 import PipeLane, { PipeTask, PipeTaskDescription } from "pipelane";
 import { RateLimiter } from "limiter";
@@ -24,7 +25,8 @@ export class LoopApiTask extends PipeTask<any, any> {
                     retry: 0,
                     sequential: "boolean, if true, other rate fields will be ignored",
                     rate: "Number, x requests / Y interval",
-                    interval: "day | hour | min | sec"
+                    interval: "day | hour | min | sec",
+                    jsonPath: "string, optional, if provided, the output of the API call will be extracted with this json path"
                 },
                 last: [{
                     url: "string, the url of the API",
@@ -53,12 +55,41 @@ export class LoopApiTask extends PipeTask<any, any> {
             do {
                 try {
                     let response = await axios(options);
-                    return {
-                        status: response.status < 300,
-                        statusCode: response.status,
-                        headers: response.headers,
-                        data: response?.data
-                    };
+                    let data = response?.data;
+                    const jsonPath = inputs.additionalInputs?.jsonPath;
+                    if (jsonPath) {
+                        try {
+                            const extracted = jsonpath.value(response, jsonPath);
+                            if (extracted !== undefined) {
+                                data = extracted;
+                            }
+                        } catch (jsonErr) {
+                            this.onLog(`jsonPath extraction failed: ${jsonErr.message}`);
+                        }
+                    }
+
+                    if (Array.isArray(data) && data.every(d => typeof d === 'string')) {
+                        return data.map(d => ({
+                            status: response.status < 300,
+                            data: d
+                        }));
+                    } else if (Array.isArray(data) && data.every(d => typeof d === 'object' && d !== null)) {
+                        return data.map(d => ({
+                            status: response.status < 300,
+                            ...d
+                        }));
+                    } else if (typeof data === 'object' && data !== null) {
+                        return [{
+                            status: response.status < 300,
+                            ...data
+                        }];
+                    } else {
+                        return [{
+                            status: response.status < 300,
+                            data
+                        }];
+                    }
+
                 } catch (e) {
                     if (retryRemaining > 0) {
                         this.onLog(`Retrying... (${retryRemaining} attempts left)`);
@@ -76,7 +107,7 @@ export class LoopApiTask extends PipeTask<any, any> {
             return err;
         };
 
-        if((last.filter(l => !!l.url)).length === 0) {
+        if ((last.filter(l => !!l.url)).length === 0) {
             return [{
                 status: false,
                 message: 'No valid API requests to process'

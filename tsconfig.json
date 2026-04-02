@@ -16,5 +16,7 @@
     ],
     "exclude": [
         "node_modules/**/**/*",
+        "client/**/**/*",
+        "dist/**/**/*",
     ]
 }
