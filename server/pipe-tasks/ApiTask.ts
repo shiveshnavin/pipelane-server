@@ -26,7 +26,7 @@ export class ApiTask extends PipeTask<any, any> {
                     url: "string, the url of the API",
                     method: "string, Http method",
                     headers: "object, an object of headers",
-                    jsonPath: "string, optional, if provided, the output of the API call data will be extracted with this json path"
+                    jsonPath: "string, optional, $ = response (e.g. $.headers will return headers) if provided, the output of the API call data will be extracted with this json path"
                 }
             }
         }

@@ -26,7 +26,7 @@ export class LoopApiTask extends PipeTask<any, any> {
                     sequential: "boolean, if true, other rate fields will be ignored",
                     rate: "Number, x requests / Y interval",
                     interval: "day | hour | min | sec",
-                    jsonPath: "string, optional, if provided, the output of the API call will be extracted with this json path"
+                    jsonPath: "string, optional, $ = response (e.g. $.headers will return headers) if provided, the output of the API call data will be extracted with this json path"
                 },
                 last: [{
                     url: "string, the url of the API",
