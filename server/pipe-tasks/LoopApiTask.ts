@@ -66,30 +66,30 @@ export class LoopApiTask extends PipeTask<any, any> {
                         } catch (jsonErr) {
                             this.onLog(`jsonPath extraction failed: ${jsonErr.message}`);
                         }
-                    }
 
-                    if (Array.isArray(data) && data.every(d => typeof d === 'string')) {
-                        return data.map(d => ({
-                            status: response.status < 300,
-                            data: d
-                        }));
-                    } else if (Array.isArray(data) && data.every(d => typeof d === 'object' && d !== null)) {
-                        return data.map(d => ({
-                            status: response.status < 300,
-                            ...d
-                        }));
-                    } else if (typeof data === 'object' && data !== null) {
-                        return [{
-                            status: response.status < 300,
-                            ...data
-                        }];
-                    } else {
-                        return [{
-                            status: response.status < 300,
-                            data
-                        }];
+                        if (Array.isArray(data)) {
+                            return {
+                                status: response.status < 300,
+                                data: data
+                            };
+                        } else if (typeof data === 'object' && data !== null) {
+                            return {
+                                status: response.status < 300,
+                                ...data
+                            };
+                        } else {
+                            return {
+                                status: response.status < 300,
+                                data
+                            };
+                        }
                     }
-
+                    return {
+                        status: response.status < 300,
+                        statusCode: response.status,
+                        headers: response.headers,
+                        data: response?.data
+                    };
                 } catch (e) {
                     if (retryRemaining > 0) {
                         this.onLog(`Retrying... (${retryRemaining} attempts left)`);
