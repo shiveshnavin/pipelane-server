@@ -18,7 +18,7 @@ export class TopicTask extends PipeTask<InputWithPreviousInputs, OutputWithStatu
     static VARIANT_READ: string = "read";
     static VARIANT_WRITE: string = "write";
     public tableName;
-    private db: MultiDbORM = undefined;
+    private db: MultiDbORM;
     private initialized = false;
 
     constructor(variantName: string, db?: MultiDbORM, tableName = 'ps_pipelane_topics') {
@@ -148,28 +148,46 @@ export class TopicTask extends PipeTask<InputWithPreviousInputs, OutputWithStatu
                 for (let t of pipeWorksInstance.inputs.topics) {
                     topicsToWrite.push(normalizeTopic(t));
                 }
-            } else if (input.additionalInputs
+            }
+            else if (input.additionalInputs
+                && input.additionalInputs.state
+                && input.additionalInputs.id
+            ) {
+                let existingTopic = await this.db.getOne(this.tableName, { id: input.additionalInputs.id });
+                if (existingTopic) {
+                    topicsToWrite.push(normalizeTopic({ ...existingTopic, ...(input.additionalInputs || {}) }));
+                } else {
+                    return [{
+                        message: 'No topic found for id ' + input.additionalInputs.id,
+                        status: false
+                    }]
+                }
+            }
+            else if (input.additionalInputs
                 && input.additionalInputs.state
                 && input.additionalInputs.queue
             ) {
                 topicsToWrite.push(normalizeTopic(input.additionalInputs || {}));
             }
 
-            let results: Topic[] = [];
+            let results = [];
             for (let t of topicsToWrite) {
                 let dbFilter = { id: t.id };
                 let existing = t.id ? (await this.db.getOne(this.tableName, dbFilter)) : undefined;
                 t = Object.assign({
                     ...t,
-                    ...input.additionalInputs
-                })
+                    ...input.additionalInputs,
+                    status: true
+                });
                 if (existing) {
                     await this.db.update(this.tableName, dbFilter, t);
-                } else {
+                }
+                else {
                     t.id = `${t.queue}-${Date.now()}`;
                     await this.db.insert(this.tableName, t);
                 }
                 results.push({ ...t });
+                input.last = input.last || results
             }
         }
 
