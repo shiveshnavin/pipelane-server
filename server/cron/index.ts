@@ -25,10 +25,17 @@ export class CronScheduler {
     pipelaneLogLevel: 0 | 1 | 2 | 3 | 4 | 5
     listeners: Map<string, PipelaneExecutionListener> = new Map()
 
-    constructor(variantConfig: TaskVariantConfig, pipelaneLogLevel?: 0 | 1 | 2 | 3 | 4 | 5, maxCacheSize = 200) {
+    constructor(variantConfig: TaskVariantConfig,
+        pipelaneLogLevel?: 0 | 1 | 2 | 3 | 4 | 5,
+        maxCacheSize = 200,
+        pipelaneResolver: any = undefined) {
         this.variantConfig = variantConfig
         this.pipelaneLogLevel = pipelaneLogLevel != undefined ? pipelaneLogLevel : 2
         this.maxCacheSize = maxCacheSize
+        if (!pipelaneResolver) {
+            pipelaneResolver = createDummyPipelaneResolver()
+        }
+        this.pipelaneResolver = pipelaneResolver
     }
 
     async getPipelaneDefinition(pipeName: string, existing?: PipelaneSchedule): Promise<PipelaneSchedule | undefined> {
@@ -564,3 +571,29 @@ export type PipelaneExecutionCallbacks = {
 export type EventType = 'NEW_TASK' | 'TASK_FINISHED' | 'SKIPPED' | 'COMPLETE' | 'KILLED';
 
 export type PipelaneExecutionListener = (pipelaneInstance: PipeLane, event: EventType, task: PipeTask<any, any>, output: OutputWithStatus[], plx: PipelaneExecution) => void;
+
+
+function createDummyPipelaneResolver() {
+    return {
+        Query: {
+            Pipelane: async (parent: any, args: any) => {
+                console.warn('Dummy resolver called for Pipelane. Returning undefined')
+                return args
+            },
+            pipelaneTasks: async (parent: any, args: any) => {
+                console.warn('Dummy resolver called for pipelaneTasks. Returning empty array')
+                return []
+            }
+        },
+        Mutation: {
+            createPipelaneExecution: async (parent: any, args: any) => {
+                console.warn('Dummy resolver called for createPipelaneExecution. Returning undefined')
+                return args
+            },
+            createPipelaneTaskExecution: async (parent: any, args: any) => {
+                console.warn('Dummy resolver called for createPipelaneTaskExecution. Returning undefined')
+                return args
+            }
+        }
+    }
+}
