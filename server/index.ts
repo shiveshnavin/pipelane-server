@@ -51,6 +51,7 @@ export async function creatPipelaneServer(
   cronScheduler = cronScheduler || new CronScheduler(variantConfig, pipelaneLogLevel)
 
   resolvers = resolvers || generateResolvers(db, variantConfig, cronScheduler)
+  cronScheduler.init([], resolvers)
   resolvers.Query.pipelanes().then(pls => {
     cronScheduler.init(pls, resolvers)
     cronScheduler.startAll()

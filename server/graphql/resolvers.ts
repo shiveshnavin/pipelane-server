@@ -18,6 +18,6 @@ export function generateResolvers(
     resolvers.forEach(r => {
         resolver = _.defaultsDeep(resolver, r)
     })
-
+    cronScheduler?.init([], resolver)
     return resolver as { Query: any, Mutation: any }
 }
