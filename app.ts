@@ -32,7 +32,8 @@ creatPipelaneServer(VariantConfig, db, 2, cronScheduler).then(pipelane => {
     app.use('/pipelane', pipelane)
     const services = pipelane.get('services')
     app.use(createMcpServer(VariantConfig, db, services?.resolvers))
-    app.use('/', (req, res) => res.redirect('/pipelane'))
+    app.get('/', (req, res) => res.redirect('/pipelane'))
+    app.post('/', (req, res) => res.status(400).send("MCP clients should use the /sse endpoint for connections and /messages for POSTs. Please update your MCP client configuration."))
     app.listen(port, () => {
         console.log(`Running a GraphQL API server at http://localhost:${port}/graph. Current time: ${new Date().toLocaleString()}`)
     })

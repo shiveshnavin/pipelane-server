@@ -6,6 +6,7 @@ import axios from "axios";
 import { MultiDbORM } from "multi-db-orm";
 import PipeLane, { PipeTaskDescription, TaskVariantConfig } from "pipelane";
 import { ShellTask } from "../pipe-tasks/ShellTask";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
 function generateZodSchema(obj: any): ZodTypeAny {
     if (obj === null) return z.null();
@@ -202,35 +203,15 @@ export function createMcpServer(variantConfig: TaskVariantConfig, db: MultiDbORM
     }
 
     const McpApp = express();
-    const transports: { [sessionId: string]: SSEServerTransport } = {};
-
-    McpApp.get("/sse", async (req, res) => {
-        const transport = new SSEServerTransport("/messages", res);
-        transports[transport.sessionId] = transport;
-
-        console.log("mcp:SSE session started:", transport.sessionId);
-
-        res.on("close", () => {
-            console.log("mcp:SSE session closed:", transport.sessionId);
-            delete transports[transport.sessionId];
+    McpApp.post("/mcp", async (req, res) => {
+        const transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: undefined // stateless
         });
 
         await server.connect(transport);
+        await transport.handleRequest(req, res, req.body);
     });
 
-    McpApp.post("/messages", async (req, res) => {
-        const sessionId = req.query.sessionId as string;
-        const transport = transports[sessionId];
-        console.log("mcp:request:", req.body)
-        if (transport) {
-            await transport.handlePostMessage(req, res);
-        } else {
-            res.status(400).send("No transport found for sessionId");
-        }
-    });
 
     return McpApp
-
-
-
 }

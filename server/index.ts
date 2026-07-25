@@ -13,10 +13,14 @@ import { createMcpServer } from "./mcp";
 import { SubPipelaneTask } from "./pipe-tasks/SubPipelaneTask";
 
 const app = express()
+app.use((req, res, next) => {
+  console.log('pipelane:Request', req.method, req.url)
+  next();
+});
 //see https://docs.expo.dev/more/expo-cli/#hosting-with-sub-paths
 //cd client && npx expo export
 const ui = express.Router()
-ui.all('*',
+ui.get('*',
   express.static(path.join(__dirname, '../client/dist')), (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'))
   })
