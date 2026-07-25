@@ -43,14 +43,38 @@ type Pipelane {
   executions: [PipelaneExecution]
 }
 
+type Pipetask {
+  name: ID!
+  step: Int
+  pipelaneName: ID!
+  taskVariantName: String
+  taskTypeName: ID!
+  active: Boolean
+  isParallel: Boolean
+  input: String
+  executions: [PipetaskExecution]
+}
+
 input CreatePipelanePayload {
   name: ID!
-  input: String
-  schedule: String
+  input: String!
+  schedule: String!
   retryCount: Int
   executionsRetentionCount: Int
-  active: Boolean
+  active: Boolean!
   tasks: [CreatePipetaskPayload]
+}
+
+
+input CreatePipetaskPayload {
+  name: ID!
+  pipelaneName: ID!
+  taskVariantName: String
+  taskTypeName: ID!
+  isParallel: Boolean
+  active: Boolean
+  input: String!
+  step: Int
 }
 
 type Pipetask {
@@ -64,18 +88,6 @@ type Pipetask {
   input: String
   executions: [PipetaskExecution]
 }
-
-input CreatePipetaskPayload {
-  name: ID!
-  pipelaneName: ID!
-  taskVariantName: String
-  taskTypeName: ID!
-  isParallel: Boolean
-  active: Boolean
-  input: String
-  step: Int
-}
-
 type PipelaneExecution {
   id: ID!
   name: ID!
