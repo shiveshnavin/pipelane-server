@@ -23,13 +23,15 @@ function initDb() {
 }
 
 const db = initDb()
-app.use(createMcpServer(VariantConfig, db))
+
 
 let cronScheduler = new CronScheduler(VariantConfig, 2)
 VariantConfig[SubPipelaneTask.TASK_TYPE_NAME] = [new SubPipelaneTask(cronScheduler, SubPipelaneTask.TASK_VARIANT_NAME)]
 
 creatPipelaneServer(VariantConfig, db, 2, cronScheduler).then(pipelane => {
     app.use('/pipelane', pipelane)
+    const services = pipelane.get('services')
+    app.use(createMcpServer(VariantConfig, db, services?.resolvers))
     app.use('/', (req, res) => res.redirect('/pipelane'))
     app.listen(port, () => {
         console.log(`Running a GraphQL API server at http://localhost:${port}/graph. Current time: ${new Date().toLocaleString()}`)

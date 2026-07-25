@@ -87,7 +87,7 @@ function addTools(variantConfig: TaskVariantConfig, server: McpServer) {
 
 }
 
-export function createMcpServer(variantConfig: TaskVariantConfig, db: MultiDbORM) {
+export function createMcpServer(variantConfig: TaskVariantConfig, db: MultiDbORM, resolvers?: any) {
 
     const server = new McpServer({
         name: "pipelane-bot",
@@ -113,6 +113,93 @@ export function createMcpServer(variantConfig: TaskVariantConfig, db: MultiDbORM
         }
     )
 
+    if (resolvers) {
+        server.tool(
+            "list-pipelanes",
+            "List all existing pipelanes (workflows)",
+            {},
+            async () => {
+                try {
+                    let res = await resolvers.Query.pipelanes();
+                    return { content: [{ type: "text", text: JSON.stringify(res) }] };
+                } catch (e: any) {
+                    return { content: [{ type: "text", text: "Error: " + e.message }] };
+                }
+            }
+        );
+
+        server.tool(
+            "create-or-update-pipelane",
+            "Create or update a pipelane workflow configuration",
+            {
+                name: z.string().describe("Name of the pipelane"),
+                schedule: z.string().optional().describe("Cron schedule expression (optional)"),
+                active: z.boolean().optional().describe("Whether the schedule is active"),
+                tasks: z.array(z.any()).optional().describe("Array of task definitions")
+            },
+            async (args) => {
+                try {
+                    let res = await resolvers.Mutation.createPipelane(undefined, { data: args, oldPipeName: args.name });
+                    return { content: [{ type: "text", text: JSON.stringify(res) }] };
+                } catch (e: any) {
+                    return { content: [{ type: "text", text: "Error: " + e.message }] };
+                }
+            }
+        );
+
+        server.tool(
+            "delete-pipelane",
+            "Delete a pipelane workflow",
+            {
+                name: z.string().describe("Name of the pipelane to delete")
+            },
+            async (args) => {
+                try {
+                    let res = await resolvers.Mutation.deletePipelane(undefined, { name: args.name });
+                    return { content: [{ type: "text", text: JSON.stringify(res) }] };
+                } catch (e: any) {
+                    return { content: [{ type: "text", text: "Error: " + e.message }] };
+                }
+            }
+        );
+
+        server.tool(
+            "get-pipelane-executions",
+            "Get execution history for a specific pipelane",
+            {
+                pipelaneName: z.string().describe("Name of the pipelane"),
+                limit: z.number().optional().describe("Max number of records to return")
+            },
+            async (args) => {
+                try {
+                    let res = await resolvers.Query.pipelaneExecutions(undefined, { pipelaneName: args.pipelaneName, limit: args.limit || 50 });
+                    return { content: [{ type: "text", text: JSON.stringify(res) }] };
+                } catch (e: any) {
+                    return { content: [{ type: "text", text: "Error: " + e.message }] };
+                }
+            }
+        );
+
+        server.tool(
+            "get-pipelane-execution-details",
+            "Get detailed output and tasks of a specific pipelane execution",
+            {
+                id: z.string().describe("The ID of the pipelane execution")
+            },
+            async (args) => {
+                try {
+                    let execution = await resolvers.Query.PipelaneExecution(undefined, { id: args.id });
+                    if (execution) {
+                        execution.tasks = await resolvers.PipelaneExecution.tasks(execution);
+                        execution.output = await resolvers.PipelaneExecution.output(execution);
+                    }
+                    return { content: [{ type: "text", text: JSON.stringify(execution) }] };
+                } catch (e: any) {
+                    return { content: [{ type: "text", text: "Error: " + e.message }] };
+                }
+            }
+        );
+    }
 
     const McpApp = express();
     const transports: { [sessionId: string]: SSEServerTransport } = {};
