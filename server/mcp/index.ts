@@ -269,7 +269,42 @@ export function createMcpServer(variantConfig: TaskVariantConfig, db: MultiDbORM
                 }
             }
         );
+
+
+        server.tool(
+            "trigger-pipelane-execution",
+            "Trigger the execution of an existing pipelane (workflow) by name. Returns the execution record created.",
+            {
+                name: z.string().describe("Name of the pipelane to trigger"),
+                input: z.string().optional().describe("Optional JSON string of input overrides to pass to the pipelane")
+            },
+            async (args) => {
+                try {
+                    let execution = await resolvers.Mutation.executePipelane(undefined, { name: args.name, input: args.input });
+                    return { content: [{ type: "text", text: JSON.stringify(execution) }] };
+                } catch (e: any) {
+                    return { content: [{ type: "text", text: "Error triggering pipelane: " + e.message }] };
+                }
+            }
+        );
+
+        server.tool(
+            "stop-pipelane-execution",
+            "Stop a running pipelane execution by its instance/execution ID.",
+            {
+                id: z.string().describe("The instance ID of the running pipelane execution to stop")
+            },
+            async (args) => {
+                try {
+                    let result = await resolvers.Mutation.stopPipelane(undefined, { id: args.id });
+                    return { content: [{ type: "text", text: JSON.stringify(result) }] };
+                } catch (e: any) {
+                    return { content: [{ type: "text", text: "Error stopping pipelane: " + e.message }] };
+                }
+            }
+        );
     }
+
 
     const McpApp = express();
     McpApp.post("/mcp", async (req, res) => {
