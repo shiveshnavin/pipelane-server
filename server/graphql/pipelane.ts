@@ -113,7 +113,9 @@ export function generatePipelaneResolvers(
             },
             output: async (parent: PipelaneExecution) => {
                 let cached = cronScheduler.executionsCache.find(ex => ex.instanceId === parent.id)
-                let output = Object.assign({}, typeof parent.output === 'string' ? JSON.parse(parent.output) : parent.output, cached?.outputs || {})
+                let parsed = typeof parent.output === 'string' ? JSON.parse(parent.output) : parent.output
+                let target = Array.isArray(parsed) ? [] : {}
+                let output = Object.assign(target, parsed, cached?.outputs || (Array.isArray(parsed) ? [] : {}))
                 return JSON.stringify(output)
             },
             tasks: async (parent: PipelaneExecution) => {
