@@ -82,7 +82,8 @@ npm i  @modelcontextprotocol/sdk zod
 ```
 import { createMcpServer } from "./server/mcp";
 
-app.use(createMcpServer(VariantConfig, db))
+let mcpServer = createMcpServer(variantConfig, db, pipeResolvers)
+app.post('/mcp', mcpServer)
 
 ```
 
