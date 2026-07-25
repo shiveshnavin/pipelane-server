@@ -95,7 +95,76 @@ export function createMcpServer(variantConfig: TaskVariantConfig, db: MultiDbORM
         version: "1.0.0"
     });
 
-    addTools(variantConfig, server)
+    server.tool(
+        "get-task-definition",
+        "Get the definition and required inputs for a specific task",
+        {
+            taskName: z.string().describe("The name of the task type"),
+            taskVariantName: z.string().optional().describe("The name of the task variant (optional)")
+        },
+        async (args) => {
+            const tasks = variantConfig[args.taskName];
+            if (!tasks || tasks.length === 0) {
+                return {
+                    content: [{
+                        type: "text",
+                        text: `Task ${args.taskName} not found`
+                    }]
+                };
+            }
+
+            let definitions = [];
+            if (args.taskVariantName) {
+                const task = tasks.find(t => t.getTaskVariantName() === args.taskVariantName);
+                if (task) {
+                    definitions.push(task.describe());
+                } else {
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Variant ${args.taskVariantName} not found for task ${args.taskName}`
+                        }]
+                    };
+                }
+            } else {
+                definitions = tasks.map(t => t.describe());
+            }
+
+            return {
+                content: [{
+                    type: "text",
+                    text: JSON.stringify(definitions)
+                }]
+            };
+        }
+    );
+
+    server.tool(
+        "get-task-variations",
+        "Get all available variations for a specific task",
+        {
+            taskName: z.string().describe("The name of the task type")
+        },
+        async (args) => {
+            const tasks = variantConfig[args.taskName];
+            if (!tasks || tasks.length === 0) {
+                return {
+                    content: [{
+                        type: "text",
+                        text: `Task ${args.taskName} not found`
+                    }]
+                };
+            }
+
+            const variations = tasks.map(t => t.getTaskVariantName());
+            return {
+                content: [{
+                    type: "text",
+                    text: JSON.stringify(variations)
+                }]
+            };
+        }
+    );
 
     server.tool(
         "check-available-tasks",
