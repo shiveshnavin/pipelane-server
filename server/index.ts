@@ -71,7 +71,7 @@ export async function creatPipelaneServer(
   })
   await appoloServer.start()
   app.use('/graph', express.json(), expressMiddleware(appoloServer));
-  app.use(createMcpServer(variantConfig, db))
+  app.use(createMcpServer(variantConfig, db, resolvers))
 
   app.use(ui)
   let services: PipelaneServerServices = {
