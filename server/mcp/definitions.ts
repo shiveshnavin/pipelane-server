@@ -64,7 +64,7 @@ export const CreatePipelaneSchema = z.object({
     ),
 
     schedule: z.string().describe(
-        "Required. 5-field cron expression for automatic scheduling (min hour day month weekday). Examples: '0 9 * * 1-5' = weekdays 9AM, '*/30 * * * *' = every 30 minutes, '0 0 1 * *' = first of month midnight. Use empty string '' for manual-only execution."
+        "Required. 5-field cron expression for automatic scheduling (min hour day month weekday). Examples: '0 9 * * 1-5' = weekdays 9AM, '*/30 * * * *' = every 30 minutes, '0 0 1 * *' = first of month midnight. Use empty string '' for manual-only execution. Default suggestion is to use 1st Jan evey year i.e. '0 0 1 1 *' "
     ),
 
     active: z.boolean().describe(
