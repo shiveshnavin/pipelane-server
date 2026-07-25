@@ -305,17 +305,12 @@ export function createMcpServer(variantConfig: TaskVariantConfig, db: MultiDbORM
         );
     }
 
-
-    const McpApp = express();
-    McpApp.post("/mcp", async (req, res) => {
+    return async (req: any, res: any) => {
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined // stateless
         });
 
         await server.connect(transport);
         await transport.handleRequest(req, res, req.body);
-    });
-
-
-    return McpApp
+    }
 }
