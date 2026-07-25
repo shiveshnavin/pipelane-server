@@ -10,7 +10,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { parse, DocumentNode, InputObjectTypeDefinitionNode, EnumTypeDefinitionNode, NamedTypeNode, ListTypeNode, NonNullTypeNode } from "graphql";
 import fs from "fs";
 import path from "path";
-import { CreatePipelaneSchema, PipetaskSchema } from "./definitions";
+import { CreatePipelaneSchema, PIPELANE_INSTRUCTIONS, PipetaskSchema } from "./definitions";
 
 // ---------------------------------------------------------------------------
 // Runtime GraphQL input → Zod schema conversion
@@ -261,6 +261,20 @@ export function createMcpServer(variantConfig: TaskVariantConfig, db: MultiDbORM
                 content: [{
                     type: "text",
                     text: JSON.stringify(Object.keys(variantConfig))
+                }]
+            };
+        }
+    )
+
+    server.tool(
+        "how-to-use-instructions",
+        "Return the Pipelane usage instructions reference.",
+        {},
+        async () => {
+            return {
+                content: [{
+                    type: "text",
+                    text: PIPELANE_INSTRUCTIONS
                 }]
             };
         }
