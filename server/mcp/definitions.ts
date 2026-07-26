@@ -31,7 +31,8 @@ When creating a pipelane, the structure looks like this:
   "name": "my-pipeline",
   "active": true,
   "schedule": "0 0 * * *", // Cron format
-  "input": "{\\"global_var\\": 1}", // Global runtime inputs passed as a stringified JSON
+  "input": "{\"global_var\": 1,  \"workspaceFolderAbsPath\": \"public/\${pl.name}\"}", // Global runtime inputs passed as a stringified JSON
+  // Always set workspaceFolderAbsPath to public/\${pl.name} so each pipelane get its own workspace
   "tasks": [
     {
       "step": 0,
