@@ -16,11 +16,14 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
     static TASK_VARIANT_NAME: string = "persist-key-value"
     static TASK_TYPE_NAME: string = "persist"
 
-    private db: MultiDbORM = undefined
+    private db: MultiDbORM = undefined as any
     public tableName = `ps_pipelane_persisted_kv`
     private initialized = false;
-    constructor(variantName?: string, db?: MultiDbORM) {
+    private skipInit = false
+
+    constructor(variantName?: string, db?: MultiDbORM, skipInit?: boolean) {
         super(PersistKeyValueTask.TASK_TYPE_NAME, variantName || PersistKeyValueTask.TASK_VARIANT_NAME)
+        this.skipInit = !!skipInit;
         if (!db) {
             try {
                 db = new SQLiteDB('pipelane.sqlite')
@@ -36,7 +39,7 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
     }
 
     async initDb() {
-        if (this.initialized || (this.db as any).persistInitialized) {
+        if (this.initialized || (this.db as any).persistInitialized || this.skipInit) {
             return
         }
         return this.db.create(this.tableName, {
@@ -109,7 +112,7 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
         }
 
         if (toInsert.length > 0) {
-            let promises = toInsert.map(_input => {
+            let promises = toInsert.map((_input: any) => {
                 //@ts-ignore
                 let dbFilter = {
                     pkey: _input.pkey,
