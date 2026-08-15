@@ -36,7 +36,7 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
     }
 
     async initDb() {
-        if (this.initialized) {
+        if (this.initialized || (this.db as any).persistInitialized) {
             return
         }
         return this.db.create(this.tableName, {
@@ -47,6 +47,7 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
         } as PersistedKeyValue).catch(e => {
             this.onLog('Error initializing db for ' + this.getTaskVariantName() + '. ' + e.message)
         }).finally(() => {
+            (this.db as any).persistInitialized = true
             this.initialized = true
         })
     }
