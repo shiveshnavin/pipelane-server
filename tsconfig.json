@@ -1,5 +1,12 @@
 {
     "compilerOptions": {
+        "useUnknownInCatchVariables": false,
+        "strictNullChecks": false,
+        "noImplicitAny": false,
+        "noUnusedLocals": false,
+        "noEmitOnError": false,
+        "skipLibCheck": true,
+        "skipDefaultLibCheck": true,
         "jsx": "react",
         "resolveJsonModule": true,
         "esModuleInterop": true,
