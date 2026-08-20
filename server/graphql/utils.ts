@@ -38,7 +38,7 @@ export function generateTaskTypeResolvers(variantConfig: TaskVariantConfig) {
 
 
 export function getTasksExecFromPipelane(cached: PipeLane) {
-    let executedTasks = (cached.executedTasks as PipeTask<InputWithPreviousInputs, OutputWithStatus>[])
+    let executedTasks = (cached.executedTasks || []) as PipeTask<InputWithPreviousInputs, OutputWithStatus>[]
     let executed = executedTasks.map(p => {
         let pltExec = {} as PipetaskExecution
         pltExec.name = p.uniqueStepName || p.taskVariantName || p.taskTypeName
@@ -60,21 +60,22 @@ export function getTasksExecFromPipelane(cached: PipeLane) {
     let plExecutions = cached.currentExecutionTasks
     if (plExecutions) {
         executing = plExecutions
+            .filter(ex => ex && ex.task)
             .filter(ex => {
                 return !executedTasks.find(p => p.uniqueStepName === ex.task.uniqueStepName)
             })
             .map(ex => {
-            let p = ex.task as PipeTask<any, any>
-            let pltExec = {} as PipetaskExecution;
-            pltExec.name = p.uniqueStepName || p.taskVariantName || p.taskTypeName
-            pltExec.pipelaneExId = cached.instanceId
-            pltExec.pipelaneName = cached.name
-            pltExec.status = Status.InProgress
-            pltExec.startTime = `${p.startTime}`
-            pltExec.endTime = undefined
-            pltExec.id = `${cached.instanceId}::${p.uniqueStepName}`
-            return pltExec
-        })
+                let p = ex.task as PipeTask<any, any>
+                let pltExec = {} as PipetaskExecution;
+                pltExec.name = p.uniqueStepName || p.taskVariantName || p.taskTypeName
+                pltExec.pipelaneExId = cached.instanceId
+                pltExec.pipelaneName = cached.name
+                pltExec.status = Status.InProgress
+                pltExec.startTime = `${p.startTime}`
+                pltExec.endTime = undefined
+                pltExec.id = `${cached.instanceId}::${p.uniqueStepName}`
+                return pltExec
+            })
     }
     return [
         ...executed.sort((a, b) => {

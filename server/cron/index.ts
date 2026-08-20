@@ -1,6 +1,6 @@
 //@ts-ignore
 import PipeLane, { VariablePipeTask, TaskVariantConfig, PipeTask, OutputWithStatus, InputWithPreviousInputs, PipeLaneListener } from "pipelane";
-import { PipelaneExecution, PipelaneExecutionPayload, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
+import { PipelaneExecution, PipelaneExecutionPayload, PipetaskExecution, Pipelane as PipelaneSchedule, Status } from "../../gen/model";
 import { Cron } from "croner";
 import * as NodeCron from 'node-cron'
 import { generatePipelaneResolvers } from "../graphql/pipelane";
@@ -24,13 +24,18 @@ export class CronScheduler {
     variantConfig: TaskVariantConfig
     pipelaneLogLevel: 0 | 1 | 2 | 3 | 4 | 5
     listeners: Map<string, PipelaneExecutionListener> = new Map()
+    private pendingTaskHistory = new Map<string, PipetaskExecution>()
+    private taskStartTimes = new Map<string, string>()
+    private taskHistoryFlushTimer?: ReturnType<typeof setTimeout>
+    private taskHistoryFlushInProgress = false
+    private taskHistoryBatchSize = 25
 
     constructor(variantConfig: TaskVariantConfig,
-        pipelaneLogLevel?: 0 | 1 | 2 | 3 | 4 | 5,
+        pipelaneLogLevel?: number | undefined,
         maxCacheSize = 200,
         pipelaneResolver: any = undefined) {
         this.variantConfig = variantConfig
-        this.pipelaneLogLevel = pipelaneLogLevel != undefined ? pipelaneLogLevel : 2
+        this.pipelaneLogLevel = (pipelaneLogLevel != undefined ? pipelaneLogLevel : 2) as any
         this.maxCacheSize = maxCacheSize
         if (!pipelaneResolver) {
             pipelaneResolver = createDummyPipelaneResolver()
@@ -80,6 +85,7 @@ export class CronScheduler {
     stopAll() {
         this.cronJobs.forEach(job => job.job.stop())
         this.currentExecutions.forEach(cn => cn.stop())
+        this.flushTaskHistory()
     }
 
     startAll() {
@@ -263,11 +269,12 @@ export class CronScheduler {
                 }
             }
             let retryCountLeft = pl.retryCount
+            let that = this;
             let onResult = (function (output, release) {
                 let status = Status.InProgress
                 if (output == undefined || output[0].status == false) {
                     if (retryCountLeft-- > 0) {
-                        if (this.pipelaneLogLevel > 0)
+                        if (that.pipelaneLogLevel > 0)
                             console.warn(`[pipelane-server] ${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}`)
                         //@ts-ignore
                         pipeWorksInstance.currentTaskIdx = 0
@@ -288,17 +295,17 @@ export class CronScheduler {
                         }
                         return
                     } else {
-                        if (this.pipelaneLogLevel > 0)
+                        if (that.pipelaneLogLevel > 0)
                             console.log(`[pipelane-server] ${pl.name} failed`)
                         status = Status.Failed
                     }
 
                 } else {
-                    if (this.pipelaneLogLevel > 0)
+                    if (that.pipelaneLogLevel > 0)
                         console.log(`[pipelane-server] ${pl.name} success`)
                     status = Status.Success
                 }
-                this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                that.pipelaneResolver.Mutation.createPipelaneExecution({}, {
                     //@ts-ignore
                     data: {
                         endTime: `${Date.now()}`,
@@ -308,7 +315,7 @@ export class CronScheduler {
                     }
                 }).catch(e => {
                     console.error('Error saving pipelane. Trying to save without output')
-                    this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                    that.pipelaneResolver.Mutation.createPipelaneExecution({}, {
                         //@ts-ignore
                         data: {
                             endTime: `${Date.now()}`,
@@ -320,7 +327,11 @@ export class CronScheduler {
                         console.error('Error saving pipelane', event, e.message)
                     })
                 })
-                this.currentExecutions = (this.currentExecutions as PipeLane[]).filter(cei => cei.instanceId != pipeWorksInstance.instanceId)
+                that.currentExecutions = (that.currentExecutions as PipeLane[]).filter(cei => cei.instanceId != pipeWorksInstance.instanceId)
+                for (const taskId of that.taskStartTimes.keys()) {
+                    if (taskId.startsWith(`${pipeWorksInstance.instanceId}::`))
+                        that.taskStartTimes.delete(taskId)
+                }
                 release && release()
             }).bind(this)
 
@@ -445,62 +456,27 @@ export class CronScheduler {
                 if (event == 'NEW_TASK') {
                     let taskName = task.uniqueStepName || task.variantType || task.type
                     let taskId = `${plx.id}::${task.variantType}::${taskName}`
-                    await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
-                        //@ts-ignore
-                        data: {
-                            id: taskId,
-                            pipelaneExId: plx.id,
-                            name: taskName,
-                            pipelaneName: plx.name,
-                            startTime: `${Date.now()}`,
-                            status: Status.InProgress,
-                            output: output
-                        }
-                    }).catch(e => {
-                        console.error('Error saving pipelane task', event, e.message)
-                    })
+                    this.taskStartTimes.set(taskId, `${Date.now()}`)
                 } else if (event == 'TASK_FINISHED' || event == 'SKIPPED') {
                     let taskName = task.uniqueStepName || task.variantType
                     let taskId = `${plx.id}::${task.variantType}::${taskName}`
                     let status = mapStatus(event, output)
                     const jsonStr = JSON.stringify(output)
-                    await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
-                        //@ts-ignore
-                        data: {
-                            name: task.uniqueStepName || task.variantType || task.type,
-                            pipelaneName: plx.name,
-                            pipelaneExId: plx.id,
-                            id: taskId,
-                            endTime: `${Date.now()}`,
-                            status: status,
-                            output: jsonStr
-                        }
-                    }).catch(async (ebase) => {
-                        console.error('Error saving pipelane task. Trying to save with base64 output.')
-                        const base64op = 'base64;' + Buffer.from(jsonStr).toString('base64')
-                        await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
-                            //@ts-ignore
-                            data: {
-                                id: taskId,
-                                endTime: `${Date.now()}`,
-                                status: mapStatus(event, output),
-                                output: base64op
-                            }
-                        }).catch(async (e) => {
-                            console.error('Error saving pipelane task. Trying to save without output.')
-                            await this.pipelaneResolver.Mutation.createPipelaneTaskExecution({}, {
-                                //@ts-ignore
-                                data: {
-                                    id: taskId,
-                                    endTime: `${Date.now()}`,
-                                    status: mapStatus(event, output),
-                                    output: 'Unsupported Output'
-                                }
-                            }).catch(e => {
-                                console.error('Error saving pipelane.', event, e.message)
-                            })
-                        })
-                    })
+                    this.pendingTaskHistory.set(taskId, {
+                        name: task.uniqueStepName || task.variantType || task.type,
+                        pipelaneName: plx.name,
+                        pipelaneExId: plx.id,
+                        id: taskId,
+                        startTime: this.taskStartTimes.get(taskId) || `${Date.now()}`,
+                        endTime: `${Date.now()}`,
+                        status: status,
+                        output: jsonStr
+                    } as PipetaskExecution)
+                    this.taskStartTimes.delete(taskId)
+                    if (this.pendingTaskHistory.size >= this.taskHistoryBatchSize)
+                        this.flushTaskHistory()
+                    else if (!this.taskHistoryFlushTimer)
+                        this.taskHistoryFlushTimer = setTimeout(() => this.flushTaskHistory(), 250)
                 } else if (event == 'COMPLETE' || event == 'KILLED') {
                     if (onResult) {
                         await new Promise((resolve) => {
@@ -515,6 +491,27 @@ export class CronScheduler {
         }).bind(this)
 
         pipelaneInstance.setListener(pipelaneListener)
+    }
+
+    private async flushTaskHistory() {
+        if (this.taskHistoryFlushTimer) {
+            clearTimeout(this.taskHistoryFlushTimer)
+            this.taskHistoryFlushTimer = undefined
+        }
+        if (this.taskHistoryFlushInProgress || this.pendingTaskHistory.size === 0)
+            return
+        const batch = Array.from(this.pendingTaskHistory.values())
+        this.pendingTaskHistory.clear()
+        try {
+            await this.pipelaneResolver.Mutation.createPipelaneTaskExecutions({}, { data: batch })
+        } catch (e) {
+            batch.forEach(taskExecution => this.pendingTaskHistory.set(taskExecution.id, taskExecution))
+            console.error('Error saving pipelane task history batch', e.message)
+        } finally {
+            this.taskHistoryFlushInProgress = false
+            if (this.pendingTaskHistory.size > 0 && !this.taskHistoryFlushTimer)
+                this.taskHistoryFlushTimer = setTimeout(() => this.flushTaskHistory(), 250)
+        }
     }
 
 
@@ -592,6 +589,10 @@ function createDummyPipelaneResolver() {
             },
             createPipelaneTaskExecution: async (parent: any, args: any) => {
                 console.warn('Dummy resolver called for createPipelaneTaskExecution. Returning undefined')
+                return args
+            },
+            createPipelaneTaskExecutions: async (parent: any, args: any) => {
+                console.warn('Dummy resolver called for createPipelaneTaskExecutions. Returning undefined')
                 return args
             }
         }

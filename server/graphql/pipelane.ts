@@ -215,6 +215,23 @@ export function generatePipelaneResolvers(
                 return existing
             },
             async PipelaneExecution(pr, arg: QueryPipelaneExecutionArgs) {
+                let cached = cronScheduler.currentExecutions.find(ex => ex.instanceId === arg.id)
+                if (cached) {
+                    return {
+                        id: cached.instanceId,
+                        name: cached.name,
+                        status: Status.InProgress
+                    } as PipelaneExecution
+                }
+                let cachedExecution = cronScheduler.executionsCache.find(ex => ex.instanceId === arg.id)
+                if (cachedExecution) {
+                    return {
+                        id: cachedExecution.instanceId,
+                        name: cachedExecution.name,
+                        status: cachedExecution.isRunning ? Status.InProgress : Status.Success,
+                        output: JSON.stringify(cachedExecution.outputs || {})
+                    } as PipelaneExecution
+                }
                 let data = await db.getOne(TableName.PS_PIPELANE_EXEC, {
                     id: arg.id
                 })
@@ -306,7 +323,7 @@ export function generatePipelaneResolvers(
                 })
                 existing.tasks = tasks
                 let newPl = await PipelaneResolvers.Mutation.createPipelane(undefined, {
-                    data: existing
+                    data: existing as any
                 })
                 return newPl
 
@@ -410,6 +427,27 @@ export function generatePipelaneResolvers(
                         existing)
                 }
                 return existing
+            },
+
+            async createPipelaneTaskExecutions(parent, request: { data: PipetaskExecution[] }) {
+                let rows = request.data || []
+                if (rows.length === 0)
+                    return []
+
+                let dbWithBatchInsert: any = db as any
+                if (typeof dbWithBatchInsert.insertMany === 'function') {
+                    await dbWithBatchInsert.insertMany(TableName.PS_PIPELANE_TASK_EXEC, rows)
+                    return rows
+                }
+
+                for (let row of rows) {
+                    try {
+                        await db.insert(TableName.PS_PIPELANE_TASK_EXEC, row)
+                    } catch (error) {
+                        await db.update(TableName.PS_PIPELANE_TASK_EXEC, { id: row.id }, row)
+                    }
+                }
+                return rows
             },
             async executePipelane(parent, request: { name: string, input: string }) {
                 let execution = await cronScheduler.triggerPipelaneByName(request.name, request.input)
@@ -558,7 +596,7 @@ class PipelaneExecCleaner {
                 // *** FAST PATH: avoid full table scan. ***
                 // We know how many we just deleted, so adjust the in-memory counter directly.
                 const deleted = oldest.length; // actual number deleted
-                counter.count = toDelete > deleted? 0:  Math.max(0, (counter.count || 0) - deleted);
+                counter.count = toDelete > deleted ? 0 : Math.max(0, (counter.count || 0) - deleted);
                 counter.dirtySincePersist = 0;
 
                 // Persist the new count (single source of truth for other processes)

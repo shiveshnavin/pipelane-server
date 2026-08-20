@@ -7,6 +7,7 @@ let pipe: Pipelane = {
     schedule: '*/5 * * * *'
 };
 
+//@ts-ignore
 let sch = new CronScheduler();
 sch.init([pipe], (p) => {
     return p

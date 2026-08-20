@@ -13,7 +13,7 @@
         "module": "nodenext",
         "target": "esNext",
         "declaration": true,
-        "outDir": "./dist",
+        "outDir": ".",
         "types": [
             "node"
         ]

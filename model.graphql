@@ -161,6 +161,9 @@ type Mutation {
   createPipelaneTaskExecution(
     data: PipetaskExecutionPayload!
   ): PipetaskExecution!
+  createPipelaneTaskExecutions(
+    data: [PipetaskExecutionPayload!]!
+  ): [PipetaskExecution!]!
 
   executePipelane(name: ID!, input: String): PipelaneExecution!
   stopPipelane(id: ID!): PipelaneExecution!
