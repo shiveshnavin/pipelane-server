@@ -57,7 +57,16 @@ export async function creatPipelaneServer(
     cronScheduler.startAll()
     console.log('pipelane:Scheduled', pls.length, 'pipes')
   }).catch(err => {
-    console.error('pipelane:Error initializing pipelanes. ', err.message)
+    console.error('pipelane:Error initializing pipelanes. Will retry one more time.', err.message)
+
+    resolvers.Query.pipelanes().then(pls2 => {
+      cronScheduler.init(pls2, resolvers)
+      cronScheduler.startAll()
+      console.log('pipelane:Scheduled', pls2.length, 'pipes')
+    }).catch(err => {
+      console.error('pipelane:Error initializing pipelanes. Fatal!', err.message)
+    })
+
   })
 
   const typeDefs = fs.readFileSync(path.join(__dirname, '../', 'model.graphql')).toString()
