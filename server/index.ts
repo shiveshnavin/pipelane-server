@@ -57,15 +57,17 @@ export async function creatPipelaneServer(
     cronScheduler.startAll()
     console.log('pipelane:Scheduled', pls.length, 'pipes')
   }).catch(err => {
-    console.error('pipelane:Error initializing pipelanes. Will retry one more time.', err.message)
+    console.error('pipelane:Error initializing pipelanes. Will retry one more time in 5s...', err.message)
 
-    resolvers.Query.pipelanes().then(pls2 => {
-      cronScheduler.init(pls2, resolvers)
-      cronScheduler.startAll()
-      console.log('pipelane:Scheduled', pls2.length, 'pipes')
-    }).catch(err => {
-      console.error('pipelane:Error initializing pipelanes. Fatal!', err.message)
-    })
+    setTimeout(() => {
+      resolvers.Query.pipelanes().then(pls2 => {
+        cronScheduler.init(pls2, resolvers)
+        cronScheduler.startAll()
+        console.log('pipelane:Scheduled', pls2.length, 'pipes')
+      }).catch(err => {
+        console.error('pipelane:Error initializing pipelanes. Fatal!', err.message)
+      })
+    }, 5000)
 
   })
 
