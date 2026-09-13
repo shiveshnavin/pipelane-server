@@ -16,7 +16,13 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
     static TASK_VARIANT_NAME: string = "persist-key-value"
     static TASK_TYPE_NAME: string = "persist"
 
-    private db: MultiDbORM = undefined as any
+    public static sharedDb: MultiDbORM = undefined as any
+    get db(): MultiDbORM {
+        return PersistKeyValueTask.sharedDb
+    }
+    set db(val: MultiDbORM) {
+        PersistKeyValueTask.sharedDb = val
+    }
     public tableName = `ps_pipelane_persisted_kv`
     private initialized = false;
     private skipInit = false
@@ -24,14 +30,16 @@ export class PersistKeyValueTask extends PipeTask<any, any> {
     constructor(variantName?: string, db?: MultiDbORM, skipInit?: boolean) {
         super(PersistKeyValueTask.TASK_TYPE_NAME, variantName || PersistKeyValueTask.TASK_VARIANT_NAME)
         this.skipInit = !!skipInit;
-        if (!db) {
+        if (!db && !PersistKeyValueTask.sharedDb) {
             try {
                 db = new SQLiteDB('pipelane.sqlite')
             } catch (e) {
                 throw new Error('Must provide `db` or install `sqlite3` package to use task `PersistKeyValueTask`')
             }
         }
-        this.db = db
+        if (db) {
+            PersistKeyValueTask.sharedDb = db
+        }
     }
 
     kill(): boolean {
