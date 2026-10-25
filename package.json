@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "gen": "node gql-ts.js",
     "postinstall": "npm run gen && cd client && yarn install && npm run build",
-    "build": "cd client && npm run build"
+    "build": "npm run compile && cd client && npm run build"
   },
   "author": "",
   "license": "ISC",
