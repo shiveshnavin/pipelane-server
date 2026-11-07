@@ -11,6 +11,7 @@ import { generatePipelaneResolvers } from "./graphql/pipelane";
 import { MultiDbORM, MySQLDBConfig } from "multi-db-orm";
 import { createMcpServer } from "./mcp";
 import { SubPipelaneTask } from "./pipe-tasks/SubPipelaneTask";
+import { ValidationGraphQLError } from "./types";
 
 const app = express()
 //see https://docs.expo.dev/more/expo-cli/#hosting-with-sub-paths
@@ -72,10 +73,25 @@ export async function creatPipelaneServer(
   })
 
   const typeDefs = fs.readFileSync(path.join(__dirname, '../', 'model.graphql')).toString()
+
+  const debugErrors = pipelaneLogLevel >= 4;
   const appoloServer = new ApolloServer({
     typeDefs,
     resolvers,
+    includeStacktraceInErrorResponses: debugErrors,
+    formatError: (formattedError, error) => {
+      if (debugErrors || formattedError.extensions?.code !== 'INTERNAL_SERVER_ERROR') {
+        console.log('GraphQL Error:', formattedError.extensions?.code, JSON.stringify(formattedError));
+        return formattedError
+      }
+      console.error('Internal server error', JSON.stringify(error));
+      if (pipelaneLogLevel == 0)
+        return new ValidationGraphQLError('An unexpected error occurred. Please try again later.');
+      return formattedError
+    }
   })
+
+
   await appoloServer.start()
   app.use('/graph', express.json(), expressMiddleware(appoloServer));
   app.use('/mcp', createMcpServer(variantConfig, db, resolvers))

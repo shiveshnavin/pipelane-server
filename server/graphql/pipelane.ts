@@ -558,7 +558,7 @@ class PipelaneExecCleaner {
                 // *** FAST PATH: avoid full table scan. ***
                 // We know how many we just deleted, so adjust the in-memory counter directly.
                 const deleted = oldest.length; // actual number deleted
-                counter.count = toDelete > deleted? 0:  Math.max(0, (counter.count || 0) - deleted);
+                counter.count = toDelete > deleted ? 0 : Math.max(0, (counter.count || 0) - deleted);
                 counter.dirtySincePersist = 0;
 
                 // Persist the new count (single source of truth for other processes)
