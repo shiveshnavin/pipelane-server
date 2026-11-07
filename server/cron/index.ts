@@ -115,6 +115,14 @@ export class CronScheduler {
         }
     }
 
+
+    unschedulePipelaneCronjob(pl: PipelaneSchedule) {
+        let existing = this.findScheduledJob(pl)
+        if (existing) {
+            existing.job.stop()
+        }
+    }
+
     createInstanceId(name: string): string {
         return `${name}-${Date.now()}`
     }
@@ -263,11 +271,12 @@ export class CronScheduler {
                 }
             }
             let retryCountLeft = pl.retryCount
+            let that = this
             let onResult = (function (output, release) {
                 let status = Status.InProgress
                 if (output == undefined || output[0].status == false) {
                     if (retryCountLeft-- > 0) {
-                        if (this.pipelaneLogLevel > 0)
+                        if (that.pipelaneLogLevel > 0)
                             console.warn(`[pipelane-server] ${pl.name} failed. Retrying. Retry count left: ${retryCountLeft}`)
                         //@ts-ignore
                         pipeWorksInstance.currentTaskIdx = 0
@@ -288,17 +297,17 @@ export class CronScheduler {
                         }
                         return
                     } else {
-                        if (this.pipelaneLogLevel > 0)
+                        if (that.pipelaneLogLevel > 0)
                             console.log(`[pipelane-server] ${pl.name} failed`)
                         status = Status.Failed
                     }
 
                 } else {
-                    if (this.pipelaneLogLevel > 0)
+                    if (that.pipelaneLogLevel > 0)
                         console.log(`[pipelane-server] ${pl.name} success`)
                     status = Status.Success
                 }
-                this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                that.pipelaneResolver.Mutation.createPipelaneExecution({}, {
                     //@ts-ignore
                     data: {
                         endTime: `${Date.now()}`,
@@ -308,7 +317,7 @@ export class CronScheduler {
                     }
                 }).catch(e => {
                     console.error('Error saving pipelane. Trying to save without output')
-                    this.pipelaneResolver.Mutation.createPipelaneExecution({}, {
+                    that.pipelaneResolver.Mutation.createPipelaneExecution({}, {
                         //@ts-ignore
                         data: {
                             endTime: `${Date.now()}`,
@@ -320,7 +329,7 @@ export class CronScheduler {
                         console.error('Error saving pipelane', event, e.message)
                     })
                 })
-                this.currentExecutions = (this.currentExecutions as PipeLane[]).filter(cei => cei.instanceId != pipeWorksInstance.instanceId)
+                that.currentExecutions = (that.currentExecutions as PipeLane[]).filter(cei => cei.instanceId != pipeWorksInstance.instanceId)
                 release && release()
             }).bind(this)
 
@@ -392,6 +401,9 @@ export class CronScheduler {
             }
 
             return plx
+        }
+        else {
+            this.unschedulePipelaneCronjob(pl)
         }
 
         return undefined
